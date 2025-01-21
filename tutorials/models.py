@@ -87,7 +87,7 @@ class Ticket(models.Model):
         ('closed', 'Closed'),
     ]
 
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_tickets')
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_tickets')
     title = models.CharField(max_length=255)
     description = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
