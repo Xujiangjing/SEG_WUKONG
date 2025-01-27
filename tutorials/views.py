@@ -4,20 +4,30 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Q
 from django.shortcuts import redirect, render
 from django.views import View
-from django.views.generic.edit import FormView, UpdateView
+from django.views.generic import ListView
+from django.views.generic.edit import FormView, UpdateView, CreateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
+
+from tutorials.models import TicketAttachment, TicketActivity, Ticket
+from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, TicketForm, TicketAttachmentForm
 from tutorials.helpers import login_prohibited
 
 
 @login_required
 def dashboard(request):
-    """Display the current user's dashboard."""
+    user = request.user
+    context = {
+        'open_tickets': Ticket.objects.filter(creator=user, status='open'),
+        'assigned_tickets': Ticket.objects.filter(assigned_to=user) if user.is_specialist() else None,
+        'recent_activities': TicketActivity.objects.filter(
+            Q(ticket__creator=user) | Q(ticket__assigned_to=user)
+        ).order_by('-action_time')[:5]
+    }
+    return render(request, 'dashboard.html', context)
 
-    current_user = request.user
-    return render(request, 'dashboard.html', {'user': current_user})
 
 
 @login_prohibited
@@ -138,8 +148,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class SignUpView(LoginProhibitedMixin, FormView):
-    """Display the sign up screen and handle sign ups."""
-
     form_class = SignUpForm
     template_name = "sign_up.html"
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
@@ -151,3 +159,50 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+
+
+@login_required
+def ticket_create(request):
+    if request.method == 'POST':
+        form = TicketForm(request.POST)
+        file_form = TicketAttachmentForm(request.POST, request.FILES)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.creator = request.user
+            ticket.save()
+
+            if file_form.is_valid():
+                files = request.FILES.getlist('file')
+                for f in files:
+                    TicketAttachment.objects.create(ticket=ticket, file=f)
+
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action='created',
+                action_by=request.user
+            )
+            return redirect('ticket_detail', pk=ticket.pk)
+    else:
+        form = TicketForm()
+        file_form = TicketAttachmentForm()
+
+    return render(request, 'tickets/create.html', {
+        'form': form,
+        'file_form': file_form
+    })
+
+class TicketListView(ListView):
+    model = Ticket
+    template_name = 'tutorials/ticket_list.html'  # 创建这个模板
+    context_object_name = 'tickets'
+
+
+class CreateTicketView(LoginRequiredMixin, CreateView):
+    model = Ticket
+    form_class = TicketForm
+    template_name = 'tutorials/create_ticket.html'
+    success_url = '/tickets/'  # 创建成功后重定向的URL
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)

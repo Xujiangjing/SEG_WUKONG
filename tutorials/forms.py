@@ -2,7 +2,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
-from .models import User
+from .models import User, Ticket, TicketAttachment
+
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
@@ -108,3 +109,33 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
             password=self.cleaned_data.get('new_password'),
         )
         return user
+
+class TicketForm(forms.ModelForm):
+    class Meta:
+        model = Ticket
+        fields = ['title', 'description', 'priority', 'assigned_department']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 5}),
+            'assigned_department': forms.Select(attrs={'class': 'form-select'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+
+class TicketAttachmentForm(forms.ModelForm):
+    file = MultipleFileField()
+
+    class Meta:
+        model = TicketAttachment
+        fields = ['file']
+
+
