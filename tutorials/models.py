@@ -156,7 +156,7 @@ class Ticket(models.Model):
     latest_editor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='edited_tickets')
 
     def __str__(self):
-        return f"Ticket {self.id}: {self.title} ({self.get_status_display()})"
+        return f"Ticket {self.id}: {self.title} ({self.status})"
 
     def save(self, *args, **kwargs):
         if self.latest_action == None:  # If no action has yet been recorded, set a default action
@@ -169,7 +169,7 @@ class TicketAttachment(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Attachment {self.id} for Ticket {self.ticket.id}"
+        return f"Attachment {self.file} for Ticket {self.ticket.id}"
 
 class TicketActivity(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='activity_log')
