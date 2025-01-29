@@ -1,7 +1,7 @@
 """Unit tests for the Ticket Attachemnt model."""
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from tutorials.models import Ticket, User,TicketAttachment
+from tickets.models import Ticket, User,TicketAttachment
 
 class TicketAttachmentModelTest(TestCase):
     def setUp(self):

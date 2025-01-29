@@ -1,7 +1,7 @@
 """Tests of the home view."""
 from django.test import TestCase
 from django.urls import reverse
-from tutorials.models import User
+from tickets.models import User
 
 class HomeViewTestCase(TestCase):
     """Tests of the home view."""

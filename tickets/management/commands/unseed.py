@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from tutorials.models import User
+from tickets.models import User
 
 class Command(BaseCommand):
     """Build automation command to unseed the database."""

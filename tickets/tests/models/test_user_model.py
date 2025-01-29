@@ -1,7 +1,7 @@
 """Unit tests for the User model."""
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from tutorials.models import User,Department
+from tickets.models import User,Department
 
 class UserModelTestCase(TestCase):
     """Unit tests for the User model."""

@@ -8,8 +8,8 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm
-from tutorials.helpers import login_prohibited
+from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm
+from tickets.helpers import login_prohibited
 
 
 @login_required
