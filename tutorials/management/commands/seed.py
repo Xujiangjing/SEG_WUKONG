@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from tickets.models import User, Department
+from tutorials.models import User, Department
 import pytz
 from faker import Faker
 import random

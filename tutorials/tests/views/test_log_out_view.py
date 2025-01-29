@@ -1,8 +1,8 @@
 """Tests of the log out view."""
 from django.test import TestCase
 from django.urls import reverse
-from tickets.models import User
-from tickets.tests.helpers import LogInTester
+from tutorials.models import User
+from tutorials.tests.helpers import LogInTester
 
 class LogOutViewTestCase(TestCase, LogInTester):
     """Tests of the log out view."""
