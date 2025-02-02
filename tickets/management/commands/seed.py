@@ -1,8 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
-from tickets.models import User, Department
+from tickets.models import User, Department, Ticket
 import pytz
 from faker import Faker
 import random
+from django.core.mail import get_connection, send_mail
+from django.conf import settings
+import time
 
 user_fixtures = [
     {'username': '@johndoe', 'email': 'john.doe@example.org', 'first_name': 'John', 'last_name': 'Doe', 'role': 'students'},
@@ -29,6 +32,24 @@ class Command(BaseCommand):
         # Seed Users
         self.create_users()
     
+        # Seed Tickets
+        self.create_sample_tickets()
+        
+    def send_bulk_emails(self, users):
+        connection = get_connection()
+
+        # choose 50 random students
+        students = list(User.objects.filter(role='students'))
+        selected_students = random.sample(students, min(50, len(students)))
+        for user in selected_students:
+            try:
+                self.send_welcome_email(user, connection)
+                time.sleep(2)  
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f"❌ Error sending email to {user.email}: {e}"))
+
+        connection.close()
+        
     def seed_departments(self):
         departments = [
             {'name': 'general_enquiry', 'description': 'General queries managed by program officers.', 'responsible_roles': 'program_officers'},
@@ -58,10 +79,17 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"Department '{department.name}' already exists."))
 
     def create_users(self):
-        self.generate_user_fixtures()
-        self.generate_random_users()
+        connection = get_connection() # Use default email connection
+        self.generate_user_fixtures(connection)
+        self.generate_random_users(connection)
+        
+        # Send welcome emails to students
+        users = User.objects.filter(role="students") 
+        self.send_bulk_emails(users)
 
-    def generate_user_fixtures(self):
+        connection.close()
+
+    def generate_user_fixtures(self, connection = None):
         for data in user_fixtures:
             department = None
             if data['role'] == 'specialists':    
@@ -69,20 +97,19 @@ class Command(BaseCommand):
                 if specialist_departments.exists():
                     department = random.choice(specialist_departments)
             elif data['role'] == 'program_officers':
-                program_officers_departments = Department.objects.filter(responsible_roles__icontains='program_officers')
-                
-            self.try_create_user(data, department)
+                    department = Department.objects.get(name="general_enquiry")
+            self.try_create_user(data, department, connection)
 
 
-    def generate_random_users(self):
+    def generate_random_users(self, connection=None):
         user_count = User.objects.count()
         while  user_count < self.USER_COUNT:
             print(f"Seeding user {user_count}/{self.USER_COUNT}", end='\r')
-            self.generate_user()
+            self.generate_user(connection)
             user_count = User.objects.count()
         print("User seeding complete.      ")
 
-    def generate_user(self):
+    def generate_user(self, connection=None):
         first_name = self.faker.first_name()
         last_name = self.faker.last_name()
         email = create_email(first_name, last_name)
@@ -102,15 +129,44 @@ class Command(BaseCommand):
 
         self.try_create_user({'username': username, 'email': email, 'first_name': first_name, 'last_name': last_name, 'role': role}, department)
        
-    def try_create_user(self, data, department=None):
+    def try_create_user(self, data, department=None, connection=None):
         try:
             if 'role' not in data:  # Default to 'others', this is for the admin, superuser.
                 data['role'] = 'others'
-            self.create_user(data, department)
+            self.create_user(data, department, connection)
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error creating user {data['username']}: {e}"))
 
-    def create_user(self, data, department=None):
+    def send_welcome_email(self, user, connection=None):
+        subject = f"Welcome, {user.first_name}!"
+        message = f"""
+        Hello {user.first_name},
+
+        Your university account has been created successfully.
+
+        Username: {user.username}
+        Email: {user.email}
+        Password: {Command.DEFAULT_PASSWORD} (Please change it after login)
+
+        You can log in to the system and manage your tickets.
+
+        Regards,
+        WuKong Help Desk
+        """
+        try:
+            send_mail(
+                subject, 
+                message, 
+                settings.EMAIL_HOST_USER, 
+                [user.email], 
+                connection=connection  
+            )
+            self.stdout.write(self.style.SUCCESS(f"✅ Email sent to {user.email}"))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"❌ Error sending email to {user.email}: {e}"))  # ✅ 记录详细错误
+
+        
+    def create_user(self, data, department=None, connection=None):
         user = User.objects.create_user(
             username=data['username'],
             email=data['email'],
@@ -122,9 +178,24 @@ class Command(BaseCommand):
         if department:
             user.department = department
             user.save()
+    
+    def create_sample_tickets(self):
+        """Generate random tickets for students"""
+        students = User.objects.filter(role='students')
+        if students.exists():
+            for student in students[:20]:  # Create only for first 20 students
+                Ticket.objects.create(
+                    title=self.faker.sentence(),
+                    description=self.faker.text(),
+                    status=random.choice(['open', 'pending', 'closed']),
+                    creator=student
+                )
+                self.stdout.write(self.style.SUCCESS(f"Sample ticket created for {student.username}"))
 
+        
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
 
 def create_email(first_name, last_name):
     return first_name + '.' + last_name + '@example.org'
+
