@@ -10,7 +10,7 @@ from django.views.generic.edit import FormView, UpdateView
 from django.urls import reverse
 from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm
 from tickets.helpers import login_prohibited
-
+from tickets.models import Ticket
 
 @login_required
 def dashboard(request):
@@ -25,6 +25,10 @@ def home(request):
     """Display the application's start/home screen."""
 
     return render(request, 'home.html')
+
+def ticket_list(request):
+    tickets = Ticket.objects.all()
+    return render(request, 'tickets/ticket_list.html', {'tickets': tickets})
 
 
 class LoginProhibitedMixin:
@@ -151,3 +155,4 @@ class SignUpView(LoginProhibitedMixin, FormView):
 
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
+    
