@@ -12,6 +12,21 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from django.contrib.messages import constants as messages
+import os 
+
+# IMAP Configuration (For Receiving Emails)
+IMAP_HOST = "imap.gmail.com"  # IMAP server
+IMAP_PORT = 993  # IMAP SSL port
+IMAP_USE_SSL = True  # IMAP requires SSL
+
+# SMTP Configuration (For Sending Emails)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = "smtp.gmail.com"  # SMTP server
+EMAIL_PORT = 587  
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False  # Must be False if TLS is True
+EMAIL_HOST_USER = "wukonghelpdesk@gmail.com"
+EMAIL_HOST_PASSWORD = "bynw apnb vmuu nmun" 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
