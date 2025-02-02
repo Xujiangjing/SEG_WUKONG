@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Department
+from .models import User, Department, Ticket
 
 # Register your models here.
 
@@ -37,3 +37,9 @@ class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
     search_fields = ('name',)
     ordering = ['name']
+
+@admin.register(Ticket)
+class TicketAdmin(admin.ModelAdmin):
+    list_display = ('title', 'status', 'sender_email', 'priority', 'assigned_user', 'created_at')
+    search_fields = ('title', 'sender_email')
+    list_filter = ('status', 'priority', 'assigned_user', 'created_at')
