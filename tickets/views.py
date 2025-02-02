@@ -9,17 +9,11 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic.edit import FormView, UpdateView, CreateView
+from django.views.generic.detail import DetailView
 from django.urls import reverse
-<<<<<<< HEAD:tutorials/views.py
-
-from tutorials.models import TicketAttachment, TicketActivity, Ticket
-from tutorials.forms import LogInForm, PasswordForm, UserForm, SignUpForm, TicketForm, TicketAttachmentForm
-from tutorials.helpers import login_prohibited
-=======
-from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm
+from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm,TicketForm, TicketAttachmentForm
 from tickets.helpers import login_prohibited
->>>>>>> main:tickets/views.py
-
+from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 
 @login_required
 def dashboard(request):
@@ -165,49 +159,42 @@ class SignUpView(LoginProhibitedMixin, FormView):
     def get_success_url(self):
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
-
-@login_required
-def ticket_create(request):
-    if request.method == 'POST':
-        form = TicketForm(request.POST)
-        file_form = TicketAttachmentForm(request.POST, request.FILES)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.creator = request.user
-            ticket.save()
-
-            if file_form.is_valid():
-                files = request.FILES.getlist('file')
-                for f in files:
-                    TicketAttachment.objects.create(ticket=ticket, file=f)
-
-            TicketActivity.objects.create(
-                ticket=ticket,
-                action='created',
-                action_by=request.user
-            )
-            return redirect('ticket_detail', pk=ticket.pk)
-    else:
-        form = TicketForm()
-        file_form = TicketAttachmentForm()
-
-    return render(request, 'tickets/create.html', {
-        'form': form,
-        'file_form': file_form
-    })
-
 class TicketListView(ListView):
     model = Ticket
-    template_name = 'tutorials/ticket_list.html'  # 创建这个模板
+    template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
 
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
     model = Ticket
     form_class = TicketForm
-    template_name = 'tutorials/create_ticket.html'
-    success_url = '/tickets/'  # 创建成功后重定向的URL
+    template_name = 'tickets/create_ticket.html'
+    success_url = '/tickets/'
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        ticket = form.save(commit=False)
+        ticket.creator = self.request.user
+        ticket.status = 'open'
+        ticket.save()
+        
+        files = self.request.FILES.getlist('file')
+        for file in files:
+            TicketAttachment.objects.create(ticket=ticket, file=file)
+        
+        TicketActivity.objects.create(
+            ticket=ticket,
+            action='created',
+            action_by=self.request.user
+        )
+        
+        messages.success(self.request, 'Query submitted successfully!')
+        return redirect('ticket_detail', pk=ticket.pk)
+
+
+
+class TicketDetailView(DetailView):
+    model = Ticket
+    template_name = 'tickets/ticket_detail.html'
+    context_object_name = 'ticket'
+
+

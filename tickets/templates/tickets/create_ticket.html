@@ -1,0 +1,24 @@
+{# tickets/templates/tickets/create_ticket.html #}
+{% extends 'base_content.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container">
+  <h1>Create a New Ticket</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- 使用已有的 TicketForm 字段 -->
+    {% include 'partials/bootstrap_form.html' with form=form %}
+
+    <!-- 附件（多文件上传）：
+         注意 name="file"，因为 views.py 里 getlist('file')
+    -->
+    <div class="mb-3">
+      <label for="id_file" class="form-label">Attachments (optional)</label>
+      <input type="file" name="file" id="id_file" class="form-control" multiple>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+{% endblock %}
