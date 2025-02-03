@@ -95,7 +95,7 @@ class Ticket(models.Model):
         ('resolved', 'Resolved'),
         ('closed', 'Closed'),
     ]
-
+    ## get_priority_choices function 
     PRIORITY_CHOICES = [
         ('low', 'Low'),
         ('medium', 'Medium'),
