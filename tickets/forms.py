@@ -130,7 +130,7 @@ class MultipleFileField(forms.FileField):
         kwargs.setdefault("widget", MultipleFileInput())
         super().__init__(*args, **kwargs)
 
-
+## MultipleFileField is a custom field that allows multiple files to be uploaded at once.
 class TicketAttachmentForm(forms.ModelForm):
     file = MultipleFileField()
 
