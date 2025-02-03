@@ -187,11 +187,12 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             action_by=self.request.user
         )
         
+        # Here is your success message + redirect
         messages.success(self.request, 'Query submitted successfully!')
         return redirect('ticket_detail', pk=ticket.pk)
 
 
-
+## This is the view for the ticket detail page
 class TicketDetailView(DetailView):
     model = Ticket
     template_name = 'tickets/ticket_detail.html'
