@@ -4,15 +4,15 @@
 
 {% block content %}
 <div class="container">
+    <!-- Create a New Ticket -->
   <h1>Create a New Ticket</h1>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    <!-- 使用已有的 TicketForm 字段 -->
     {% include 'partials/bootstrap_form.html' with form=form %}
+    <div class="mb-3">
+      <label for="id_description" class="form-label">Description</label>
+      <textarea name="description" id="id_description" class="form-control" rows="3"></textarea>
 
-    <!-- 附件（多文件上传）：
-         注意 name="file"，因为 views.py 里 getlist('file')
-    -->
     <div class="mb-3">
       <label for="id_file" class="form-label">Attachments (optional)</label>
       <input type="file" name="file" id="id_file" class="form-control" multiple>
