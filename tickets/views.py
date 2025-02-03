@@ -177,6 +177,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ticket.status = 'open'
         ticket.save()
         
+        ## Upload multiple files
         files = self.request.FILES.getlist('file')
         for file in files:
             TicketAttachment.objects.create(ticket=ticket, file=file)
