@@ -194,7 +194,6 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
 
 ## This is the view for the ticket detail page
-## This view will display the details of a ticket
 class TicketDetailView(DetailView):
     model = Ticket
     template_name = 'tickets/ticket_detail.html'
