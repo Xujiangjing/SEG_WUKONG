@@ -46,7 +46,14 @@
             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
               <li><a class="dropdown-item" href="{% url 'profile' %}">
                 <i class="bi bi-person-gear"></i> Profile Settings
-              </a></li>
+              </a>
+            </li>
+            <!-- Add a link to the change password page -->
+            <li>
+              <a class="dropdown-item" href="{% url 'password' %}">
+                <i class="bi bi-key"></i> Change Password
+              </a>
+            </li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item text-danger" href="{% url 'log_out' %}">
                 <i class="bi bi-box-arrow-right"></i> Logout
