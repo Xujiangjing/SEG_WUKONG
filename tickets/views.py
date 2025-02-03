@@ -164,7 +164,7 @@ class TicketListView(ListView):
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
 
-
+## This is the view for the ticket creation page
 class CreateTicketView(LoginRequiredMixin, CreateView):
     model = Ticket
     form_class = TicketForm
