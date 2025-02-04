@@ -20,9 +20,9 @@ def dashboard(request):
     user = request.user
     context = {
         'open_tickets': Ticket.objects.filter(creator=user, status='open'),
-        'assigned_tickets': Ticket.objects.filter(assigned_to=user) if user.is_specialist() else None,
+        'assigned_tickets': Ticket.objects.filter(assigned_user=user) if user.is_specialist() else None,
         'recent_activities': TicketActivity.objects.filter(
-            Q(ticket__creator=user) | Q(ticket__assigned_to=user)
+            Q(ticket__creator=user) | Q(ticket__assigned_user=user)
         ).order_by('-action_time')[:5]
     }
     return render(request, 'dashboard.html', context)
