@@ -144,7 +144,7 @@ class Ticket(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    assigned_user = models.ForeignKey(
+    assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
