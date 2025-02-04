@@ -35,9 +35,9 @@ def home(request):
 
     return render(request, 'home.html')
 
-def ticket_list(request):
-    tickets = Ticket.objects.all()
-    return render(request, 'tickets/ticket_list.html', {'tickets': tickets})
+# def ticket_list(request): # pragma: no cover
+#     tickets = Ticket.objects.all() # pragma: no cover
+#     return render(request, 'tickets/ticket_list.html', {'tickets': tickets}) # pragma: no cover
 
 
 class LoginProhibitedMixin:
