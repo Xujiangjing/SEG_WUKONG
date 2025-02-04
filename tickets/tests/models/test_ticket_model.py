@@ -35,7 +35,7 @@ class TicketModelTest(TestCase):
             title="Test Ticket",
             description="This is a test ticket",
             creator=self.user2,
-            assigned_to=self.user1,
+            assigned_user=self.user1,
             assigned_department = "program_officers",
             latest_action="created",
             latest_editor = self.user2,
@@ -48,7 +48,7 @@ class TicketModelTest(TestCase):
         self.assertEqual(self.ticket.title, "Test Ticket")
         self.assertEqual(self.ticket.description, "This is a test ticket")
         self.assertEqual(self.ticket.creator, self.user2)
-        self.assertEqual(self.ticket.assigned_to, self.user1)
+        self.assertEqual(self.ticket.assigned_user, self.user1)
         self.assertEqual(self.ticket.status, "open")
 
     def test_ticket_str(self):
