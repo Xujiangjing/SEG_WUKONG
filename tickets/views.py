@@ -57,7 +57,6 @@ def dashboard(request):
     return render(request, 'dashboard.html', {'user': current_user, 'message': "You do not have permission to view this dashboard."})
 
 
-
 @login_prohibited
 def home(request):
     """Display the application's start/home screen."""
