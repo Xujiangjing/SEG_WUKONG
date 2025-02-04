@@ -1,10 +1,158 @@
 {% extends 'base_content.html' %}
+
 {% block content %}
-<div class="container">
+<div class="container my-4">
   <div class="row">
     <div class="col-12">
-      <h1>Welcome to your dashboard {{ user.username }}</h1>
+      <h1 class="text-center text-primary">Welcome to your dashboard, {{ user.username }}</h1>
+
+      <ul class="nav nav-pills mb-3" id="dashboard-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <a class="nav-link active" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab" aria-controls="profile" aria-selected="true">Profile</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="tickets-tab" data-bs-toggle="pill" href="#tickets" role="tab" aria-controls="tickets" aria-selected="false">Tickets</a>
+        </li>
+      </ul>
+
+      <div class="tab-content" id="dashboard-tabs-content">
+        <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+          <h2>Your Profile</h2>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
+            <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
+            <li class="list-group-item"><strong>First Name:</strong> {{ user.first_name }}</li>
+            <li class="list-group-item"><strong>Last Name:</strong> {{ user.last_name }}</li>
+            <li class="list-group-item"><strong>Role:</strong>
+              {% if user.is_program_officer %}
+                Program Officer
+              {% elif user.is_specialist %}
+                Specialist
+              {% elif user.is_student %}
+                Student
+              {% else %}
+                Unknown
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+
+        <div class="tab-pane fade" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
+          {% if user.is_program_officer %}
+            <h2>Your Department's Tickets</h2>
+            <table class="table table-bordered table-striped table-light">
+              <thead class="table-blue">
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Assigned To</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in department_tickets %}
+                  <tr>
+                    <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.status }}</td>
+                    <td>{{ ticket.priority }}</td>
+                    <td>{{ ticket.assigned_to }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <h2>Other Department's Tickets</h2>
+            <table class="table table-bordered table-striped table-light">
+              <thead class="table-blue">
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Assigned Department</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in other_department_tickets %}
+                  <tr>
+                    <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.status }}</td>
+                    <td>{{ ticket.priority }}</td>
+                    <td>{{ ticket.assigned_department }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <h2>Specialist Ticket Assignment Statistics</h2>
+            <table class="table table-bordered table-striped table-light">
+              <thead class="table-blue">
+                <tr>
+                  <th>Specialist</th>
+                  <th>Assigned Tickets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for specialist in ticket_stats %}
+                  <tr>
+                    <td>{{ specialist.full_name }}</td>
+                    <td>{{ specialist.ticket_count }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+
+          {% if user.is_student %}
+            <h2>Your Submitted Tickets</h2>
+            <table class="table table-bordered table-striped table-light">
+              <thead class="table-blue">
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in student_tickets %}
+                  <tr>
+                    <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.status }}</td>
+                    <td>{{ ticket.priority }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+
+          {% if user.is_specialist %}
+            <h2>Your Assigned Tickets</h2>
+            <table class="table table-bordered table-striped table-light">
+              <thead class="table-blue">
+                <tr>
+                  <th>Title</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in assigned_tickets %}
+                  <tr>
+                    <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.status }}</td>
+                    <td>{{ ticket.priority }}</td>
+                    <td>
+                      <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
 </div>
 {% endblock %}
+
