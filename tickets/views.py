@@ -35,6 +35,10 @@ def home(request):
 
     return render(request, 'home.html')
 
+def ticket_list(request):
+    tickets = Ticket.objects.all()
+    return render(request, 'tickets/ticket_list.html', {'tickets': tickets})
+
 
 class LoginProhibitedMixin:
     """Mixin that redirects when a user is logged in."""

@@ -144,7 +144,7 @@ class Ticket(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    assigned_to = models.ForeignKey(
+    assigned_user = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
@@ -154,7 +154,8 @@ class Ticket(models.Model):
     )
     latest_action = models.CharField(max_length=20, choices=ACTION_CHOICES, blank=True, null=True)
     latest_editor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='edited_tickets')
-
+    sender_email = models.EmailField(blank=True, null=True)
+    
     def __str__(self):
         return f"Ticket {self.id}: {self.title} ({self.status})"
 
