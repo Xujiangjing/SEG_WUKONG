@@ -4,29 +4,57 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
-from django.views.generic.edit import FormView, UpdateView, CreateView
 from django.views.generic.detail import DetailView
-from django.urls import reverse
-from tickets.forms import LogInForm, PasswordForm, UserForm, SignUpForm,TicketForm, TicketAttachmentForm
+from django.views.generic.edit import CreateView, FormView, UpdateView
+from tickets.forms import (LogInForm, PasswordForm, SignUpForm,
+                           TicketAttachmentForm, TicketForm, UserForm)
 from tickets.helpers import login_prohibited
 from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 
+
 @login_required
 def dashboard(request):
-    user = request.user
-    context = {
-        'open_tickets': Ticket.objects.filter(creator=user, status='open'),
-        'assigned_tickets': Ticket.objects.filter(assigned_user=user) if user.is_specialist() else None,
-        'recent_activities': TicketActivity.objects.filter(
-            Q(ticket__creator=user) | Q(ticket__assigned_user=user)
-        ).order_by('-action_time')[:5]
-    }
-    return render(request, 'dashboard.html', context)
+    current_user = request.user
+    if current_user.is_program_officer():
+        if current_user.department:
+            department_tickets = Ticket.objects.filter(assigned_department=current_user.department.name)
+        else:
+            department_tickets = []
+        
+        if current_user.department:
+            other_department_tickets = Ticket.objects.exclude(assigned_department=current_user.department.name)
+        else:
+            other_department_tickets = Ticket.objects.all()
+        
+        ticket_stats = User.objects.filter(role='specialists').annotate(ticket_count=Count('assigned_tickets'))
+        
+        return render(request, 'dashboard.html', {
+            'user': current_user,
+            'department_tickets': department_tickets,
+            'other_department_tickets': other_department_tickets,
+            'ticket_stats': ticket_stats,
+        })
+    
+    elif current_user.is_student():
+        student_tickets = Ticket.objects.filter(creator=current_user)
+        return render(request, 'dashboard.html', {
+            'user': current_user,
+            'student_tickets': student_tickets,
+        })
+    elif current_user.is_specialist():
+        assigned_tickets = Ticket.objects.filter(assigned_to=current_user)
+        
+        return render(request, 'dashboard.html', {
+            'user': current_user,
+            'assigned_tickets': assigned_tickets,
+        })
+
+    return render(request, 'dashboard.html', {'user': current_user, 'message': "You do not have permission to view this dashboard."})
 
 
 

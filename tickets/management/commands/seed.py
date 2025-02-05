@@ -19,7 +19,7 @@ user_fixtures = [
 class Command(BaseCommand):
     """Build automation command to seed the database."""
     TICKET_COUNT = 100  # Adjust the number of tickets to generate
-    USER_COUNT = 300
+    USER_COUNT = 100
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
 
         # choose 50 random students
         students = list(User.objects.filter(role='students'))
-        selected_students = random.sample(students, min(50, len(students)))
+        selected_students = random.sample(students, min(5, len(students)))
         for user in selected_students:
             try:
                 self.send_welcome_email(user, connection)
@@ -88,8 +88,8 @@ class Command(BaseCommand):
         self.generate_random_users(connection)
         
         # Send welcome emails to students
-        users = User.objects.filter(role="students") 
-        self.send_bulk_emails(users)
+        # users = User.objects.filter(role="students") 
+        # self.send_bulk_emails(users)
 
         connection.close()
 
@@ -102,12 +102,6 @@ class Command(BaseCommand):
                     department = random.choice(specialist_departments)
             elif data['role'] == 'program_officers':
                     department = Department.objects.get(name="general_enquiry")
-            self.try_create_user(data, department, connection)
-
-                program_officers_departments = Department.objects.filter(responsible_roles__icontains='program_officers')
-                if program_officers_departments.exists():
-                    department = random.choice(program_officers_departments)
-                
             self.try_create_user(data, department)
 
     def generate_random_users(self, connection=None):
