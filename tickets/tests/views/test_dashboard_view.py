@@ -35,19 +35,17 @@ class DashboardViewTestCase(TestCase):
         self.specialist.department = self.department
         self.specialist.save()
 
-        # Create a ticket assigned to the department
         self.ticket = Ticket.objects.create(
             creator=self.student,
             title="Test Ticket",
             description="This is a test ticket.",
             assigned_department=self.department.name,
-            assigned_to=self.specialist
+            assigned_user=self.specialist
         )
 
         self.url = reverse('dashboard')
 
     def test_dashboard_for_program_officer_with_department(self):
-        """Test dashboard for program officer with department."""
         self.client.login(username='@programofficer', password='Password123')
         response = self.client.get(self.url)
 
@@ -58,7 +56,6 @@ class DashboardViewTestCase(TestCase):
         self.assertIn('ticket_stats', response.context)
 
     def test_dashboard_for_program_officer_without_department(self):
-        """Test dashboard for program officer without department."""
         self.program_officer.department = None
         self.program_officer.save()
         self.client.login(username='@programofficer', password='Password123')
@@ -70,7 +67,6 @@ class DashboardViewTestCase(TestCase):
         self.assertIn('other_department_tickets', response.context)
 
     def test_dashboard_for_student(self):
-        """Test dashboard for student."""
         self.client.login(username='@student', password='Password123')
         response = self.client.get(self.url)
 

@@ -47,7 +47,7 @@ def dashboard(request):
             'student_tickets': student_tickets,
         })
     elif current_user.is_specialist():
-        assigned_tickets = Ticket.objects.filter(assigned_to=current_user)
+        assigned_tickets = Ticket.objects.filter(assigned_user=current_user)
         
         return render(request, 'dashboard.html', {
             'user': current_user,

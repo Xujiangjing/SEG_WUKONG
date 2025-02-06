@@ -227,7 +227,7 @@ class Command(BaseCommand):
         # Optionally assign it to a specialist
         if random.random() < 0.5:  # 50% chance to assign it to a specialist
             specialist = random.choice(User.objects.filter(role='specialists').order_by('?'))
-            ticket.assigned_to = specialist
+            ticket.assigned_user = specialist
             ticket.save()
 
         self.stdout.write(self.style.SUCCESS(f"Ticket '{ticket.title}' created."))
