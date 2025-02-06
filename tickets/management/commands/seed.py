@@ -1,11 +1,13 @@
-from django.core.management.base import BaseCommand, CommandError
-from tickets.models import User, Department, Ticket
-import pytz
-from faker import Faker
 import random
-from django.core.mail import get_connection, send_mail
-from django.conf import settings
 import time
+import uuid
+
+import pytz
+from django.conf import settings
+from django.core.mail import get_connection, send_mail
+from django.core.management.base import BaseCommand, CommandError
+from faker import Faker
+from tickets.models import Department, Ticket, User
 
 user_fixtures = [
     {'username': '@johndoe', 'email': 'john.doe@example.org', 'first_name': 'John', 'last_name': 'Doe', 'role': 'students'},
@@ -16,8 +18,8 @@ user_fixtures = [
 
 class Command(BaseCommand):
     """Build automation command to seed the database."""
-
-    USER_COUNT = 300
+    TICKET_COUNT = 100  # Adjust the number of tickets to generate
+    USER_COUNT = 100
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -40,7 +42,7 @@ class Command(BaseCommand):
 
         # choose 50 random students
         students = list(User.objects.filter(role='students'))
-        selected_students = random.sample(students, min(50, len(students)))
+        selected_students = random.sample(students, min(5, len(students)))
         for user in selected_students:
             try:
                 self.send_welcome_email(user, connection)
@@ -50,6 +52,8 @@ class Command(BaseCommand):
 
         connection.close()
         
+        self.generate_tickets()
+    
     def seed_departments(self):
         departments = [
             {'name': 'general_enquiry', 'description': 'General queries managed by program officers.', 'responsible_roles': 'program_officers'},
@@ -84,8 +88,8 @@ class Command(BaseCommand):
         self.generate_random_users(connection)
         
         # Send welcome emails to students
-        users = User.objects.filter(role="students") 
-        self.send_bulk_emails(users)
+        # users = User.objects.filter(role="students") 
+        # self.send_bulk_emails(users)
 
         connection.close()
 
@@ -98,8 +102,7 @@ class Command(BaseCommand):
                     department = random.choice(specialist_departments)
             elif data['role'] == 'program_officers':
                     department = Department.objects.get(name="general_enquiry")
-            self.try_create_user(data, department, connection)
-
+            self.try_create_user(data, department)
 
     def generate_random_users(self, connection=None):
         user_count = User.objects.count()
@@ -192,7 +195,43 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(self.style.SUCCESS(f"Sample ticket created for {student.username}"))
 
-        
+                    
+    def generate_tickets(self):
+        ticket_count = Ticket.objects.count()
+        while ticket_count < self.TICKET_COUNT:
+            print(f"Seeding ticket {ticket_count}/{self.TICKET_COUNT}", end='\r')
+            self.create_ticket()
+            ticket_count = Ticket.objects.count()
+        print("Ticket seeding complete.      ")
+
+    def create_ticket(self):
+        user = User.objects.order_by('?').first()  # Random user
+        department = random.choice([d['name'] for d in Department.objects.values('name')])
+
+        # Random title, description, and status
+        title = self.faker.sentence(nb_words=6)
+        description = self.faker.text(max_nb_chars=200)
+        status = random.choice(['open', 'in_progress', 'resolved', 'closed'])
+        priority = random.choice(['low', 'medium', 'high', 'urgent'])
+
+        # Generate ticket
+        ticket = Ticket.objects.create(
+            creator=user,
+            title=title,
+            description=description,
+            status=status,
+            priority=priority,
+            assigned_department=department,
+        )
+
+        # Optionally assign it to a specialist
+        if random.random() < 0.5:  # 50% chance to assign it to a specialist
+            specialist = random.choice(User.objects.filter(role='specialists').order_by('?'))
+            ticket.assigned_user = specialist
+            ticket.save()
+
+        self.stdout.write(self.style.SUCCESS(f"Ticket '{ticket.title}' created."))
+   
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
 
