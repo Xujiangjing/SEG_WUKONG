@@ -20,7 +20,26 @@ from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 @login_required
 def dashboard(request):
     current_user = request.user
-    
+    if current_user.is_program_officer() or current_user.is_specialist():
+        if request.method == "POST" and "respond_ticket" in request.POST:
+            ticket_id = request.POST.get("ticket_id")
+            response_message = request.POST.get("response_message")
+            ticket = Ticket.objects.get(id=ticket_id)
+            if ticket.answers!=None:
+                ticket.answers += "\n" 
+            else :
+                ticket.answers = ""
+            ticket.answers += f"Response by {current_user.username}: {response_message}"
+            ticket.save()  
+
+            ticket_activity = TicketActivity.objects.create(
+                ticket=ticket,
+                action='responded',
+                action_by=current_user,
+                comment=response_message
+            )
+            ticket_activity.save()
+            return redirect('dashboard') 
     if current_user.is_program_officer():
         if current_user.department:
             department_tickets = Ticket.objects.filter(assigned_department=current_user.department.name)
@@ -51,31 +70,6 @@ def dashboard(request):
             )
             ticket_activity.save()
             return redirect('dashboard') 
-        
-        if request.method == 'POST' and 'respond_ticket' in request.POST:
-            ticket_id = request.POST.get("ticket_id")
-            response_message = request.POST.get("response_message")
-
-            try:
-                ticket = Ticket.objects.get(id=ticket_id)
-                if ticket.answers:
-                    ticket.answers += "\n" 
-                else :
-                    ticket.answers = ""
-                ticket.answers += f"Response by {current_user.username}: {response_message}"
-                ticket.save()  
-
-                ticket_activity = TicketActivity.objects.create(
-                    ticket=ticket,
-                    action='responded',
-                    action_by=current_user,
-                    comment=response_message
-                )
-                ticket_activity.save()
-
-            except Ticket.DoesNotExist:
-                return HttpResponse("Ticket not found.", status=404)
-            return redirect('dashboard')
             
         return render(request, 'dashboard.html', {
             'user': current_user,
@@ -93,33 +87,6 @@ def dashboard(request):
     
     elif current_user.is_specialist():
         assigned_tickets = Ticket.objects.filter(assigned_user=current_user)
-
-        if request.method == "POST" and "respond_ticket" in request.POST:
-            ticket_id = request.POST.get("ticket_id")
-            response_message = request.POST.get("response_message")
-
-            try:
-                ticket = Ticket.objects.get(id=ticket_id)
-                if ticket.answers:
-                    ticket.answers += "\n" 
-                else :
-                    ticket.answers = ""
-                ticket.answers += f"Response by {current_user.username}: {response_message}"
-                ticket.save()  
-
-                ticket_activity = TicketActivity.objects.create(
-                    ticket=ticket,
-                    action='responded',
-                    action_by=current_user,
-                    comment=response_message
-                )
-                ticket_activity.save()
-
-            except Ticket.DoesNotExist:
-                return HttpResponse("Ticket not found.", status=404)
-
-            return redirect('dashboard') 
-
         return render(request, 'dashboard.html', {
             'user': current_user,
             'assigned_tickets': assigned_tickets,
