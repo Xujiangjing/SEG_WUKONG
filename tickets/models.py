@@ -144,6 +144,7 @@ class Ticket(models.Model):
         choices=DEPARTMENT_CHOICES,
         default='general_enquiry'
     )
+    answers = models.TextField(blank=True, null=True, help_text="All responses to the ticket.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     assigned_user = models.ForeignKey(

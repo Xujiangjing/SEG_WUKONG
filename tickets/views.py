@@ -39,7 +39,7 @@ def dashboard(request):
             new_assignee_id = request.POST.get('new_assignee_id')
             ticket = Ticket.objects.get(id=ticket_id)
             new_assignee = User.objects.get(id=new_assignee_id)
-            ticket.assigned_to = new_assignee
+            ticket.assigned_user = new_assignee
             ticket.latest_action = 'redirected'
             ticket.save()
 
