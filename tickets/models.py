@@ -1,9 +1,11 @@
-from django.core.validators import RegexValidator
+import uuid
+
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 from django.db import models
 from django.forms import ValidationError
 from libgravatar import Gravatar
-import uuid
+
 
 class Department(models.Model):
     """Model used to represent a department in Django Admin."""

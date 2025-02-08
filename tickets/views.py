@@ -20,19 +20,63 @@ from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 @login_required
 def dashboard(request):
     current_user = request.user
+    
     if current_user.is_program_officer():
         if current_user.department:
             department_tickets = Ticket.objects.filter(assigned_department=current_user.department.name)
         else:
             department_tickets = []
-        
+            
         if current_user.department:
             other_department_tickets = Ticket.objects.exclude(assigned_department=current_user.department.name)
         else:
             other_department_tickets = Ticket.objects.all()
-        
+
         ticket_stats = User.objects.filter(role='specialists').annotate(ticket_count=Count('assigned_tickets'))
+
+        if request.method == 'POST' and 'redirect_ticket' in request.POST:
+            ticket_id = request.POST.get('ticket_id')
+            new_assignee_id = request.POST.get('new_assignee_id')
+            ticket = Ticket.objects.get(id=ticket_id)
+            new_assignee = User.objects.get(id=new_assignee_id)
+            ticket.assigned_to = new_assignee
+            ticket.latest_action = 'redirected'
+            ticket.save()
+
+            ticket_activity = TicketActivity.objects.create(
+                ticket=ticket,
+                action='redirected',
+                action_by=current_user,
+                comment=f"Redirected to {new_assignee.username}"
+            )
+            ticket_activity.save()
+            return redirect('dashboard') 
         
+        if request.method == 'POST' and 'respond_ticket' in request.POST:
+            ticket_id = request.POST.get("ticket_id")
+            response_message = request.POST.get("response_message")
+
+            try:
+                ticket = Ticket.objects.get(id=ticket_id)
+                if ticket.answers:
+                    ticket.answers += "\n" 
+                else :
+                    ticket.answers = ""
+                ticket.answers += f"Response by {current_user.username}: {response_message}"
+                ticket.save()  
+
+                ticket_activity = TicketActivity.objects.create(
+                    ticket=ticket,
+                    action='responded',
+                    action_by=current_user,
+                    comment=response_message
+                )
+                ticket_activity.save()
+
+            except Ticket.DoesNotExist:
+                return HttpResponse("Ticket not found.", status=404)
+            return redirect('dashboard')
+            
         return render(request, 'dashboard.html', {
             'user': current_user,
             'department_tickets': department_tickets,
@@ -46,9 +90,36 @@ def dashboard(request):
             'user': current_user,
             'student_tickets': student_tickets,
         })
+    
     elif current_user.is_specialist():
         assigned_tickets = Ticket.objects.filter(assigned_user=current_user)
-        
+
+        if request.method == "POST" and "respond_ticket" in request.POST:
+            ticket_id = request.POST.get("ticket_id")
+            response_message = request.POST.get("response_message")
+
+            try:
+                ticket = Ticket.objects.get(id=ticket_id)
+                if ticket.answers:
+                    ticket.answers += "\n" 
+                else :
+                    ticket.answers = ""
+                ticket.answers += f"Response by {current_user.username}: {response_message}"
+                ticket.save()  
+
+                ticket_activity = TicketActivity.objects.create(
+                    ticket=ticket,
+                    action='responded',
+                    action_by=current_user,
+                    comment=response_message
+                )
+                ticket_activity.save()
+
+            except Ticket.DoesNotExist:
+                return HttpResponse("Ticket not found.", status=404)
+
+            return redirect('dashboard') 
+
         return render(request, 'dashboard.html', {
             'user': current_user,
             'assigned_tickets': assigned_tickets,
