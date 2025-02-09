@@ -8,15 +8,15 @@
 
       <ul class="nav nav-pills mb-3" id="dashboard-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <a class="nav-link active" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab" aria-controls="profile" aria-selected="true">Profile</a>
+          <a class="nav-link" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab" aria-controls="profile" aria-selected="true">Profile</a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link" id="tickets-tab" data-bs-toggle="pill" href="#tickets" role="tab" aria-controls="tickets" aria-selected="false">Tickets</a>
+          <a class="nav-link active" id="tickets-tab" data-bs-toggle="pill" href="#tickets" role="tab" aria-controls="tickets" aria-selected="false">Tickets</a>
         </li>
       </ul>
 
       <div class="tab-content" id="dashboard-tabs-content">
-        <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
           <h2>Your Profile</h2>
           <ul class="list-group">
             <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
@@ -37,7 +37,7 @@
           </ul>
         </div>
 
-        <div class="tab-pane fade" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
+        <div class="tab-pane fade show active" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
           {% if user.is_program_officer %}
             <h2>Your Department's Tickets</h2>
             <table class="table table-bordered table-striped table-light">
@@ -47,6 +47,8 @@
                   <th>Status</th>
                   <th>Priority</th>
                   <th>Assigned To</th>
+                  <th>Answers</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -56,11 +58,34 @@
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.priority }}</td>
                     <td>{{ ticket.assigned_user }}</td>
+                    <td>
+                      <!-- Display the answers for the ticket -->
+                      <pre>{{ ticket.answers }}</pre>
+                    </td>
+                    <td>
+                      <!-- Redirect Ticket Button -->
+                      <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                        <select name="new_assignee_id">
+                          {% for specialist in ticket_stats %}
+                            <option value="{{ specialist.id }}">{{ specialist.full_name }}</option>
+                          {% endfor %}
+                        </select>
+                        <button type="submit" name="redirect_ticket" class="btn btn-sm btn-warning">Redirect to Specialist</button>
+                      </form>
+                      <br>
+                      <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                        <textarea name="response_message" placeholder="Enter your response here..." required></textarea>
+                        <button type="submit" name="respond_ticket" class="btn btn-sm btn-primary">Respond</button>
+                      </form>
+                    </td>
                   </tr>
                 {% endfor %}
               </tbody>
             </table>
-
             <h2>Other Department's Tickets</h2>
             <table class="table table-bordered table-striped table-light">
               <thead class="table-blue">
@@ -110,6 +135,7 @@
                   <th>Title</th>
                   <th>Status</th>
                   <th>Priority</th>
+                  <th>Answers</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,6 +144,10 @@
                     <td>{{ ticket.title }}</td>
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.priority }}</td>
+                    <td>
+                      <!-- Display the answers for the ticket -->
+                      <pre>{{ ticket.answers }}</pre>
+                    </td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -132,6 +162,7 @@
                   <th>Title</th>
                   <th>Status</th>
                   <th>Priority</th>
+                  <th>Answers</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -142,7 +173,17 @@
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.priority }}</td>
                     <td>
-                      <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">View</a>
+                      <!-- Display the answers for the ticket -->
+                      <pre>{{ ticket.answers }}</pre>
+                    </td>
+                    <td>
+                      <!-- Respond Ticket Form -->
+                      <form method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+                        <textarea name="response_message" placeholder="Enter your response here..." required></textarea>
+                        <button type="submit" name="respond_ticket" class="btn btn-sm btn-primary">Respond</button>
+                      </form>
                     </td>
                   </tr>
                 {% endfor %}
@@ -155,4 +196,3 @@
   </div>
 </div>
 {% endblock %}
-

@@ -33,6 +33,7 @@ class Command(BaseCommand):
 
         # Seed Users
         self.create_users()
+        self.generate_tickets()
     
         # Seed Tickets
         self.create_sample_tickets()
