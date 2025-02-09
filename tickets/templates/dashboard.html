@@ -119,6 +119,11 @@
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.priority }}</td>
                   </tr>
+                  {% if ticket.status == 'open' %}
+                    <td>
+                      <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
+                    </td>
+                  {% endif %}
                 {% endfor %}
               </tbody>
             </table>
