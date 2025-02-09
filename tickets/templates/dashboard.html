@@ -39,11 +39,12 @@
 
         <div class="tab-pane fade show active" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
           {% if user.is_program_officer %}
-            <h2>Your Department's Tickets</h2>
+            <h2>Tickets</h2>
             <table class="table table-bordered table-striped table-light">
               <thead class="table-blue">
                 <tr>
                   <th>Title</th>
+                  <th>Category</th>
                   <th>Status</th>
                   <th>Priority</th>
                   <th>Assigned To</th>
@@ -52,9 +53,10 @@
                 </tr>
               </thead>
               <tbody>
-                {% for ticket in department_tickets %}
+                {% for ticket in all_tickets %}
                   <tr>
                     <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.assigned_department }}</td>
                     <td>{{ ticket.status }}</td>
                     <td>{{ ticket.priority }}</td>
                     <td>{{ ticket.assigned_user }}</td>
@@ -86,27 +88,6 @@
                         <button type="submit" name="respond_ticket" class="btn btn-sm btn-primary">Respond</button>
                       </form>
                     </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-            <h2>Other Department's Tickets</h2>
-            <table class="table table-bordered table-striped table-light">
-              <thead class="table-blue">
-                <tr>
-                  <th>Title</th>
-                  <th>Status</th>
-                  <th>Priority</th>
-                  <th>Assigned Department</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for ticket in other_department_tickets %}
-                  <tr>
-                    <td>{{ ticket.title }}</td>
-                    <td>{{ ticket.status }}</td>
-                    <td>{{ ticket.priority }}</td>
-                    <td>{{ ticket.assigned_department }}</td>
                   </tr>
                 {% endfor %}
               </tbody>

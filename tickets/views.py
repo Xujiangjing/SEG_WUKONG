@@ -41,15 +41,7 @@ def dashboard(request):
             ticket_activity.save()
             return redirect('dashboard') 
     if current_user.is_program_officer():
-        if current_user.department:
-            department_tickets = Ticket.objects.filter(assigned_department=current_user.department.name)
-        else:
-            department_tickets = []
-            
-        if current_user.department:
-            other_department_tickets = Ticket.objects.exclude(assigned_department=current_user.department.name)
-        else:
-            other_department_tickets = Ticket.objects.all()
+        all_tickets = Ticket.objects.all()
 
         ticket_stats = User.objects.filter(role='specialists').annotate(ticket_count=Count('assigned_tickets'))
 
@@ -73,8 +65,7 @@ def dashboard(request):
             
         return render(request, 'dashboard.html', {
             'user': current_user,
-            'department_tickets': department_tickets,
-            'other_department_tickets': other_department_tickets,
+            'all_tickets': all_tickets,
             'ticket_stats': ticket_stats,
         })
     
