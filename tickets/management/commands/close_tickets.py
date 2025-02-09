@@ -10,7 +10,7 @@ class Command(BaseCommand):
         now = timezone.now()
         stale_tickets = Ticket.objects.filter(
             status__in=['open', 'in_progress', 'resolved'],
-            updated_at__lt=now - timedelta(days=1)
+            updated_at__lt=now - timedelta(days=7)
         )
         count = stale_tickets.update(status='closed')
         self.stdout.write(self.style.SUCCESS(f'Successfully closed {count} stale tickets'))
