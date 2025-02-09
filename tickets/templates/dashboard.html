@@ -59,8 +59,12 @@
                     <td>{{ ticket.priority }}</td>
                     <td>{{ ticket.assigned_user }}</td>
                     <td>
-                      <!-- Display the answers for the ticket -->
-                      <pre>{{ ticket.answers }}</pre>
+                      <!-- Check if ticket.answers is None or empty -->
+                      {% if ticket.answers %}
+                        Answered
+                      {% else %}
+                        Not yet answered
+                      {% endif %}
                     </td>
                     <td>
                       <!-- Redirect Ticket Button -->
