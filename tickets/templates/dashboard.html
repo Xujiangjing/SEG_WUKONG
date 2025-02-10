@@ -46,10 +46,13 @@
                       class="form-control" 
                       name="search" 
                       value="{{ request.GET.search }}" 
-                      placeholder="Search for questions and replies..."
+                      placeholder="Search for tickets..."
                   >
                   <button type="submit" class="btn btn-primary">
-                      Search
+                    Search
+                  </button>
+                  <button type="submit" class="btn btn-secondary ms-2" onclick="this.form.search.value = ''">
+                    Clear
                   </button>
                 </div>
             </form>
