@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Count, Q
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render,get_object_or_404
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -266,3 +266,13 @@ class TicketDetailView(DetailView):
     context_object_name = 'ticket'
 
 
+@login_required
+def close_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user.is_student() and request.user == ticket.creator:
+        ticket.status = 'closed'
+        ticket.save()
+        messages.success(request, 'Ticket closed successfully.')
+    else:
+        messages.error(request, 'You do not have permission to close this ticket.')
+    return redirect('dashboard')
