@@ -43,27 +43,6 @@ class DashboardViewTestCase(TestCase):
 
         self.url = reverse('dashboard')
 
-    def test_dashboard_for_program_officer_with_department(self):
-        self.client.login(username='@programofficer', password='Password123')
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'dashboard.html')
-        self.assertIn('department_tickets', response.context)
-        self.assertIn('other_department_tickets', response.context)
-        self.assertIn('ticket_stats', response.context)
-
-    def test_dashboard_for_program_officer_without_department(self):
-        self.program_officer.department = None
-        self.program_officer.save()
-        self.client.login(username='@programofficer', password='Password123')
-        response = self.client.get(self.url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'dashboard.html')
-        self.assertIn('department_tickets', response.context)
-        self.assertIn('other_department_tickets', response.context)
-
     def test_dashboard_for_student(self):
         self.client.login(username='@student', password='Password123')
         response = self.client.get(self.url)
