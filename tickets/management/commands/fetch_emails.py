@@ -59,8 +59,6 @@ class Command(BaseCommand):
                         else:
                             body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
                             
-                        assigned_department = self.categorize_ticket(subject, body)
-                        
                         # revise the code to create a new user if the sender is not in the database
                         user = User.objects.filter(email=sender_email).first()
                         if not user:
@@ -73,8 +71,7 @@ class Command(BaseCommand):
                             description=body,
                             creator=user,
                             sender_email=sender_email,
-                            status="open",
-                            assigned_department=assigned_department
+                            status="open"
                         )
 
                         ai_department = classify_department(ticket.description)
