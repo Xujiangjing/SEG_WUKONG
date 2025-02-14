@@ -3,9 +3,10 @@ import email
 import re
 from email.header import decode_header
 from django.core.management.base import BaseCommand
-from tickets.models import Ticket, Department, User
+from tickets.models import Ticket, Department, User, AITicketProcessing
 from django.conf import settings
 from django.core.mail import send_mail
+from tickets.ai_service import generate_ai_answer, classify_department
 
 
 class Command(BaseCommand):
@@ -67,13 +68,21 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.WARNING(f"⚠️ Created new user for {sender_email}"))
 
                         # create a new ticket
-                        Ticket.objects.create(
+                        ticket = Ticket.objects.create(
                             title=subject,
                             description=body,
                             creator=user,
                             sender_email=sender_email,
                             status="open",
                             assigned_department=assigned_department
+                        )
+
+                        ai_department = classify_department(ticket.description)
+                        ai_answer = generate_ai_answer(ticket.description)
+                        AITicketProcessing.objects.create(
+                            ticket=ticket,
+                            ai_generated_answer=ai_answer,
+                            ai_assigned_department=ai_department
                         )
 
                         # send a confirmation email to the student
