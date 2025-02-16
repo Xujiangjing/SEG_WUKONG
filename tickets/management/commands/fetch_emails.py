@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from tickets.models import Ticket, Department, User
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils.timezone import now, timedelta
 
 
 class Command(BaseCommand):
@@ -66,6 +67,14 @@ class Command(BaseCommand):
                             user = User.objects.create(username=sender_email.split("@")[0], email=sender_email, password="TemporaryPass123")
                             self.stdout.write(self.style.WARNING(f"⚠️ Created new user for {sender_email}"))
 
+                        # Check for duplicate tickets
+                        existing_ticket = self.is_duplicate_ticket(sender_email, subject, body)
+
+                        if existing_ticket:
+                            self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
+                            self.stdout.write(self.style.WARNING(f"⚠️ Duplicate ticket detected: {subject}, informing {sender_email}"))
+                            continue  # Skip creating the ticket
+                        
                         # create a new ticket
                         Ticket.objects.create(
                             title=subject,
@@ -184,3 +193,47 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS(f"📧 Confirmation email sent to {student_email}"))
+        
+        from django.utils.timezone import now, timedelta
+
+    def is_duplicate_ticket(self,sender_email, subject, body):
+        """
+        Checks if a duplicate ticket exists in the last 7 days.
+        - Allows resubmission only if no response in 7 days.
+        """
+        time_threshold = now() - timedelta(days=7)  # Look back 7 days
+    
+        similar_tickets = Ticket.objects.filter(
+            sender_email=sender_email, 
+            title__iexact=subject,  # Case-insensitive title match
+            description__iexact=body,  # Exact description match
+            created_at__gte=time_threshold
+        )
+
+        for ticket in similar_tickets:
+            # If a response exists, reject duplicate
+            if ticket.answers.exists():
+                return ticket  # Return the existing ticket to notify the student
+        
+        return None  # No active duplicate, allow ticket creation
+
+    def send_duplicate_notice(self, student_email, ticket_title, ticket_id):
+        """
+        Sends an email notifying the student that their ticket is a duplicate.
+        """
+        subject = f"Duplicate Ticket Submission - {ticket_title}"
+        message = f"""
+        Hello,
+
+        You have already submitted a ticket with the same details: '{ticket_title}'.
+        You can track it using Ticket ID #{ticket_id}.
+
+        Our team is currently working on it. Please wait for a response before submitting again.
+        If no response is received within 7 days, you may resubmit.
+
+        Thank you for your patience.
+
+        Regards,
+        WuKong Help Desk 
+        """
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [student_email])
