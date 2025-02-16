@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Count, Q
-from django.shortcuts import redirect, render,get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -18,6 +18,7 @@ from tickets.helpers import login_prohibited
 from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 
 
+# todo :improve the dashboard view to handle ticket responses
 @login_required
 def dashboard(request):
     current_user = request.user
