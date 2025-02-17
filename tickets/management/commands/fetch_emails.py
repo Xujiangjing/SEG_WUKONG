@@ -65,13 +65,15 @@ class Command(BaseCommand):
                             user = User.objects.create(username=sender_email.split("@")[0], email=sender_email, password="TemporaryPass123")
                             self.stdout.write(self.style.WARNING(f"⚠️ Created new user for {sender_email}"))
 
+                        # department = self.categorize_ticket(subject, body)
                         # create a new ticket
                         ticket = Ticket.objects.create(
                             title=subject,
                             description=body,
                             creator=user,
                             sender_email=sender_email,
-                            status="open"
+                            status="open",
+                            # assigned_department=department
                         )
 
                         ai_department = classify_department(ticket.description)
