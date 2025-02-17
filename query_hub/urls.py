@@ -36,5 +36,7 @@ urlpatterns = [
     path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
     path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     path('close_ticket/<uuid:ticket_id>/', views.close_ticket, name='close_ticket'),
+    path('tickets/table/', views.TicketsTableView.as_view(), name='tickets_table'),
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

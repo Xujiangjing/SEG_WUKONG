@@ -232,6 +232,11 @@ class TicketListView(ListView):
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
 
+class TicketsTableView(View):
+    def get(self, request):
+        tickets = Ticket.objects.select_related('ai_processing', 'creator')
+        return render(request, 'tickets_table.html', {'tickets': tickets})
+
 class CreateTicketView(LoginRequiredMixin, CreateView):
     model = Ticket
     form_class = TicketForm
