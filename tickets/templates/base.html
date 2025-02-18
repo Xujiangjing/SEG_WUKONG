@@ -4,15 +4,67 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-uWxY/CJNBR+1zjPWmfnSnVxwRheevXITnMqoEIeG1LJrdI0GlVs/9cVSyPYXdcSF" crossorigin="anonymous">
     <link href="{% static 'custom.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
-    <title>Task Manager</title>
+    {% comment %} <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"> {% endcomment %}
+    <title>wukong</title>
   </head>
   <body>
     {% block body %}
     {% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/js/bootstrap.min.js" integrity="sha384-PsUw7Xwds7x08Ew3exXhqzbhuEYmA2xnwc8BuD6SEr+UmEHlX8/MCltYEodzWA4u" crossorigin="anonymous"></script>
+    <script>
+    $(window).on("mousewheel", function(event) {
+      if (!$('.section-1').is(":hidden")) {
+        $('.bg-cover-2').fadeIn(200)
+
+        $('.section-1').fadeOut(1500)
+        $('.section-2').fadeIn(1000)
+      }
+    });
+    $('.section-2, .bg-cover-2').on('click', () => {
+      $('.section-2 .header').animate({
+        left: '50%',
+      }, 1000); // 动画持续时间为1000毫秒
+      $('.section-2 .center-text').animate({
+        top: "20%",
+      }, 1000); // 动画持续时间为1000毫秒
+      $('.section-2 .small-title, .section-2 .small-title-1').animate({
+        right: "50%",
+      }, 1000)
+      $('.center-login, .small-title-1').show()
+      $('.bottom-box').css({
+        display: "flex"
+      })
+      $('.hover-handle').hover(() => {
+
+        $('.header').addClass('header-scale')
+        $('.header img').addClass('img-light')
+        $('.center-login, .center-box').fadeOut(1500)
+        $('.center-login-stroke, .center-box-stroke').fadeIn(1000)
+        $('.small-title div,.small-title-1 div, .title div').addClass('shake')
+        $('.contact').fadeOut(1000)
+        $('.message').fadeIn(1000)
+      }, () => {
+        $('.header').removeClass('header-scale')
+        $('.header').addClass('header-scale-reset')
+        $('.header img').removeClass('img-light')
+        $('.header img').addClass('img-light-reset')
+        $('.center-login, .center-box').fadeIn(1000)
+        $('.center-login-stroke, .center-box-stroke').fadeOut(1500)
+        $('.message').fadeOut(1000)
+        $('.contact').fadeIn(1000)
+        setTimeout(() => {
+          $('.small-title div, .small-title-1 div,.title div').removeClass('shake')
+        }, 1000)
+      })
+    })
+    
+      </script>
   </body>
+
 </html>
