@@ -185,7 +185,7 @@ h3.profile-title {
   background-color: #f2faff;
 }
 
-/* 首页开始 */
+/* "Home Page Start" */
 
 body  {
   margin: 0;
@@ -467,7 +467,7 @@ body  {
 }
 
 .shake {
-  animation: shake 0.4s 6; /* 动画名称 持续时间 重复次数 */
+  animation: shake 0.4s 6; /* Animation name, duration, repetition count. */
 }
 
 .logo {
