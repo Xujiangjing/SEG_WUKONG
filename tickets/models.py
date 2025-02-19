@@ -184,3 +184,14 @@ class TicketActivity(models.Model):
 
     def __str__(self):
         return f"Activity for Ticket {self.ticket.id} by {self.action_by.username} on {self.action_time}"
+
+class Response(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses') 
+    responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank = True, related_name='user_responses')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        responder_name = self.responder.full_name() if self.responder else "Unknown"
+        return f"Response {self.id} to Ticket {self.ticket.id} by {responder_name}"
