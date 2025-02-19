@@ -196,26 +196,24 @@ class Command(BaseCommand):
         
         from django.utils.timezone import now, timedelta
 
-    def is_duplicate_ticket(self,sender_email, subject, body):
+    def is_duplicate_ticket(self, sender_email, subject, body):
         """
         Checks if a duplicate ticket exists in the last 7 days.
         - Allows resubmission only if no response in 7 days.
         """
-        time_threshold = now() - timedelta(days=7)  # Look back 7 days
-    
-        similar_tickets = Ticket.objects.filter(
-            sender_email=sender_email, 
-            title__iexact=subject,  # Case-insensitive title match
-            description__iexact=body,  # Exact description match
-            created_at__gte=time_threshold
-        )
+        time_threshold = now() - timedelta(days=7)
 
-        for ticket in similar_tickets:
-            # If a response exists, reject duplicate
-            if ticket.answers.exists():
-                return ticket  # Return the existing ticket to notify the student
-        
-        return None  # No active duplicate, allow ticket creation
+        ticket = Ticket.objects.filter(
+            sender_email=sender_email,
+            title__iexact=subject,
+            description__iexact=body,
+            created_at__gte=time_threshold
+        ).first()
+        if not ticket:
+            return None  
+        if ticket.responses.exists():
+            return ticket  # ✅ Duplicate detected
+        return None  # ✅ Ticket exists but has no responses, allow resubmission
 
     def send_duplicate_notice(self, student_email, ticket_title, ticket_id):
         """
