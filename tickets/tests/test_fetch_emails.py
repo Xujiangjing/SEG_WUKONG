@@ -4,16 +4,18 @@ import sys
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from tickets.management.commands.fetch_emails import Command
-from tickets.models import Ticket, User, Department
+from tickets.models import Ticket, User, Department, Response
 from email import message_from_bytes
 from django.utils.timezone import now, timedelta
 from django.core import mail
 from django.contrib.auth import get_user_model
 
 # Setup Django environment
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "query_hub.settings")
 django.setup()
+
 
 class FetchEmailsTest(TestCase):
     
@@ -110,13 +112,18 @@ class FetchEmailsTest(TestCase):
             assigned_department=self.department,
             created_at=now() - timedelta(days=3)  # Within 7 days
         )
+        
+        existing_ticket = Ticket.objects.filter(title=self.subject).first()
+        self.assertIsNotNone(existing_ticket, "❌ existing_ticket should not be None before adding answers.")
 
-        # Simulate a response from an officer
-        existing_ticket.answers.create(
-            content="This is a response from the officer.",
+        Response.objects.create(  # Ensure it exists before calling .create()
+            ticket=existing_ticket,
             responder=self.user,
+            content="This is a response from the officer.",
             created_at=now() - timedelta(days=2)
         )
+        
+        self.assertTrue(existing_ticket.responses.exists(), "❌ The existing ticket has no responses, duplicate check will fail!")
 
         # Check if duplicate detection works
         duplicate_ticket = self.command.is_duplicate_ticket(self.sender_email, self.subject, self.body)
