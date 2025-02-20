@@ -1,7 +1,6 @@
 # WUKONG
 $ source venv/bin/activate  
 $ pip install -r requirements.txt    
-$ pip install python-dotenv  
 $ python manage.py migrate  
 $ python manage.py makemigrations  
 $ python3 manage.py seed  
