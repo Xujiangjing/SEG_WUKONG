@@ -4,12 +4,13 @@ import re
 import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
-from tickets.models import Ticket, Department, User
+from tickets.models import Ticket, Department, User, AITicketProcessing
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
 import os
 from django.db.models import Count
+from tickets.ai_service import generate_ai_answer, classify_department
 
 
 class Command(BaseCommand):
@@ -62,8 +63,6 @@ class Command(BaseCommand):
                         else:
                             body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
                             
-                        assigned_department = self.categorize_ticket(subject, body)
-                        
                         # revise the code to create a new user if the sender is not in the database
                         user = User.objects.filter(email=sender_email).first()
                         if not user:
@@ -81,16 +80,26 @@ class Command(BaseCommand):
                         if existing_ticket:
                             self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
                             self.stdout.write(self.style.WARNING(f"⚠️ Duplicate ticket detected: {subject}, informing {sender_email}"))
-                            continue  # Skip creating the ticket
-                        
+                            continue  # Skip creating the ticket                       
+
+                        # department = self.categorize_ticket(subject, body)
+
                         # create a new ticket
-                        Ticket.objects.create(
+                        ticket = Ticket.objects.create(
                             title=subject,
                             description=body,
                             creator=user,
                             sender_email=sender_email,
                             status="open",
-                            assigned_department=assigned_department
+                            # assigned_department=department
+                        )
+
+                        ai_department = classify_department(ticket.description)
+                        ai_answer = generate_ai_answer(ticket.description)
+                        AITicketProcessing.objects.create(
+                            ticket=ticket,
+                            ai_generated_answer=ai_answer,
+                            ai_assigned_department=ai_department
                         )
 
                         # send a confirmation email to the student

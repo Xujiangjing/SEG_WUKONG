@@ -1,13 +1,19 @@
 import random
 import time
-import uuid
+import re
+import os
 
 import pytz
 from django.conf import settings
 from django.core.mail import get_connection, send_mail
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
-from tickets.models import Department, Ticket, User
+from tickets.models import Department, Ticket, User, AITicketProcessing
+from tickets.ai_service import generate_ai_answer, classify_department, query_bedrock
+import boto3
+from botocore.exceptions import ClientError
+import json
+
 
 user_fixtures = [
     {'username': '@johndoe', 'email': 'john.doe@example.org', 'first_name': 'John', 'last_name': 'Doe', 'role': 'students'},
@@ -15,11 +21,13 @@ user_fixtures = [
     {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson', 'role': 'program_officers'},
 ]
 
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 
 class Command(BaseCommand):
     """Build automation command to seed the database."""
-    TICKET_COUNT = 100  # Adjust the number of tickets to generate
-    USER_COUNT = 100
+    TICKET_COUNT = 5
+    USER_COUNT = 30
     DEFAULT_PASSWORD = 'Password123'
     help = 'Seeds the database with sample data'
 
@@ -33,15 +41,12 @@ class Command(BaseCommand):
 
         # Seed Users
         self.create_users()
-        self.generate_tickets()
     
         # Seed Tickets
-        self.create_sample_tickets()
+        self.create_tickets()
         
     def send_bulk_emails(self, users):
         connection = get_connection()
-
-        # choose 50 random students
         students = list(User.objects.filter(role='students'))
         selected_students = random.sample(students, min(5, len(students)))
         for user in selected_students:
@@ -53,7 +58,7 @@ class Command(BaseCommand):
 
         connection.close()
         
-        self.generate_tickets()
+        self.create_tickets()
     
     def seed_departments(self):
         departments = [
@@ -118,21 +123,23 @@ class Command(BaseCommand):
         last_name = self.faker.last_name()
         email = create_email(first_name, last_name)
         username = create_username(first_name, last_name)
-        
-         # Ensure unique email
+
+        # Ensure unique email
         while User.objects.filter(email=email).exists():
             email = create_email(first_name, last_name)
-            
+
         role = self.faker.random_element(['students', 'program_officers', 'specialists'])
         department = None
+
         # Only assign department to specialists
         if role == 'specialists':
             department = Department.objects.filter(responsible_roles__icontains='specialists')
             if department.exists():
                 department = random.choice(department)
 
+        self.stdout.write(self.style.SUCCESS(f"Seeding user: {username} with role: {role}"))
         self.try_create_user({'username': username, 'email': email, 'first_name': first_name, 'last_name': last_name, 'role': role}, department)
-       
+    
     def try_create_user(self, data, department=None, connection=None):
         try:
             if 'role' not in data:  # Default to 'others', this is for the admin, superuser.
@@ -168,8 +175,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"✅ Email sent to {user.email}"))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"❌ Error sending email to {user.email}: {e}"))  # ✅ 记录详细错误
-
-        
+     
     def create_user(self, data, department=None, connection=None):
         user = User.objects.create_user(
             username=data['username'],
@@ -183,56 +189,67 @@ class Command(BaseCommand):
             user.department = department
             user.save()
     
-    def create_sample_tickets(self):
-        """Generate random tickets for students"""
-        students = User.objects.filter(role='students')
-        if students.exists():
-            for student in students[:20]:  # Create only for first 20 students
-                Ticket.objects.create(
-                    title=self.faker.sentence(),
-                    description=self.faker.text(),
-                    status=random.choice(['open', 'pending', 'closed']),
-                    creator=student
-                )
-                self.stdout.write(self.style.SUCCESS(f"Sample ticket created for {student.username}"))
+    def create_tickets(self):
+        """Generate meaningful tickets for students using AWS Bedrock."""
+        students = list(User.objects.filter(role='students'))
+        if not students:
+            self.stdout.write(self.style.WARNING("No students found, skipping ticket creation."))
+            return
 
-                    
-    def generate_tickets(self):
-        ticket_count = Ticket.objects.count()
-        while ticket_count < self.TICKET_COUNT:
-            print(f"Seeding ticket {ticket_count}/{self.TICKET_COUNT}", end='\r')
-            self.create_ticket()
-            ticket_count = Ticket.objects.count()
-        print("Ticket seeding complete.      ")
+        departments = list(Ticket.DEPARTMENT_CHOICES)
+        new_tickets = []
+        new_ai_tickets = []
 
-    def create_ticket(self):
-        user = User.objects.order_by('?').first()  # Random user
-        department = random.choice([d['name'] for d in Department.objects.values('name')])
+        while len(new_tickets) < self.TICKET_COUNT:
+            student = random.choice(students)
+            department = random.choice(departments)[0]
 
-        # Random title, description, and status
-        title = self.faker.sentence(nb_words=6)
-        description = self.faker.text(max_nb_chars=200)
-        status = random.choice(['open', 'in_progress', 'resolved', 'closed'])
-        priority = random.choice(['low', 'medium', 'high', 'urgent'])
+            # Prompt for student query generation
+            prompt = f"Create a meaningful/realistic university student query with a title and a description for the {department} department. 50 words max. Answer in a paragraph, do not involve quotation marks or words like: 1.Here is a university student query for the study_abroad department: 2.title/description, just keep the query itself. The first sentence should be the title of the query, the rest should be the description. Separate the title and description with a period."
+            ai_generated_query = query_bedrock(prompt)
 
-        # Generate ticket
-        ticket = Ticket.objects.create(
-            creator=user,
-            title=title,
-            description=description,
-            status=status,
-            priority=priority,
-            assigned_department=department,
-        )
+            if not ai_generated_query:
+                continue
 
-        # Optionally assign it to a specialist
-        if random.random() < 0.5:  # 50% chance to assign it to a specialist
-            specialist = random.choice(User.objects.filter(role='specialists').order_by('?'))
-            ticket.assigned_user = specialist
-            ticket.save()
+            match = re.match(r"^(.*?[.?!])\s*(.*)", ai_generated_query.strip())
+            if match:
+                title = match.group(1).strip()
+                description = match.group(2).strip() or "Further details required."
+            else:
+                title = ai_generated_query.strip()
+                description = "Further details required."
+            
+            ticket = Ticket(
+                creator=student,
+                title=title,
+                description=description,
+                status='open',
+                priority=random.choice(['low', 'medium', 'high', 'urgent']),
+            )
+            new_tickets.append(ticket)
+        
+        created_tickets = Ticket.objects.bulk_create(new_tickets)
+        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(created_tickets)} tickets."))
 
-        self.stdout.write(self.style.SUCCESS(f"Ticket '{ticket.title}' created."))
-   
+        for ticket in created_tickets:
+            ai_department = classify_department(ticket.description)
+            ai_answer = generate_ai_answer(ticket.description)
+
+            ai_ticket = AITicketProcessing.objects.create(
+                ticket=ticket,
+                ai_generated_response=ai_answer,
+                ai_assigned_department=ai_department
+            )
+            new_ai_tickets.append(ai_ticket)
+            self.stdout.write(self.style.SUCCESS(f"Ticket title: {ticket.title}"))
+            self.stdout.write(self.style.SUCCESS(f"Description: {ticket.description}"))
+            self.stdout.write(self.style.SUCCESS(f"   "))
+            self.stdout.write(self.style.SUCCESS(f"AI Response: {ai_answer}"))
+            self.stdout.write(self.style.SUCCESS(f"==============================================================================="))
+            self.stdout.write(self.style.SUCCESS(f"==============================================================================="))
+            self.stdout.write(self.style.SUCCESS(f"   "))
+        self.stdout.write(self.style.SUCCESS(f"Successfully answered {len(new_ai_tickets)} tickets."))
+
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
 
