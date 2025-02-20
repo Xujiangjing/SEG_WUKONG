@@ -1,0 +1,16 @@
+{% extends 'base_content.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Supplement Ticket: {{ ticket.title }}</h2>
+    <p><strong>Return Reason:</strong> {{ ticket.return_reason }}</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}  <!-- Display the form fields -->
+
+        <button type="submit" class="btn btn-success">Resubmit Ticket</button>
+        <a href="{% url 'ticket_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

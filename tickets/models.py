@@ -96,6 +96,7 @@ class Ticket(models.Model):
         ('in_progress', 'In Progress'),
         ('resolved', 'Resolved'),
         ('closed', 'Closed'),
+        ('returned', 'Returned'), # Returned to the student for more information
     ]
     ## get_priority_choices function 
     PRIORITY_CHOICES = [
@@ -158,12 +159,13 @@ class Ticket(models.Model):
     latest_action = models.CharField(max_length=20, choices=ACTION_CHOICES, blank=True, null=True)
     latest_editor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='edited_tickets')
     sender_email = models.EmailField(blank=True, null=True)
+    return_reason = models.TextField(blank=True, null=True) # Reason for returning the ticket
     
     def __str__(self):
         return f"Ticket {self.id}: {self.title} ({self.status})"
 
     def save(self, *args, **kwargs):
-        if self.latest_action == None:  # If no action has yet been recorded, set a default action
+        if self.latest_action is None:  # If no action has yet been recorded, set a default action
             self.latest_action = 'created'
         super().save(*args, **kwargs)
 
