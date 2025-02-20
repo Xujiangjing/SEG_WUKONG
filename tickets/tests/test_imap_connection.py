@@ -8,7 +8,7 @@ class IMAPConnectionTest(TestCase):
     @patch("imaplib.IMAP4_SSL")  # ✅ Mock IMAP to avoid real network calls
     def test_imap_login_success(self, mock_imap):
         """Test if IMAP login is successful."""
-        # 🔹 Mock IMAP behavior
+        # Mock IMAP behavior
         mock_mail = MagicMock()
         mock_imap.return_value = mock_mail
 

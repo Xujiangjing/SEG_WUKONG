@@ -1,4 +1,5 @@
 import time
+import os
 from django.test import TestCase, override_settings
 from django.core.mail import send_mail
 from tickets.models import Ticket, Department
@@ -6,14 +7,14 @@ from tickets.management.commands.fetch_emails import Command
 from django.conf import settings
 
 @override_settings(
-    # setup real email settings for Gmail
     EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend',
     EMAIL_HOST='smtp.gmail.com',
     EMAIL_PORT=587,
     EMAIL_USE_TLS=True,
     EMAIL_HOST_USER='wukonghelpdesk@gmail.com',
-    EMAIL_HOST_PASSWORD='bynw apnb vmuu nmun', 
+    EMAIL_HOST_PASSWORD=os.getenv('EMAIL_HOST_PASSWORD', ''),  
 )
+
 class RealFetchEmailsTest(TestCase):
     """Use real email settings to test the fetch_emails command"""
 
