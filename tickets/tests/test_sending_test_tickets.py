@@ -24,13 +24,13 @@ class SendTestTicketsTest(TestCase):
             )
             self.students.append(student)
         
-        print(f"✅ Created {len(self.students)} test students.")
+        print(f"Created {len(self.students)} test students.")
 
-    @patch("django.core.mail.send_mail")  # ✅ Ensure correct patch path
+    @patch("django.core.mail.send_mail")  # Ensure correct patch path
     def test_send_test_tickets(self, mock_send_mail):
         """Test that emails are correctly sent to the help desk."""
         students = list(User.objects.filter(role="students").all())  # Force reload users
-        self.assertGreater(len(students), 0, "❌ No students found in test database!")
+        self.assertGreater(len(students), 0, "No students found in test database!")
 
         test_messages = [
             ("Course Registration Issue", "I need help enrolling in a course.", "academic_support"),
@@ -61,7 +61,7 @@ class SendTestTicketsTest(TestCase):
             )
 
 
-        # ✅ Ensure send_mail() was called
-        self.assertGreater(mock_send_mail.call_count, 0, "❌ send_mail() was not called!")
+        # Ensure send_mail() was called
+        self.assertGreater(mock_send_mail.call_count, 0, "send_mail() was not called!")
 
-        print(f"✅ {mock_send_mail.call_count} test emails sent successfully.")
+        print(f"{mock_send_mail.call_count} test emails sent successfully.")
