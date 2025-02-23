@@ -12,7 +12,8 @@ from django.views.generic import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, FormView, UpdateView
 from tickets.forms import (LogInForm, PasswordForm, SignUpForm,
-                           TicketAttachmentForm, TicketForm, UserForm)
+                           TicketAttachmentForm, TicketForm, UserForm,
+                           ReturnTicketForm, SupplementTicketForm)
 from tickets.helpers import login_prohibited
 from tickets.models import Ticket, TicketActivity, TicketAttachment, User, AITicketProcessing
 from .ai_service import generate_ai_answer, classify_department
@@ -288,3 +289,44 @@ def close_ticket(request, ticket_id):
     else:
         messages.error(request, 'You do not have permission to close this ticket.')
     return redirect('dashboard')
+
+@login_required
+def return_ticket(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    if not request.user.is_program_officer() or ticket.status != 'open':
+        return redirect('ticket_list')
+
+    if request.method == 'POST':
+        form = ReturnTicketForm(request.POST)
+        if form.is_valid():
+            ticket.status = 'returned'
+            ticket.return_reason = form.cleaned_data['return_reason']
+            ticket.save()
+            return redirect('ticket_list')
+    else:
+        form = ReturnTicketForm()
+
+    return render(request, 'tickets/return_ticket.html', {'form': form, 'ticket': ticket})
+
+
+@login_required
+def supplement_ticket(request, pk):
+    ticket = get_object_or_404(Ticket, pk=pk)
+    if not request.user.is_student() or ticket.status != 'returned':
+        return redirect('ticket_list')
+
+    if request.user != ticket.creator:
+        messages.error(request, "You do not have permission to modify this ticket.")
+        return redirect("ticket_list")
+
+    if request.method == 'POST':
+        form = SupplementTicketForm(request.POST)
+        if form.is_valid():
+            ticket.description += "\n\nSupplement: " + form.cleaned_data['supplement_info']
+            ticket.status = 'open'
+            ticket.save()
+            return redirect('ticket_list')
+    else:
+        form = SupplementTicketForm()
+
+    return render(request, 'tickets/supplement_ticket.html', {'form': form, 'ticket': ticket})
