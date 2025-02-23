@@ -113,10 +113,9 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'description', 'priority', 'assigned_department']
+        fields = ['title', 'description', 'priority']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
-            'assigned_department': forms.Select(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -141,3 +140,12 @@ class TicketAttachmentForm(forms.ModelForm):
         fields = ['file']
 
 
+
+class ReturnTicketForm(forms.Form):
+    # fields...
+    pass
+
+
+class SupplementTicketForm(forms.Form):
+    # fields...
+    pass
