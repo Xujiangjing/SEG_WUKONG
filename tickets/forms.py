@@ -2,7 +2,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
-from .models import User, Ticket, TicketAttachment
+
+from .models import Ticket, TicketAttachment, User
 
 
 class LogInForm(forms.Form):
@@ -140,4 +141,21 @@ class TicketAttachmentForm(forms.ModelForm):
         model = TicketAttachment
         fields = ['file']
 
+class ReturnTicketForm(forms.ModelForm):
+    return_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}),
+        required=True,
+    )
 
+    class Meta:
+        model = Ticket
+        fields = ['return_reason'] 
+        
+
+class SupplementTicketForm(forms.Form):
+    supplement_info = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 40}),
+        required=True,
+        label="",
+        help_text=""
+    )
