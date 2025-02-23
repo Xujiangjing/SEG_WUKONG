@@ -42,8 +42,8 @@ def dashboard(request):
         if search_query:
             tickets = tickets.filter(title__icontains=search_query)
 
-        if status_filter:
-            tickets = tickets.filter(status=status_filter)
+        # if status_filter:
+        #     tickets = tickets.filter(status=status_filter)
 
 
         if sort_option == 'date_asc':
