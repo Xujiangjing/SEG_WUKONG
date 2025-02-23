@@ -46,14 +46,14 @@ def dashboard(request):
             tickets = tickets.filter(status=status_filter)
 
 
-        # if sort_option == 'date_asc':
-        #     tickets = tickets.order_by('created_at')
-        # elif sort_option == 'date_desc':
-        #     tickets = tickets.order_by('-created_at')
-        # elif sort_option == 'priority_asc':
-        #     tickets = tickets.order_by(priority_case)
-        # elif sort_option == 'priority_desc':
-        #     tickets = tickets.order_by(-priority_case)
+        if sort_option == 'date_asc':
+            tickets = tickets.order_by('created_at')
+        elif sort_option == 'date_desc':
+            tickets = tickets.order_by('-created_at')
+        elif sort_option == 'priority_asc':
+            tickets = tickets.order_by(priority_case)
+        elif sort_option == 'priority_desc':
+            tickets = tickets.order_by(-priority_case)
 
         ticket_stats = User.objects.filter(role='specialists').annotate(
             ticket_count=Count('assigned_tickets')
