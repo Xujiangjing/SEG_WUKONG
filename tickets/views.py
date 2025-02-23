@@ -332,7 +332,7 @@ def supplement_ticket(request, pk):
 @login_required
 def respond_ticket_page(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    
+    print(ticket.description)
     if request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect('dashboard')
     

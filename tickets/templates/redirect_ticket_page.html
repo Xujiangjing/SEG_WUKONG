@@ -13,6 +13,7 @@
                     <td><strong>Title:</strong></td>
                     <td>{{ ticket.title }}</td>
                 </tr>
+                
                 <tr class="table-info">
                     <td><strong>Status:</strong></td>
                     <td id="ticket-status">{{ ticket.get_status_display }}</td>
@@ -32,6 +33,10 @@
                 <tr class="table-info">
                     <td><strong>Assigned to:</strong></td>
                     <td id="assigned-user">{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
+                </tr>
+                <tr>
+                    <td><strong>Discription:</strong></td>
+                    <td>{{ ticket.description }}</td>
                 </tr>
             </table>
         </div>

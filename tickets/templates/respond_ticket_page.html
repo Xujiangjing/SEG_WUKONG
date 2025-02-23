@@ -35,6 +35,10 @@
                             <td><strong>Assigned to:</strong></td>
                             <td>{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
                         </tr>
+                        <tr>
+                            <td><strong>Discription:</strong></td>
+                            <td>{{ ticket.description }}</td>
+                        </tr>
                     </table>
                 </div>
             </div>
