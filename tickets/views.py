@@ -241,22 +241,33 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = 'open'
-        ticket.save()
+        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
         
-        ## Upload multiple files
-        files = self.request.FILES.getlist('file')
-        for file in files:
-            TicketAttachment.objects.create(ticket=ticket, file=file)
-        
-        TicketActivity.objects.create(
-            ticket=ticket,
-            action='created',
-            action_by=self.request.user
-        )
-        
-        # Here is your success message + redirect
-        messages.success(self.request, 'Query submitted successfully!')
-        return redirect('ticket_detail', pk=ticket.pk)
+        if existing_ticket:
+            existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
+                ticket.id, ticket.description)
+            existing_ticket.save()
+            TicketActivity.objects.create(
+                ticket=existing_ticket,
+                action='merged',
+                action_by=self.request.user,
+                comment=f'Merged with ticket {ticket.id}'
+            )
+            
+            messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
+            return redirect('ticket_detail', pk=existing_ticket.pk)
+        else:
+            ticket.save()
+            files = self.request.FILES.getlist('file')
+            for file in files:
+                TicketAttachment.objects.create(ticket=ticket, file=file)
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action='created',
+                action_by=self.request.user
+            )
+            messages.success(self.request, 'Query submitted successfully!')
+            return redirect('ticket_detail', pk=ticket.pk)
 
 
 ## This is the view for the ticket detail page
