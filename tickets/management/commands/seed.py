@@ -50,7 +50,7 @@ class Command(BaseCommand):
     """Build automation command to seed the database."""
     TICKET_COUNT = 5
     USER_COUNT = 30
-    DEFAULT_PASSWORD = 'Password123'
+    DEFAULT_PASSWORD = 'pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc='
     help = 'Seeds the database with sample data'
 
     def __init__(self, *args, **kwargs):
