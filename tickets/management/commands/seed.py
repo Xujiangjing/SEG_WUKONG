@@ -65,7 +65,7 @@ class Command(BaseCommand):
         self.create_users()
     
         # Seed Tickets
-        #self.create_tickets()
+        self.create_tickets()
     
     def seed_departments(self):
         """Create departments from the predefined list if they do not exist."""
