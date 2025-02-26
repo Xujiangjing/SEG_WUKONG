@@ -13,7 +13,33 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 from django.contrib.messages import constants as messages
 import os 
+from dotenv import load_dotenv
+import sys
 
+# Load environment variables from .env file
+load_dotenv()
+
+# IMAP Configuration (For Receiving Emails)
+IMAP_HOST = os.getenv("IMAP_HOST", "imap.gmail.com")
+IMAP_PORT = int(os.getenv("IMAP_PORT", 993))
+IMAP_USE_SSL = os.getenv("IMAP_USE_SSL", "True") == "True"
+
+# SMTP Configuration (For Sending Emails)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False") == "True"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+# Perspective API Key for Email Analysis
+PERSPECTIVE_API_KEY = os.getenv("PERSPECTIVE_API_KEY", "")
+
+# Testing Mode
+TESTING = "test" in sys.argv
+
+"""
 # IMAP Configuration (For Receiving Emails)
 IMAP_HOST = "imap.gmail.com"  # IMAP server
 IMAP_PORT = 993  # IMAP SSL port
@@ -26,7 +52,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False  # Must be False if TLS is True
 EMAIL_HOST_USER = "wukonghelpdesk@gmail.com"
-EMAIL_HOST_PASSWORD = "bynw apnb vmuu nmun" 
+EMAIL_HOST_PASSWORD = "bynw apnb vmuu nmun" """
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -19,8 +19,9 @@ from tickets.forms import (LogInForm, PasswordForm, ReturnTicketForm,
                            SignUpForm, SupplementTicketForm,
                            TicketAttachmentForm, TicketForm, UserForm)
 from tickets.helpers import login_prohibited
-from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 
+from tickets.models import Ticket, TicketActivity, TicketAttachment, User, AITicketProcessing
+from .ai_service import generate_ai_answer, classify_department
 from .models import Ticket, TicketActivity
 
 
@@ -240,7 +241,11 @@ class TicketListView(ListView):
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
 
-## This is the view for the ticket creation page
+class TicketsTableView(View):
+    def get(self, request):
+        tickets = Ticket.objects.select_related('ai_processing', 'creator')
+        return render(request, 'tickets_table.html', {'tickets': tickets})
+
 class CreateTicketView(LoginRequiredMixin, CreateView):
     model = Ticket
     form_class = TicketForm
@@ -276,11 +281,18 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 action='created',
                 action_by=self.request.user
             )
+            ai_department = classify_department(ticket.description)
+            ai_answer = generate_ai_answer(ticket.description)
+            AITicketProcessing.objects.create(
+                ticket=ticket,
+                ai_generated_response=ai_answer,
+                ai_assigned_department=ai_department
+            )   
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
 
 
-## This is the view for the ticket detail page
+
 class TicketDetailView(DetailView):
     model = Ticket
     template_name = 'tickets/ticket_detail.html'
