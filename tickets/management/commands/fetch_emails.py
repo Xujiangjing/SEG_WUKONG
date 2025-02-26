@@ -116,6 +116,7 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f"❌ Error fetching emails: {e}"))
 
     
+    
     def categorize_ticket(self, subject, body):
         """Assigns a category based on keywords in the subject or body."""
         

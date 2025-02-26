@@ -99,8 +99,26 @@ class FetchEmailsTest(TransactionTestCase):
         self.assertIn("WuKong Help Desk", kwargs.get("html_message"))
         self.assertIn("Your Ticket Has Been Received", kwargs.get("html_message"))
 
+    def test_email_subject_decoding(self):
+        """Test that the email subject is correctly decoded."""
+        Ticket.objects.all().delete()
+        encoded_subject = "=?utf-8?b?dGVzdCBzdWJqZWN0?="
+        fake_email_bytes = f"From: student@wukong.ac.uk\nSubject: {encoded_subject}\n\nTest Body.".encode()
+    
+        fake_email_msg = message_from_bytes(fake_email_bytes)
+    
+        with patch("tickets.management.commands.fetch_emails.imaplib.IMAP4_SSL") as mock_imap:
+            mock_mail = MagicMock()
+            mock_imap.return_value = mock_mail
+            mock_mail.search.return_value = ("OK", [b"1"])
+            mock_mail.fetch.return_value = ("OK", [(b"1", fake_email_msg.as_bytes())])
+
+            self.command.handle()
+             
+            ticket = Ticket.objects.first()
+            self.assertIsNotNone(ticket)
+            self.assertEqual(ticket.title, "test subject")
        
-        
     def test_duplicate_ticket_with_response(self):
         """Test that a ticket with a response is detected as a duplicate."""
         if self.existing_ticket.responses.count() > 0:
@@ -168,5 +186,22 @@ class FetchEmailsTest(TransactionTestCase):
         self.assertIn("You have already submitted a ticket", sent_mail.body, "❌ Email body is incorrect")
         self.assertIn(str(existing_ticket.id), sent_mail.body, "❌ Ticket ID not found in email body")
 
-        
+    def test_skip_failure_notification(self):
+        """Test that failure notification emails are skipped."""
+        Ticket.objects.all().delete()
+        fake_email_bytes = b"From: <mailer-daemon@server.com>\nSubject: Delivery Status Notification\n\nFailure report."
+        fake_email_msg = message_from_bytes(fake_email_bytes)
+
+        with patch("tickets.management.commands.fetch_emails.imaplib.IMAP4_SSL") as mock_imap:
+            mock_mail = MagicMock()
+            mock_imap.return_value = mock_mail
+            mock_mail.search.return_value = ("OK", [b"1"])
+            mock_mail.fetch.return_value = ("OK", [(b"1", fake_email_msg.as_bytes())])
+
+            self.command.handle()
+
+            # Ensure no ticket was created
+            ticket = Ticket.objects.first()
+            self.assertIsNone(ticket, "❌ Ticket created for failure notification")
+     
     
