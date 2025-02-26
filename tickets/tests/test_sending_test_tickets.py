@@ -19,12 +19,10 @@ class SendTestTicketsTest(TestCase):
                 username=f"@student{i}",
                 first_name=f"Test{i}",
                 last_name="User",
-                email=f"student{i}@example.com",
+                email=f"student{i}@wukong.ac.uk",
                 role="students"
             )
             self.students.append(student)
-        
-        print(f"Created {len(self.students)} test students.")
 
     @patch("django.core.mail.send_mail")  # Ensure correct patch path
     def test_send_test_tickets(self, mock_send_mail):
@@ -56,7 +54,7 @@ class SendTestTicketsTest(TestCase):
                 subject.strip(),
                 full_message.strip(),
                 student.email,  # Sender (From)
-                ["helpdesk@example.com"],  # Receiver (To: Help Desk)
+                ["helpdesk@wukong.ac.uk"],  # Receiver (To: Help Desk)
                 fail_silently=False,
             )
 
@@ -64,4 +62,4 @@ class SendTestTicketsTest(TestCase):
         # Ensure send_mail() was called
         self.assertGreater(mock_send_mail.call_count, 0, "send_mail() was not called!")
 
-        print(f"{mock_send_mail.call_count} test emails sent successfully.")
+        

@@ -16,7 +16,7 @@ class SMTPConnectionTest(TestCase):
         try:
             server = smtplib.SMTP("smtp.gmail.com", 587)
             server.starttls()
-            server.login("test@example.com", "password123")
+            server.login("test@wukong.ac.uk", "password123")
             server.quit()
             success = True
         except Exception as e:
@@ -24,7 +24,7 @@ class SMTPConnectionTest(TestCase):
 
         # Verify that `starttls()`, `login()`, and `quit()` were called
         mock_server.starttls.assert_called_once()
-        mock_server.login.assert_called_once_with("test@example.com", "password123")
+        mock_server.login.assert_called_once_with("test@wukong.ac.uk", "password123")
         mock_server.quit.assert_called_once()
 
         # Assert connection was successful
@@ -39,8 +39,7 @@ class SMTPConnectionTest(TestCase):
         with self.assertRaises(smtplib.SMTPException):
             server = smtplib.SMTP("smtp.gmail.com", 587)
             server.starttls()
-            server.login("test@example.com", "wrongpassword")
+            server.login("test@wukong.ac.uk", "wrongpassword")
             server.quit()
 
-        print("SMTP failure handled correctly.")
-
+       

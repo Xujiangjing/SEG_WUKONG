@@ -66,9 +66,6 @@ class TestSpamDetection(unittest.TestCase):
         result = command.is_spam(subject, body)
         self.assertFalse(result)  # Expected to return False
     
-    def tearDown(self):
-        print(f"Pass: {self._testMethodName}")
-
 
 if __name__ == '__main__':
     unittest.main()

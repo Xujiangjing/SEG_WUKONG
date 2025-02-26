@@ -12,8 +12,8 @@ class EmailSendingTest(TestCase):
             result = django.core.mail.send_mail(
                 "Test Email",
                 "This is a test email.",
-                "test@example.com",
-                ["wukonghelpdesk@gmail.com"],
+                "test@wukong.ac.uk",
+                ["wukonghelpdesk@wukong.ac.uk"],
                 fail_silently=False,
             )
 

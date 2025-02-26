@@ -98,7 +98,7 @@ class Command(BaseCommand):
                         ai_answer = generate_ai_answer(ticket.description)
                         AITicketProcessing.objects.create(
                             ticket=ticket,
-                            ai_generated_answer=ai_answer,
+                            ai_generated_response=ai_answer,
                             ai_assigned_department=ai_department
                         )
 
@@ -208,6 +208,7 @@ class Command(BaseCommand):
             fail_silently=False,
             html_message=html_message,  # Use the HTML content
         )
+        
 
         self.stdout.write(self.style.SUCCESS(f"📧 Confirmation email sent to {student_email}"))
         

@@ -23,7 +23,7 @@ class FetchEmailsTest(TransactionTestCase):
     def setUp(self):
         """Creates a Ticket and User before each test"""
         self.command = Command()
-        self.sender_email = "student@wukong.com"
+        self.sender_email = "student@wukong.ac.uk"
         self.subject = "Test Ticket Subject"
         self.body = "This is a test ticket body."
 
@@ -75,7 +75,7 @@ class FetchEmailsTest(TransactionTestCase):
         mock_mail.fetch.return_value = ("OK", [(b"1", (b"Fake Email Content"))])  # Mock email content
 
         # 3️⃣ Mock Email Content
-        fake_email_bytes = b"From: student1@wukong.com\nSubject: Help Needed\n\nThis is a test email."
+        fake_email_bytes = b"From: student1@wukong.ac.uk\nSubject: Help Needed\n\nThis is a test email."
         fake_email_msg = message_from_bytes(fake_email_bytes)  # Make sure it's a valid email message
         mock_mail.fetch.return_value = ("OK", [(b"1", fake_email_msg.as_bytes())])
 
@@ -93,13 +93,13 @@ class FetchEmailsTest(TransactionTestCase):
         args, kwargs = mock_send_mail.call_args
 
         # 7️⃣ Check if the email is sent to the student
-        self.assertIn("student1@wukong.com", kwargs.get("recipient_list"))
+        self.assertIn("student1@wukong.ac.uk", kwargs.get("recipient_list"))
 
         # 8️⃣ Check if the email content is correct
         self.assertIn("WuKong Help Desk", kwargs.get("html_message"))
         self.assertIn("Your Ticket Has Been Received", kwargs.get("html_message"))
 
-        print("✅ Test fetch_emails sends a confirmation email")
+       
         
     def test_duplicate_ticket_with_response(self):
         """Test that a ticket with a response is detected as a duplicate."""
@@ -168,5 +168,5 @@ class FetchEmailsTest(TransactionTestCase):
         self.assertIn("You have already submitted a ticket", sent_mail.body, "❌ Email body is incorrect")
         self.assertIn(str(existing_ticket.id), sent_mail.body, "❌ Ticket ID not found in email body")
 
-        print("✅ 'send_duplicate_notice' sends a notification email")
+        
     

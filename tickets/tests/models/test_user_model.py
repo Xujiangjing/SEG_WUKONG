@@ -2,6 +2,7 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from tickets.models import User,Department
+import hashlib
 
 class UserModelTestCase(TestCase):
     """Unit tests for the User model."""
@@ -11,7 +12,7 @@ class UserModelTestCase(TestCase):
         'tickets/tests/fixtures/other_users.json'
     ]
 
-    GRAVATAR_URL = "https://www.gravatar.com/avatar/363c1b0cd64dadffb867236a00e62986"
+    GRAVATAR_URL = "https://www.gravatar.com/avatar/0818f6c505500cdc4e3f25f0bbf09e24"
 
     def setUp(self):
         self.user = User.objects.get(username='@johndoe')
@@ -24,7 +25,7 @@ class UserModelTestCase(TestCase):
             username="@userwithdepartment",
             first_name="User",
             last_name="WithDepartment",
-            email="userwithdepartment@example.com",
+            email="userwithdepartment@wukong.ac.uk",
             role="students",
             department=self.departmentS
         )
@@ -32,7 +33,7 @@ class UserModelTestCase(TestCase):
             username="@userwithoutdepartment",
             first_name="User",
             last_name="WithoutDepartment",
-            email="userwithoutdepartment@example.com",
+            email="userwithoutdepartment@wukong.ac.uk",
             role="students",
             department=None
         )
@@ -124,23 +125,23 @@ class UserModelTestCase(TestCase):
         self._assert_user_is_invalid()
 
     def test_email_must_contain_username(self):
-        self.user.email = '@example.org'
+        self.user.email = '@wukong.ac.uk'
         self._assert_user_is_invalid()
 
     def test_email_must_contain_at_symbol(self):
-        self.user.email = 'johndoe.example.org'
+        self.user.email = 'johndoe.wukong.ac.uk'
         self._assert_user_is_invalid()
 
     def test_email_must_contain_domain_name(self):
-        self.user.email = 'johndoe@.org'
+        self.user.email = 'johndoe@.ac.uk'
         self._assert_user_is_invalid()
 
     def test_email_must_contain_domain(self):
-        self.user.email = 'johndoe@example'
+        self.user.email = 'johndoe@wukong'
         self._assert_user_is_invalid()
 
     def test_email_must_not_contain_more_than_one_at(self):
-        self.user.email = 'johndoe@@example.org'
+        self.user.email = 'johndoe@@wukong.ac.uk'
         self._assert_user_is_invalid()
 
 
@@ -181,7 +182,7 @@ class UserModelTestCase(TestCase):
             username="@specialistuser",
             first_name="Specialist",
             last_name="User",
-            email="specialistuser@example.com",
+            email="specialistuser@wukong.ac.uk.com",
             role="specialists",
             department=None  # No department assigned
         )
@@ -194,7 +195,7 @@ class UserModelTestCase(TestCase):
             username="@specialistuser",
             first_name="Specialist",
             last_name="User",
-            email="specialistuser@example.com",
+            email="specialistuser@wukong.ac.uk.com",
             role="specialists",
             department=self.departmentS# Department assigned
         )

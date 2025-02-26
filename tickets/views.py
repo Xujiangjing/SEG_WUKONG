@@ -285,7 +285,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             ai_answer = generate_ai_answer(ticket.description)
             AITicketProcessing.objects.create(
                 ticket=ticket,
-                ai_generated_answer=ai_answer,
+                ai_generated_response=ai_answer,
                 ai_assigned_department=ai_department
             )   
             messages.success(self.request, 'Query submitted successfully!')

@@ -38,4 +38,3 @@ class IMAPConnectionTest(TestCase):
             mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
             mail.login("test@example.com", "wrongpassword")
 
-        print("IMAP failure handled correctly.")
