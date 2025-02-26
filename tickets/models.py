@@ -133,6 +133,7 @@ class Ticket(models.Model):
         ('redirected', 'Redirected'),
         ('responded', 'Responded'),
         ('closed', 'Closed'),
+        ('merged', 'Merged'),
     ]
 
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_tickets')
