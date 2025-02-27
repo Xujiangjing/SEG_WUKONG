@@ -25,14 +25,16 @@ from .ai_service import generate_ai_answer, classify_department
 from .models import Ticket, TicketActivity
 
 
-# todo :improve the dashboard view to handle ticket responses
+
 @login_required
 def dashboard(request):
     current_user = request.user
 
+
     search_query = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
-    sort_option  = request.GET.get('sort', '')
+    sort_option = request.GET.get('sort', '')
+
 
     priority_case = Case(
         When(priority='urgent', then=4),
@@ -42,13 +44,64 @@ def dashboard(request):
         output_field=IntegerField()
     )
 
+
     if current_user.is_program_officer():
+
+        if request.method == 'POST' and 'respond_ticket' in request.POST:
+            ticket_id = request.POST.get("ticket_id")
+            response_message = request.POST.get("response_message")
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+
+ 
+            if ticket.answers:
+                ticket.answers += "\n"
+            else:
+                ticket.answers = ""
+            ticket.answers += f"Response by {current_user.username}: {response_message}"
+
+            ticket.latest_action = 'responded'
+            ticket.save()
+
+
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action='responded',
+                action_by=current_user,
+                comment=response_message
+            )
+
+            return redirect('dashboard')
+
+
+        if request.method == 'POST' and 'redirect_ticket' in request.POST:
+            ticket_id = request.POST.get('ticket_id')
+            new_assignee_id = request.POST.get('new_assignee_id')
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            new_assignee = get_object_or_404(User, id=new_assignee_id)
+
+            ticket.assigned_user = new_assignee
+            ticket.latest_action = 'redirected'
+            ticket.status = 'in_progress'  
+            ticket.save()
+
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action='redirected',
+                action_by=current_user,
+                comment=f"Redirected to {new_assignee.username}"
+            )
+
+            return redirect('dashboard')
+
 
         tickets = Ticket.objects.all()
 
 
         if search_query:
-            tickets = tickets.filter(title__icontains=search_query)
+            tickets = tickets.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
 
         if status_filter:
             tickets = tickets.filter(status=status_filter)
@@ -76,10 +129,14 @@ def dashboard(request):
 
     elif current_user.is_student():
 
+
         tickets = Ticket.objects.filter(creator=current_user)
 
+
         if search_query:
-            tickets = tickets.filter(title__icontains=search_query)
+            tickets = tickets.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
 
         if status_filter:
             tickets = tickets.filter(status=status_filter)
@@ -101,11 +158,37 @@ def dashboard(request):
 
     elif current_user.is_specialist():
 
+        if request.method == 'POST' and 'respond_ticket' in request.POST:
+            ticket_id = request.POST.get("ticket_id")
+            response_message = request.POST.get("response_message")
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+
+            if ticket.answers:
+                ticket.answers += "\n"
+            else:
+                ticket.answers = ""
+            ticket.answers += f"Response by {current_user.username}: {response_message}"
+
+            ticket.latest_action = 'responded'
+            ticket.save()
+
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action='responded',
+                action_by=current_user,
+                comment=response_message
+            )
+
+            return redirect('dashboard')
+
         tickets = Ticket.objects.filter(assigned_user=current_user)
 
+
         if search_query:
-            tickets = tickets.filter(title__icontains=search_query)
-            
+            tickets = tickets.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
         if status_filter:
             tickets = tickets.filter(status=status_filter)
 
