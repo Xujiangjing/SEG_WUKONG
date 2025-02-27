@@ -141,11 +141,3 @@ class TicketAttachmentForm(forms.ModelForm):
 
 
 
-class ReturnTicketForm(forms.Form):
-    # fields...
-    pass
-
-
-class SupplementTicketForm(forms.Form):
-    # fields...
-    pass
