@@ -114,10 +114,9 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'description', 'priority', 'assigned_department']
+        fields = ['title', 'description', 'priority']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
-            'assigned_department': forms.Select(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -140,6 +139,7 @@ class TicketAttachmentForm(forms.ModelForm):
     class Meta:
         model = TicketAttachment
         fields = ['file']
+
 
 # The ReturnTicketForm form is used to create a form for returning a ticket.
 class ReturnTicketForm(forms.Form):
