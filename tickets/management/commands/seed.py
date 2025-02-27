@@ -1,26 +1,56 @@
 import random
 import time
-import uuid
+import re
+import os
 
 import pytz
 from django.conf import settings
 from django.core.mail import get_connection, send_mail
 from django.core.management.base import BaseCommand, CommandError
 from faker import Faker
-from tickets.models import Department, Ticket, User
+from tickets.models import Department, Ticket, User, AITicketProcessing
+from tickets.ai_service import generate_ai_answer, classify_department, query_bedrock
+import boto3
+from botocore.exceptions import ClientError
+import json
 
-user_fixtures = [
-    {'username': '@johndoe', 'email': 'john.doe@example.org', 'first_name': 'John', 'last_name': 'Doe', 'role': 'students'},
-    {'username': '@janedoe', 'email': 'jane.doe@example.org', 'first_name': 'Jane', 'last_name': 'Doe', 'role': 'specialists'},
-    {'username': '@charlie', 'email': 'charlie.johnson@example.org', 'first_name': 'Charlie', 'last_name': 'Johnson', 'role': 'program_officers'},
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+
+# Predefined users 
+USER_FIXTURES = [
+    {'username': '@johndoe', 'email': 'john.doe@wukong.ac.uk', 'first_name': 'John', 'last_name': 'Doe', 'role': 'students'},
+    {'username': '@janedoe', 'email': 'jane.doe@wukong.ac.uk', 'first_name': 'Jane', 'last_name': 'Doe', 'role': 'specialists'},
+    {'username': '@charlie', 'email': 'charlie.johnson@wukong.ac.uk', 'first_name': 'Charlie', 'last_name': 'Johnson', 'role': 'program_officers'},
+]
+
+# Departments for seeding
+DEPARTMENTS = [
+            {'name': 'general_enquiry', 'description': 'General queries managed by program officers.', 'responsible_roles': 'program_officers'},
+            {'name': 'academic_support', 'description': 'Academic support provided by personal tutors.', 'responsible_roles': 'specialists'},
+            {'name': 'health_services', 'description': 'Health-related issues handled by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'financial_aid', 'description': 'Financial aid inquiries managed by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'career_services', 'description': 'Career guidance provided by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'welfare', 'description': 'Welfare support provided by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'misconduct', 'description': 'Misconduct cases managed by personal tutors.', 'responsible_roles': 'specialists'},
+            {'name': 'it_support', 'description': 'IT-related issues handled by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'housing', 'description': 'Housing queries handled by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'admissions', 'description': 'Admissions queries managed by program officers.', 'responsible_roles': 'specialists'},
+            {'name': 'library_services', 'description': 'Library-related support by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'research_support', 'description': 'Research-related assistance by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'study_abroad', 'description': 'Study abroad support managed by personal tutors.', 'responsible_roles': 'specialists'},
+            {'name': 'alumni_relations', 'description': 'Alumni relations managed by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'exam_office', 'description': 'Examination office queries handled by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'security', 'description': 'Campus security issues handled by specialists.', 'responsible_roles': 'specialists'},
+            {'name': 'language_centre', 'description': 'Language centre support provided by specialists.', 'responsible_roles': 'specialists'},
 ]
 
 
 class Command(BaseCommand):
     """Build automation command to seed the database."""
-    TICKET_COUNT = 100  # Adjust the number of tickets to generate
-    USER_COUNT = 100
-    DEFAULT_PASSWORD = 'Password123'
+    TICKET_COUNT = 5
+    USER_COUNT = 30
+    DEFAULT_PASSWORD = 'pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc='
     help = 'Seeds the database with sample data'
 
     def __init__(self, *args, **kwargs):
@@ -33,50 +63,13 @@ class Command(BaseCommand):
 
         # Seed Users
         self.create_users()
-        self.generate_tickets()
     
         # Seed Tickets
-        self.create_sample_tickets()
-        
-    def send_bulk_emails(self, users):
-        connection = get_connection()
-
-        # choose 50 random students
-        students = list(User.objects.filter(role='students'))
-        selected_students = random.sample(students, min(5, len(students)))
-        for user in selected_students:
-            try:
-                self.send_welcome_email(user, connection)
-                time.sleep(2)  
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"❌ Error sending email to {user.email}: {e}"))
-
-        connection.close()
-        
-        self.generate_tickets()
+        self.create_tickets()
     
     def seed_departments(self):
-        departments = [
-            {'name': 'general_enquiry', 'description': 'General queries managed by program officers.', 'responsible_roles': 'program_officers'},
-            {'name': 'academic_support', 'description': 'Academic support provided by personal tutors.', 'responsible_roles': 'specialists'},
-            {'name': 'health_services', 'description': 'Health-related issues handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'financial_aid', 'description': 'Financial aid inquiries managed by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'career_services', 'description': 'Career guidance provided by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'welfare', 'description': 'Welfare support provided by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'misconduct', 'description': 'Misconduct cases managed by personal tutors.', 'responsible_roles': 'specialists'},
-            {'name': 'it_support', 'description': 'IT-related issues handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'housing', 'description': 'Housing queries handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'admissions', 'description': 'Admissions queries managed by program officers.', 'responsible_roles': 'program_officers'},
-            {'name': 'library_services', 'description': 'Library-related support by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'research_support', 'description': 'Research-related assistance by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'study_abroad', 'description': 'Study abroad support managed by personal tutors.', 'responsible_roles': 'specialists'},
-            {'name': 'alumni_relations', 'description': 'Alumni relations managed by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'exam_office', 'description': 'Examination office queries handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'security', 'description': 'Campus security issues handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'language_centre', 'description': 'Language centre support provided by specialists.', 'responsible_roles': 'specialists'},
-        ]
-
-        for department_data in departments:
+        """Create departments from the predefined list if they do not exist."""
+        for department_data in DEPARTMENTS:
             department, created = Department.objects.get_or_create(name=department_data['name'], defaults=department_data)
             if created:
                 self.stdout.write(self.style.SUCCESS(f"Department '{department.name}' created."))
@@ -84,158 +77,145 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"Department '{department.name}' already exists."))
 
     def create_users(self):
-        connection = get_connection() # Use default email connection
-        self.generate_user_fixtures(connection)
-        self.generate_random_users(connection)
+        """Creates both predefined and randomly generated users, ensuring balanced role distribution."""
         
-        # Send welcome emails to students
-        # users = User.objects.filter(role="students") 
-        # self.send_bulk_emails(users)
+        total_users_needed = self.USER_COUNT
+        specialist_departments = list(Department.objects.filter(responsible_roles="specialists"))
 
-        connection.close()
+        # Define target role distribution
+        target_specialists = max(1, total_users_needed // 5)  # 20% specialists
+        target_program_officers = max(1, total_users_needed // 10)  # 10% program officers
+        target_students = total_users_needed - (target_specialists + target_program_officers)  # Remaining are students
 
-    def generate_user_fixtures(self, connection = None):
-        for data in user_fixtures:
-            department = None
-            if data['role'] == 'specialists':    
-                specialist_departments = Department.objects.filter(responsible_roles__icontains='specialists')
-                if specialist_departments.exists():
-                    department = random.choice(specialist_departments)
-            elif data['role'] == 'program_officers':
-                    department = Department.objects.get(name="general_enquiry")
-            self.try_create_user(data, department)
+        users = []
 
-    def generate_random_users(self, connection=None):
-        user_count = User.objects.count()
-        while  user_count < self.USER_COUNT:
-            print(f"Seeding user {user_count}/{self.USER_COUNT}", end='\r')
-            self.generate_user(connection)
-            user_count = User.objects.count()
-        print("User seeding complete.      ")
+        # Add predefined users
+        for data in USER_FIXTURES:
+            users.append(self.prepare_user_data(data, data["role"], specialist_departments))
 
-    def generate_user(self, connection=None):
-        first_name = self.faker.first_name()
-        last_name = self.faker.last_name()
-        email = create_email(first_name, last_name)
-        username = create_username(first_name, last_name)
-        
-         # Ensure unique email
-        while User.objects.filter(email=email).exists():
-            email = create_email(first_name, last_name)
-            
-        role = self.faker.random_element(['students', 'program_officers', 'specialists'])
+        # Assign at least one specialist to every department
+        for dept in specialist_departments:
+            if len(users) >= total_users_needed:
+                break  # Stop if have enough users
+            users.append(self.prepare_user_data(self.generate_random_user_data(), "specialists", [dept]))
+
+        # Generate remaining users while ensuring balanced role distribution
+        assigned_specialists = len([u for u in users if u.role == "specialists"])
+        assigned_program_officers = len([u for u in users if u.role == "program_officers"])
+        assigned_students = len([u for u in users if u.role == "students"])
+
+        while len(users) + User.objects.count() < total_users_needed:
+            user_data = self.generate_random_user_data()
+
+            if assigned_specialists < target_specialists:
+                role = "specialists"
+                assigned_specialists += 1
+            elif assigned_program_officers < target_program_officers:
+                role = "program_officers"
+                assigned_program_officers += 1
+            else:
+                role = "students"
+                assigned_students += 1
+
+            users.append(self.prepare_user_data(user_data, role, specialist_departments))
+
+        # Bulk create users
+        User.objects.bulk_create(users, ignore_conflicts=True)
+        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(users)} users."))
+
+    def prepare_user_data(self, data, role=None, specialist_departments=None):
+        """Assigns users to roles and departments proportionally."""
         department = None
-        # Only assign department to specialists
-        if role == 'specialists':
-            department = Department.objects.filter(responsible_roles__icontains='specialists')
-            if department.exists():
-                department = random.choice(department)
 
-        self.try_create_user({'username': username, 'email': email, 'first_name': first_name, 'last_name': last_name, 'role': role}, department)
-       
-    def try_create_user(self, data, department=None, connection=None):
-        try:
-            if 'role' not in data:  # Default to 'others', this is for the admin, superuser.
-                data['role'] = 'others'
-            self.create_user(data, department, connection)
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"Error creating user {data['username']}: {e}"))
+        if role == 'specialists' and specialist_departments:
+            department = min(specialist_departments, key=lambda d: User.objects.filter(department=d).count())
+        elif role == 'program_officers':
+            department = Department.objects.get(name="general_enquiry")
 
-    def send_welcome_email(self, user, connection=None):
-        subject = f"Welcome, {user.first_name}!"
-        message = f"""
-        Hello {user.first_name},
-
-        Your university account has been created successfully.
-
-        Username: {user.username}
-        Email: {user.email}
-        Password: {Command.DEFAULT_PASSWORD} (Please change it after login)
-
-        You can log in to the system and manage your tickets.
-
-        Regards,
-        WuKong Help Desk
-        """
-        try:
-            send_mail(
-                subject, 
-                message, 
-                settings.EMAIL_HOST_USER, 
-                [user.email], 
-                connection=connection  
-            )
-            self.stdout.write(self.style.SUCCESS(f"✅ Email sent to {user.email}"))
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f"❌ Error sending email to {user.email}: {e}"))  # ✅ 记录详细错误
-
-        
-    def create_user(self, data, department=None, connection=None):
-        user = User.objects.create_user(
+        return User(
             username=data['username'],
             email=data['email'],
-            password=Command.DEFAULT_PASSWORD,
+            password=self.DEFAULT_PASSWORD,
             first_name=data['first_name'],
             last_name=data['last_name'],
-            role=data.get('role', 'others'), # Default to 'others'
-        )
-        if department:
-            user.department = department
-            user.save()
-    
-    def create_sample_tickets(self):
-        """Generate random tickets for students"""
-        students = User.objects.filter(role='students')
-        if students.exists():
-            for student in students[:20]:  # Create only for first 20 students
-                Ticket.objects.create(
-                    title=self.faker.sentence(),
-                    description=self.faker.text(),
-                    status=random.choice(['open', 'pending', 'closed']),
-                    creator=student
-                )
-                self.stdout.write(self.style.SUCCESS(f"Sample ticket created for {student.username}"))
-
-                    
-    def generate_tickets(self):
-        ticket_count = Ticket.objects.count()
-        while ticket_count < self.TICKET_COUNT:
-            print(f"Seeding ticket {ticket_count}/{self.TICKET_COUNT}", end='\r')
-            self.create_ticket()
-            ticket_count = Ticket.objects.count()
-        print("Ticket seeding complete.      ")
-
-    def create_ticket(self):
-        user = User.objects.order_by('?').first()  # Random user
-        department = random.choice([d['name'] for d in Department.objects.values('name')])
-
-        # Random title, description, and status
-        title = self.faker.sentence(nb_words=6)
-        description = self.faker.text(max_nb_chars=200)
-        status = random.choice(['open', 'in_progress', 'resolved', 'closed'])
-        priority = random.choice(['low', 'medium', 'high', 'urgent'])
-
-        # Generate ticket
-        ticket = Ticket.objects.create(
-            creator=user,
-            title=title,
-            description=description,
-            status=status,
-            priority=priority,
-            assigned_department=department,
+            role=role,
+            department=department
         )
 
-        # Optionally assign it to a specialist
-        if random.random() < 0.5:  # 50% chance to assign it to a specialist
-            specialist = random.choice(User.objects.filter(role='specialists').order_by('?'))
-            ticket.assigned_user = specialist
-            ticket.save()
+    def generate_random_user_data(self):
+        """Generates random user data."""
+        first_name, last_name = self.faker.first_name(), self.faker.last_name()
+        return {
+            "username": f"@{first_name.lower()}{last_name.lower()}",
+            "email": f"{first_name.lower()}.{last_name.lower()}@wukong.ac.uk",
+            "first_name": first_name,
+            "last_name": last_name
+        }
+        
+    def create_tickets(self):
+        """Generate meaningful tickets for students using AWS Bedrock."""
+        students = list(User.objects.filter(role='students'))
+        if not students:
+            self.stdout.write(self.style.WARNING("No students found, skipping ticket creation."))
+            return
 
-        self.stdout.write(self.style.SUCCESS(f"Ticket '{ticket.title}' created."))
-   
+        departments = list(Ticket.DEPARTMENT_CHOICES)
+        new_tickets = []
+        new_ai_tickets = []
+
+        while len(new_tickets) < self.TICKET_COUNT:
+            student = random.choice(students)
+            department = random.choice(departments)[0]
+
+            # Prompt for student query generation
+            prompt = f"Create a meaningful/realistic university student query with a title and a description for the {department} department. 50 words max. Answer in a paragraph, do not involve quotation marks or words like: 1.Here is a university student query for the study_abroad department: 2.title/description, just keep the query itself. The first sentence should be the title of the query, the rest should be the description. Separate the title and description with a period."
+            ai_generated_query = query_bedrock(prompt)
+
+            if not ai_generated_query:
+                continue
+
+            match = re.match(r"^(.*?[.?!])\s*(.*)", ai_generated_query.strip())
+            if match:
+                title = match.group(1).strip()
+                description = match.group(2).strip() or "Further details required."
+            else:
+                title = ai_generated_query.strip()
+                description = "Further details required."
+            
+            ticket = Ticket(
+                creator=student,
+                title=title,
+                description=description,
+                status='open',
+                priority=random.choice(['low', 'medium', 'high', 'urgent']),
+            )
+            new_tickets.append(ticket)
+        
+        created_tickets = Ticket.objects.bulk_create(new_tickets)
+        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(created_tickets)} tickets."))
+
+        for ticket in created_tickets:
+            ai_department = classify_department(ticket.description)
+            ai_answer = generate_ai_answer(ticket.description)
+
+            ai_ticket = AITicketProcessing.objects.create(
+                ticket=ticket,
+                ai_generated_response=ai_answer,
+                ai_assigned_department=ai_department
+            )
+            new_ai_tickets.append(ai_ticket)
+            self.stdout.write(self.style.SUCCESS(f"Ticket title: {ticket.title}"))
+            self.stdout.write(self.style.SUCCESS(f"Description: {ticket.description}"))
+            self.stdout.write(self.style.SUCCESS(f"   "))
+            self.stdout.write(self.style.SUCCESS(f"AI Response: {ai_answer}"))
+            self.stdout.write(self.style.SUCCESS(f"==============================================================================="))
+            self.stdout.write(self.style.SUCCESS(f"==============================================================================="))
+            self.stdout.write(self.style.SUCCESS(f"   "))
+        self.stdout.write(self.style.SUCCESS(f"Successfully answered {len(new_ai_tickets)} tickets."))
+
 def create_username(first_name, last_name):
     return '@' + first_name.lower() + last_name.lower()
 
 def create_email(first_name, last_name):
-    return first_name + '.' + last_name + '@example.org'
+    return first_name + '.' + last_name + '@wukong.ac.uk'
 

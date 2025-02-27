@@ -173,11 +173,9 @@
                         <!-- Respond to Ticket Form -->
                         <form method="post" action="">
                           {% csrf_token %}
-                          <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
-                          <textarea name="response_message" placeholder="Enter your response here..." required></textarea>
-                          <button type="submit" name="respond_ticket" class="btn btn-sm btn-primary">Respond</button>
+                          <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
                         </form>
-                      </td>
+                    </td>
                     </tr>
                   {% endfor %}
                 </tbody>

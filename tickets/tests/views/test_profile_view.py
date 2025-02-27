@@ -21,7 +21,7 @@ class ProfileViewTest(TestCase):
             'first_name': 'John2',
             'last_name': 'Doe2',
             'username': '@johndoe2',
-            'email': 'johndoe2@example.org',
+            'email': 'johndoe2@wukong.ac.uk',
         }
 
     def test_profile_url(self):
@@ -57,7 +57,7 @@ class ProfileViewTest(TestCase):
         self.assertEqual(self.user.username, '@johndoe')
         self.assertEqual(self.user.first_name, 'John')
         self.assertEqual(self.user.last_name, 'Doe')
-        self.assertEqual(self.user.email, 'johndoe@example.org')
+        self.assertEqual(self.user.email, 'johndoe@wukong.ac.uk')
 
     def test_unsuccessful_profile_update_due_to_duplicate_username(self):
         self.client.login(username=self.user.username, password='Password123')
@@ -75,7 +75,7 @@ class ProfileViewTest(TestCase):
         self.assertEqual(self.user.username, '@johndoe')
         self.assertEqual(self.user.first_name, 'John')
         self.assertEqual(self.user.last_name, 'Doe')
-        self.assertEqual(self.user.email, 'johndoe@example.org')
+        self.assertEqual(self.user.email, 'johndoe@wukong.ac.uk')
 
     def test_succesful_profile_update(self):
         self.client.login(username=self.user.username, password='Password123')
@@ -93,7 +93,7 @@ class ProfileViewTest(TestCase):
         self.assertEqual(self.user.username, '@johndoe2')
         self.assertEqual(self.user.first_name, 'John2')
         self.assertEqual(self.user.last_name, 'Doe2')
-        self.assertEqual(self.user.email, 'johndoe2@example.org')
+        self.assertEqual(self.user.email, 'johndoe2@wukong.ac.uk')
 
     def test_post_profile_redirects_when_not_logged_in(self):
         redirect_url = reverse_with_next('log_in', self.url)

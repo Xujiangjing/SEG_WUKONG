@@ -133,6 +133,7 @@ class Ticket(models.Model):
         ('redirected', 'Redirected'),
         ('responded', 'Responded'),
         ('closed', 'Closed'),
+        ('merged', 'Merged'),
     ]
 
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_tickets')
@@ -186,3 +187,29 @@ class TicketActivity(models.Model):
 
     def __str__(self):
         return f"Activity for Ticket {self.ticket.id} by {self.action_by.username} on {self.action_time}"
+
+
+class Response(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses') 
+    responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank = True, related_name='user_responses')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        responder_name = self.responder.full_name() if self.responder else "Unknown"
+        return f"Response {self.id} to Ticket {self.ticket.id} by {responder_name}"
+
+class AITicketProcessing(models.Model):
+    ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='ai_processing')
+    ai_generated_response = models.TextField(blank=True, null=True, help_text="AI-generated response for review.")
+    ai_assigned_department = models.CharField(
+        max_length=50,
+        choices=Ticket.DEPARTMENT_CHOICES,
+        default='general_enquiry',
+        help_text="AI-suggested department classification."
+    )
+
+    def __str__(self):
+        return f"AI Processing for Ticket {self.ticket.id}"
+
