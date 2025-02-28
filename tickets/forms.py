@@ -2,7 +2,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.core.validators import RegexValidator
-from .models import User, Ticket, TicketAttachment
+
+from .models import Ticket, TicketAttachment, User
 
 
 class LogInForm(forms.Form):
@@ -113,10 +114,9 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'description', 'priority', 'assigned_department']
+        fields = ['title', 'description', 'priority']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 5}),
-            'assigned_department': forms.Select(attrs={'class': 'form-select'}),
             'priority': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -141,3 +141,18 @@ class TicketAttachmentForm(forms.ModelForm):
         fields = ['file']
 
 
+# The ReturnTicketForm form is used to create a form for returning a ticket.
+class ReturnTicketForm(forms.Form):
+    return_reason = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter reason for returning'}),
+        label="Reason for Returning",
+        required=True
+    )
+
+# The SupplementTicketForm form is used to create a form for supplementing a ticket.
+class SupplementTicketForm(forms.Form):
+    supplement_info = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter additional information'}),
+        label="Supplement Information",
+        required=True
+    )

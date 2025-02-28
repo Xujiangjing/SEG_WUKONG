@@ -10,9 +10,6 @@
     {% csrf_token %}
     {% include 'partials/bootstrap_form.html' with form=form %}
     <div class="mb-3">
-      <label for="id_description" class="form-label">Description</label>
-      <textarea name="description" id="id_description" class="form-control" rows="3"></textarea>
-    <div class="mb-3">
       <label for="id_file" class="form-label">Attachments (optional)</label>
       <input type="file" name="file" id="id_file" class="form-control" multiple>
     </div>

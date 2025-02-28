@@ -8,22 +8,39 @@
 
       <ul class="nav nav-pills mb-3" id="dashboard-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <a class="nav-link" id="profile-tab" data-bs-toggle="pill" href="#profile" role="tab" aria-controls="profile" aria-selected="true">Profile</a>
+          <a class="nav-link" id="profile-tab" data-bs-toggle="pill" href="#profile"
+             role="tab" aria-controls="profile" aria-selected="true">
+            Profile
+          </a>
         </li>
         <li class="nav-item" role="presentation">
-          <a class="nav-link active" id="tickets-tab" data-bs-toggle="pill" href="#tickets" role="tab" aria-controls="tickets" aria-selected="false">Tickets</a>
+          <a class="nav-link active" id="tickets-tab" data-bs-toggle="pill" href="#tickets"
+             role="tab" aria-controls="tickets" aria-selected="false">
+            Tickets
+          </a>
         </li>
       </ul>
 
       <div class="tab-content" id="dashboard-tabs-content">
+
+        <!-- Profile Tab -->
         <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
           <h2>Your Profile</h2>
           <ul class="list-group">
-            <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
-            <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
-            <li class="list-group-item"><strong>First Name:</strong> {{ user.first_name }}</li>
-            <li class="list-group-item"><strong>Last Name:</strong> {{ user.last_name }}</li>
-            <li class="list-group-item"><strong>Role:</strong>
+            <li class="list-group-item">
+              <strong>Username:</strong> {{ user.username }}
+            </li>
+            <li class="list-group-item">
+              <strong>Email:</strong> {{ user.email }}
+            </li>
+            <li class="list-group-item">
+              <strong>First Name:</strong> {{ user.first_name }}
+            </li>
+            <li class="list-group-item">
+              <strong>Last Name:</strong> {{ user.last_name }}
+            </li>
+            <li class="list-group-item">
+              <strong>Role:</strong>
               {% if user.is_program_officer %}
                 Program Officer
               {% elif user.is_specialist %}
@@ -37,39 +54,79 @@
           </ul>
         </div>
 
-        <!-- Search Box -->
-        <div class="search-box mb-4">
+        <!-- Tickets Tab -->
+        <div class="tab-pane fade show active" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
+
+          <!-- Filter & Sort Form -->
           <form method="GET" action="{% url 'dashboard' %}">
-              <div class="input-group">
-                  <input 
-                      type="text" 
-                      class="form-control" 
-                      name="search" 
-                      value="{{ request.GET.search }}" 
-                      placeholder="Search for tickets..."
+            <div class="row mb-4">
+              <!-- Search input -->
+              <div class="col-md-3 mb-2 mb-md-0">
+                <input
+                  type="text"
+                  class="form-control"
+                  name="search"
+                  value="{{ request.GET.search }}"
+                  placeholder="Search for tickets..."
+                />
+              </div>
+
+              <!-- Status filter dropdown -->
+              <div class="col-md-3 mb-2 mb-md-0">
+                <select name="status" class="form-select">
+                  <option value="">-- Filter by Status --</option>
+                  <option value="open" {% if request.GET.status == 'open' %}selected{% endif %}>Open</option>
+                  <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                  <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                  <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
+                  <option value="returned" {% if request.GET.status == 'returned' %}selected{% endif %}>Returned</option>
+                </select>
+              </div>
+
+              <!-- Sort dropdown -->
+              <div class="col-md-3 mb-2 mb-md-0">
+                <select name="sort" class="form-select">
+                  <option value="">-- Sort By --</option>
+                  <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+                  <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
+                  <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
+                  <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
+                </select>
+              </div>
+
+              <!-- Buttons -->
+              <div class="col-md-3">
+                <div class="input-group">
+                  <button type="submit" class="btn btn-primary">Apply</button>
+                  <!-- Clear button resets all filters -->
+                  <button
+                    type="submit"
+                    class="btn btn-secondary ms-2"
+                    onclick="
+                      this.form.search.value='';
+                      this.form.status.value='';
+                      this.form.sort.value='';
+                    "
                   >
-                  <button type="submit" class="btn btn-primary">
-                    Search
-                  </button>
-                  <button type="submit" class="btn btn-secondary ms-2" onclick="this.form.search.value = ''">
                     Clear
                   </button>
                 </div>
-            </form>
-        </div>
+              </div>
+            </div>
+          </form>
 
-        <div class="tab-pane fade show active" id="tickets" role="tabpanel" aria-labelledby="tickets-tab">
+          <!-- Program Officer tickets -->
           {% if user.is_program_officer %}
             <h2>Tickets</h2>
             {% if not all_tickets %}
-              {% if request.GET.search %}
-                  <div class="alert alert-info" role="alert">
-                      No tickets found matching your search criteria. Try a different search term.
-                  </div>
+              {% if request.GET.search or request.GET.status or request.GET.sort %}
+                <div class="alert alert-info" role="alert">
+                  No tickets found matching your criteria. Try a different filter or search term.
+                </div>
               {% else %}
-                  <div class="alert alert-info" role="alert">
-                      No tickets posted at the moment.
-                  </div>
+                <div class="alert alert-info" role="alert">
+                  No tickets posted at the moment.
+                </div>
               {% endif %}
             {% else %}
               <table class="table table-bordered table-striped table-light">
@@ -93,7 +150,6 @@
                       <td>{{ ticket.priority }}</td>
                       <td>{{ ticket.assigned_user }}</td>
                       <td>
-                        <!-- Check if ticket.answers is None or empty -->
                         {% if ticket.answers %}
                           Answered
                         {% else %}
@@ -113,15 +169,13 @@
                           </select>
                           <button type="submit" name="redirect_ticket" class="btn btn-sm btn-warning">Redirect to Specialist</button>
                         </form>
-                        
                         <br>
+                        <!-- Respond to Ticket Form -->
                         <form method="post" action="">
                           {% csrf_token %}
-                          <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
-                          <textarea name="response_message" placeholder="Enter your response here..." required></textarea>
-                          <button type="submit" name="respond_ticket" class="btn btn-sm btn-primary">Respond</button>
+                          <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
                         </form>
-                      </td>
+                    </td>
                     </tr>
                   {% endfor %}
                 </tbody>
@@ -147,62 +201,63 @@
             </table>
           {% endif %}
 
+          <!-- Student tickets -->
           {% if user.is_student %}
             <h2>Your Submitted Tickets</h2>
-            <!-- Messages Section -->
             {% if not student_tickets %}
-              {% if request.GET.search %}
-                  <div class="alert alert-info" role="alert">
-                      No tickets found matching your search criteria. Try a different search term.
-                  </div>
+              {% if request.GET.search or request.GET.status or request.GET.sort %}
+                <div class="alert alert-info" role="alert">
+                  No tickets found matching your criteria. Try a different filter or search term.
+                </div>
               {% else %}
-                  <div class="alert alert-info" role="alert">
-                      No tickets posted at the moment.
-                  </div>
+                <div class="alert alert-info" role="alert">
+                  No tickets posted at the moment.
+                </div>
               {% endif %}
             {% else %}
-                <table class="table table-bordered table-striped table-light">
-                  <thead class="table-blue">
+              <table class="table table-bordered table-striped table-light">
+                <thead class="table-blue">
+                  <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Answers</th>
+                    <th></th> <!-- empty heading for actions -->
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ticket in student_tickets %}
                     <tr>
-                      <th>Title</th>
-                      <th>Status</th>
-                      <th>Priority</th>
-                      <th>Answers</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for ticket in student_tickets %}
-                      <tr>
-                        <td>{{ ticket.title }}</td>
-                        <td>{{ ticket.status }}</td>
-                        <td>{{ ticket.priority }}</td>
-                        <td>
-                          <!-- Display the answers for the ticket -->
-                          <pre>{{ ticket.answers }}</pre>
-                        </td>
-                      </tr>
-                      {% if ticket.status == 'open' %}
-                        <td>
+                      <td>{{ ticket.title }}</td>
+                      <td>{{ ticket.status }}</td>
+                      <td>{{ ticket.priority }}</td>
+                      <td>
+                        <pre>{{ ticket.answers }}</pre>
+                      </td>
+                      <td>
+                        {% if ticket.status == 'open' %}
                           <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
-                        </td>
-                      {% endif %}
-                    {% endfor %}
-                  </tbody>
-                </table>              
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             {% endif %}
           {% endif %}
 
+          <!-- Specialist tickets -->
           {% if user.is_specialist %}
             <h2>Your Assigned Tickets</h2>
             {% if not assigned_tickets %}
-              {% if request.GET.search %}
-                  <div class="alert alert-info" role="alert">
-                      No tickets found matching your search criteria. Try a different search term.
-                  </div>
+              {% if request.GET.search or request.GET.status or request.GET.sort %}
+                <div class="alert alert-info" role="alert">
+                  No tickets found matching your criteria. Try a different filter or search term.
+                </div>
               {% else %}
-                  <div class="alert alert-info" role="alert">
-                      No tickets posted at the moment.
-                  </div>
+                <div class="alert alert-info" role="alert">
+                  No tickets posted at the moment.
+                </div>
               {% endif %}
             {% else %}
               <table class="table table-bordered table-striped table-light">
@@ -222,7 +277,6 @@
                       <td>{{ ticket.status }}</td>
                       <td>{{ ticket.priority }}</td>
                       <td>
-                        <!-- Display the answers for the ticket -->
                         <pre>{{ ticket.answers }}</pre>
                       </td>
                       <td>
@@ -240,8 +294,9 @@
               </table>
             {% endif %}
           {% endif %}
-        </div>
-      </div>
+
+        </div> <!-- end of tickets tab -->
+      </div> <!-- end of tab-content -->
     </div>
   </div>
 </div>
