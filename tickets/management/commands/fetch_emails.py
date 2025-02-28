@@ -1,6 +1,7 @@
 import imaplib
 import email
 import re
+import sys
 import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
@@ -30,74 +31,58 @@ class Command(BaseCommand):
             for email_id in email_ids:
                 status, msg_data = mail.fetch(email_id, "(RFC822)")
                 for response_part in msg_data:
-                    if isinstance(response_part, tuple):
-                        msg = email.message_from_bytes(response_part[1])
+                    payload = response_part[1]
+                    msg = email.message_from_bytes(payload)
 
-                        # Decode email subject
-                        subject, encoding = decode_header(msg["Subject"])[0]
-                        if isinstance(subject, bytes):
-                            subject = subject.decode(encoding or "utf-8")
-
-                        sender = msg.get("From")
+                    # Decode email subject
+                    subject, sender_email, body = self.parse_email_message(msg)
+                    
+                    # filter out failure notifications
+                    if "mailer-daemon" in sender_email.lower() or "delivery status notification" in subject.lower():
+                        continue
+                    
+                    # revise the code to create a new user if the sender is not in the database
+                    user, created = User.objects.get_or_create(
+                        email=sender_email,
+                        defaults={
+                            "username": sender_email.split("@")[0],
+                            "password": "TemporaryPass123",
+                        }
+                    )
+                    if created:
+                        user.set_password("TemporaryPass123")
+                        user.save()
                         
-                        # Extract the sender's email address
-                        match = re.search(r"<(.+?)>", sender)
-                        sender_email = match.group(1) if match else sender
+                    # Check for AI-based spam detection
+                    if self.is_spam(subject, body):
+                        continue
+                    
+                    # Check for duplicate tickets
+                    existing_ticket = self.is_duplicate_ticket(sender_email, subject, body)
 
-                        # filter out failure notifications
-                        if "mailer-daemon" in sender_email.lower() or "delivery status notification" in subject.lower():
-                            self.stdout.write(self.style.WARNING(f"⚠️ Skipping failure notification from {sender_email}: {subject}"))
-                            continue
-                        
-                        body = ""
+                    if existing_ticket:
+                        self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
+                        continue  # Skip creating the ticket                       
 
-                        # Extract the email body
-                        if msg.is_multipart():
-                            for part in msg.walk():
-                                content_type = part.get_content_type()
-                                if content_type == "text/plain":
-                                    body = part.get_payload(decode=True)
-                                    if isinstance(body, bytes):  # make sure it's a string
-                                        body = body.decode("utf-8", errors="ignore")
-                                    break
-                        else:
-                            body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
-                            
-                        # revise the code to create a new user if the sender is not in the database
-                        user = User.objects.filter(email=sender_email).first()
-                        if not user:
-                            user = User.objects.create(username=sender_email.split("@")[0], email=sender_email, password="TemporaryPass123")
-                            self.stdout.write(self.style.WARNING(f"⚠️ Created new user for {sender_email}"))
+                    department = self.categorize_ticket(subject, body)
 
-                        # Check for AI-based spam detection
-                        if self.is_spam(subject, body):
-                            self.stdout.write(self.style.WARNING(f"🚫 AI detected spam from {sender_email}: {subject}"))
-                            continue
-                        
-                        # Check for duplicate tickets
-                        existing_ticket = self.is_duplicate_ticket(sender_email, subject, body)
+                    # create a new ticket
+                    ticket = Ticket.objects.create(
+                        title=subject,
+                        description=body,
+                        creator=user,
+                        sender_email=sender_email,
+                        status="open",
+                        assigned_department=department
+                    )
 
-                        if existing_ticket:
-                            self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
-                            self.stdout.write(self.style.WARNING(f"⚠️ Duplicate ticket detected: {subject}, informing {sender_email}"))
-                            continue  # Skip creating the ticket                       
+                    ai_process_ticket(ticket)
 
-                        # department = self.categorize_ticket(subject, body)
+                    # send a confirmation email to the student
+                    self.send_confirmation_email(sender_email, subject)
 
-                        # create a new ticket
-                        ticket = Ticket.objects.create(
-                            title=subject,
-                            description=body,
-                            creator=user,
-                            sender_email=sender_email,
-                            status="open",
-                        )
-                        ai_process_ticket(ticket)
-
-                        self.send_confirmation_email(sender_email, subject)
-                        self.stdout.write(self.style.SUCCESS(f"🎫 Ticket created from email: {subject}"))
-                        # mark the email as read
-                        mail.store(email_id, "+FLAGS", "\\Seen")
+                    # mark the email as read
+                    mail.store(email_id, "+FLAGS", "\\Seen")
 
             mail.logout()
         except Exception as e:
@@ -198,11 +183,6 @@ class Command(BaseCommand):
             html_message=html_message,  # Use the HTML content
         )
         
-
-        self.stdout.write(self.style.SUCCESS(f"📧 Confirmation email sent to {student_email}"))
-        
-        from django.utils.timezone import now, timedelta
-
     def is_duplicate_ticket(self, sender_email, subject, body):
         """
         Checks if a duplicate ticket exists in the last 7 days.
@@ -221,7 +201,6 @@ class Command(BaseCommand):
             if old_ticket.response_count == 0:  # Allow resubmission if no response over 7 days
                 return None
             else:
-                print(f"🚫 Sending duplicate notice for old ticket ID {old_ticket.id}")
                 self.send_duplicate_notice(sender_email, subject, old_ticket.id)  # Notify student
                 return old_ticket  # Reject resubmission if there is a response even after 7 days
     
@@ -234,7 +213,6 @@ class Command(BaseCommand):
         ).order_by("-created_at").first()
         
         if recent_ticket:
-            print(f"🚫 Sending duplicate notice for recent ticket ID {recent_ticket.id}")
             self.send_duplicate_notice(sender_email, subject, recent_ticket.id)  # Notify student
             return recent_ticket  # Check for a recent ticket within 7 days
         
@@ -261,22 +239,12 @@ class Command(BaseCommand):
         """
         send_mail(subject, message, settings.EMAIL_HOST_USER, [student_email])
 
-
     def is_spam(self, subject, body):
-        """
-        Uses Google's Perspective API to detect spam.
-        """
-        
-        # Skip spam detection in test mode
+        """Uses Google's Perspective API to detect spam."""
         if settings.TESTING:
-            self.stdout.write(self.style.WARNING("🚧 Skipping spam detection in test mode"))
-            return False 
+            return False
         
         PERSPECTIVE_API_KEY = settings.PERSPECTIVE_API_KEY
-        
-        if not PERSPECTIVE_API_KEY:
-            self.stderr.write(self.style.ERROR("❌ Lack Perspective API key"))
-            return False
         
         url = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze"
         content = f"{subject} {body}"
@@ -297,8 +265,48 @@ class Command(BaseCommand):
             spam_score = result.get("attributeScores", {}).get("SPAM", {}).get("summaryScore", {}).get("value", 0)
             return spam_score > 0.8  
         except requests.RequestException as e:
-            self.stderr.write(self.style.ERROR(f"❌ Request error: {e}"))
+            print("❌ Error connecting to Perspective API:", e)
             return False
         except ValueError:
-            self.stderr.write(self.style.ERROR("❌ Invalid JSON response"))
+            print("❌ Invalid JSON response from Perspective API")
             return False
+
+    def parse_email_message(self, msg):
+        """Decodes the email message and extracts the subject, sender, and body."""
+        
+        # Decode email subject
+        subject = ""
+        for part, encoding in decode_header(msg.get("Subject", "")):
+            if isinstance(part, bytes):
+                subject += part.decode(encoding or "utf-8", errors="ignore")
+            else:
+                subject += part
+
+        # Extract sender's email    
+        sender = msg.get("From", "")
+        match = re.search(r"<(.+?)>", sender)
+        sender_email = match.group(1) if match else sender
+
+        # Extract email body only if necessary
+        body = ""
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_maintype() == "multipart":
+                    continue
+                content_type = part.get_content_type()
+                content_disposition = str(part.get("Content-Disposition"))
+                if content_type == "text/plain" and "attachment" not in content_disposition:
+                    part_payload = part.get_payload(decode=True)
+                    if part_payload:
+                        body = part_payload.decode("utf-8", errors="ignore")
+                    break
+        else:
+            payload = msg.get_payload(decode=True)
+            if payload:
+                body = payload.decode("utf-8", errors="ignore")
+            
+        return subject, sender_email, body
+    
+    
+
+      
