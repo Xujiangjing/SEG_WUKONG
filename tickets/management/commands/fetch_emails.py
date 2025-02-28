@@ -1,11 +1,16 @@
 import imaplib
 import email
 import re
+import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
-from tickets.models import Ticket, Department, User
+from tickets.models import Ticket, Department, User, AITicketProcessing
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils.timezone import now, timedelta
+import os
+from django.db.models import Count
+from tickets.ai_service import generate_ai_answer, classify_department
 
 
 class Command(BaseCommand):
@@ -14,8 +19,8 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         try:
             # Connect to Gmail IMAP server
-            mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
-            mail.login("wukonghelpdesk@gmail.com", "bynw apnb vmuu nmun")
+            mail = imaplib.IMAP4_SSL(settings.IMAP_HOST, settings.IMAP_PORT)
+            mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             mail.select("inbox")  # Select the inbox
 
             # Search for unread emails
@@ -58,22 +63,43 @@ class Command(BaseCommand):
                         else:
                             body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
                             
-                        assigned_department = self.categorize_ticket(subject, body)
-                        
                         # revise the code to create a new user if the sender is not in the database
                         user = User.objects.filter(email=sender_email).first()
                         if not user:
                             user = User.objects.create(username=sender_email.split("@")[0], email=sender_email, password="TemporaryPass123")
                             self.stdout.write(self.style.WARNING(f"⚠️ Created new user for {sender_email}"))
 
+                        # Check for AI-based spam detection
+                        if self.is_spam(subject, body):
+                            self.stdout.write(self.style.WARNING(f"🚫 AI detected spam from {sender_email}: {subject}"))
+                            continue
+                        
+                        # Check for duplicate tickets
+                        existing_ticket = self.is_duplicate_ticket(sender_email, subject, body)
+
+                        if existing_ticket:
+                            self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
+                            self.stdout.write(self.style.WARNING(f"⚠️ Duplicate ticket detected: {subject}, informing {sender_email}"))
+                            continue  # Skip creating the ticket                       
+
+                        # department = self.categorize_ticket(subject, body)
+
                         # create a new ticket
-                        Ticket.objects.create(
+                        ticket = Ticket.objects.create(
                             title=subject,
                             description=body,
                             creator=user,
                             sender_email=sender_email,
                             status="open",
-                            assigned_department=assigned_department
+                            # assigned_department=department
+                        )
+
+                        ai_department = classify_department(ticket.description)
+                        ai_answer = generate_ai_answer(ticket.description)
+                        AITicketProcessing.objects.create(
+                            ticket=ticket,
+                            ai_generated_response=ai_answer,
+                            ai_assigned_department=ai_department
                         )
 
                         # send a confirmation email to the student
@@ -89,6 +115,7 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"❌ Error fetching emails: {e}"))
 
+    
     
     def categorize_ticket(self, subject, body):
         """Assigns a category based on keywords in the subject or body."""
@@ -182,5 +209,108 @@ class Command(BaseCommand):
             fail_silently=False,
             html_message=html_message,  # Use the HTML content
         )
+        
 
         self.stdout.write(self.style.SUCCESS(f"📧 Confirmation email sent to {student_email}"))
+        
+        from django.utils.timezone import now, timedelta
+
+    def is_duplicate_ticket(self, sender_email, subject, body):
+        """
+        Checks if a duplicate ticket exists in the last 7 days.
+        - It allows resubmission if no response is received within 7 days.
+        """
+        time_threshold = now() - timedelta(days=7)
+        # search for an old ticket with the same details
+        old_ticket = Ticket.objects.annotate(response_count=Count("responses")).filter(
+            sender_email=sender_email.strip(),
+            title__iexact=subject.strip(),
+            description__iexact=body.strip(),
+            created_at__lt=time_threshold  # 7 days ago
+        ).order_by("-created_at").first()
+
+        if old_ticket:
+            if old_ticket.response_count == 0:  # Allow resubmission if no response over 7 days
+                return None
+            else:
+                print(f"🚫 Sending duplicate notice for old ticket ID {old_ticket.id}")
+                self.send_duplicate_notice(sender_email, subject, old_ticket.id)  # Notify student
+                return old_ticket  # Reject resubmission if there is a response even after 7 days
+    
+        # Search for a recent ticket within 7 days
+        recent_ticket = Ticket.objects.filter(
+            sender_email=sender_email.strip(),
+            title__iexact=subject.strip(),
+            description__iexact=body.strip(),
+            created_at__gte=time_threshold  # within 7 days
+        ).order_by("-created_at").first()
+        
+        if recent_ticket:
+            print(f"🚫 Sending duplicate notice for recent ticket ID {recent_ticket.id}")
+            self.send_duplicate_notice(sender_email, subject, recent_ticket.id)  # Notify student
+            return recent_ticket  # Check for a recent ticket within 7 days
+        
+        return None  # No duplicate ticket found
+
+    def send_duplicate_notice(self, student_email, ticket_title, ticket_id):
+        """
+        Sends an email notifying the student that their ticket is a duplicate.
+        """
+        subject = f"Duplicate Ticket Submission - {ticket_title}"
+        message = f"""
+        Hello,
+
+        You have already submitted a ticket with the same details: '{ticket_title}'.
+        You can track it using Ticket ID #{ticket_id}.
+
+        Our team is currently working on it. Please wait for a response before submitting again.
+        If no response is received within 7 days, you may resubmit.
+
+        Thank you for your patience.
+
+        Regards,
+        WuKong Help Desk 
+        """
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [student_email])
+
+
+    def is_spam(self, subject, body):
+        """
+        Uses Google's Perspective API to detect spam.
+        """
+        
+        # Skip spam detection in test mode
+        if settings.TESTING:
+            self.stdout.write(self.style.WARNING("🚧 Skipping spam detection in test mode"))
+            return False 
+        
+        PERSPECTIVE_API_KEY = settings.PERSPECTIVE_API_KEY
+        
+        if not PERSPECTIVE_API_KEY:
+            self.stderr.write(self.style.ERROR("❌ Lack Perspective API key"))
+            return False
+        
+        url = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze"
+        content = f"{subject} {body}"
+
+        data = {
+            "comment": {"text": content},
+            "requestedAttributes": {"TOXICITY": {}, "SPAM": {}},
+            "languages": ["en"],
+            "doNotStore": True,
+        }
+
+        try:
+            response = requests.post(f"{url}?key={PERSPECTIVE_API_KEY}", json=data)
+            response.raise_for_status()  # check for any request errors
+            result = response.json()
+
+            # Check if the spam score is above the threshold
+            spam_score = result.get("attributeScores", {}).get("SPAM", {}).get("summaryScore", {}).get("value", 0)
+            return spam_score > 0.8  
+        except requests.RequestException as e:
+            self.stderr.write(self.style.ERROR(f"❌ Request error: {e}"))
+            return False
+        except ValueError:
+            self.stderr.write(self.style.ERROR("❌ Invalid JSON response"))
+            return False

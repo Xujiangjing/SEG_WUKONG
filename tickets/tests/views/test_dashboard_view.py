@@ -69,7 +69,7 @@ class DashboardViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'dashboard.html')
         self.assertIn('message', response.context)
-        self.assertEqual(response.context['message'], "You do not have permission to view this dashboard.")
+        self.assertEqual(response.context['message'], "You do not have permission to view this page.")
 
     def test_redirect_ticket(self):
         self.client.login(username='@programofficer', password='Password123')
