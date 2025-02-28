@@ -6,25 +6,24 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from tickets.models import User, Ticket, TicketAttachment
 from tickets.forms import TicketForm
 
+
 class CreateTicketViewTestCase(TestCase):
     """Tests for the CreateTicketView."""
 
     fixtures = [
         'tickets/tests/fixtures/default_user.json',
-        # 'tickets/tests/fixtures/other_users.json'
     ]
 
     def setUp(self):
         """Set up test data for each test."""
         self.user = User.objects.get(username='@johndoe')
-
         self.url = reverse('create_ticket')
+
 
         self.form_input = {
             'title': 'My Test Ticket',
             'description': 'Hello, I have an issue with my coursework.',
-            'priority': 'medium',
-            'assigned_department': 'academic_support'
+            'priority': 'medium'
         }
 
     def test_create_ticket_url(self):
@@ -53,7 +52,7 @@ class CreateTicketViewTestCase(TestCase):
         self.assertTemplateUsed(response, 'tickets/create_ticket.html')
         form = response.context['form']
         self.assertTrue(isinstance(form, TicketForm))
-        self.assertFalse(form.is_bound) 
+        self.assertFalse(form.is_bound)
 
     def test_post_create_ticket_valid_data(self):
         """
@@ -67,21 +66,19 @@ class CreateTicketViewTestCase(TestCase):
         after_count = Ticket.objects.count()
         self.assertEqual(after_count, before_count + 1)
 
-
         ticket = Ticket.objects.latest('created_at')
         self.assertEqual(ticket.title, self.form_input['title'])
         self.assertEqual(ticket.description, self.form_input['description'])
         self.assertEqual(ticket.priority, self.form_input['priority'])
-        self.assertEqual(ticket.assigned_department, self.form_input['assigned_department'])
-        self.assertEqual(ticket.creator, self.user)
 
+        self.assertEqual(ticket.assigned_department, 'general_enquiry')
+        self.assertEqual(ticket.creator, self.user)
 
         expected_redirect_url = reverse('ticket_detail', kwargs={'pk': ticket.pk})
         self.assertRedirects(response, expected_redirect_url, status_code=302, target_status_code=200)
 
-
         messages_list = list(response.context['messages'])
-        self.assertEqual(len(messages_list), 1)  # "Query submitted successfully!"
+        self.assertEqual(len(messages_list), 1)  
         self.assertEqual(messages_list[0].level, messages.SUCCESS)
 
     def test_post_create_ticket_with_attachments(self):
@@ -98,7 +95,6 @@ class CreateTicketViewTestCase(TestCase):
             'title': 'My Test Ticket',
             'description': 'Hello, I have an issue with my coursework.',
             'priority': 'medium',
-            'assigned_department': 'academic_support',
             'file': [file1, file2]
         }
 
@@ -127,12 +123,10 @@ class CreateTicketViewTestCase(TestCase):
         """
         self.client.login(username=self.user.username, password='Password123')
 
-
         invalid_input = {
             'title': '',
             'description': 'No Title Provided',
-            'priority': 'medium',
-            'assigned_department': 'academic_support'
+            'priority': 'medium'
         }
         before_count = Ticket.objects.count()
         response = self.client.post(self.url, invalid_input)

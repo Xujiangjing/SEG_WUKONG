@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Case, When, Value, IntegerField
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -25,86 +25,193 @@ from .ai_service import generate_ai_answer, classify_department
 from .models import Ticket, TicketActivity
 
 
-# todo :improve the dashboard view to handle ticket responses
+
 @login_required
 def dashboard(request):
     current_user = request.user
+
+
     search_query = request.GET.get('search', '')
-    
-    if current_user.is_program_officer() or current_user.is_specialist():
-        if request.method == "POST" and "respond_ticket" in request.POST:
+    status_filter = request.GET.get('status', '')
+    sort_option = request.GET.get('sort', '')
+
+
+    priority_case = Case(
+        When(priority='urgent', then=4),
+        When(priority='high', then=3),
+        When(priority='medium', then=2),
+        When(priority='low', then=1),
+        output_field=IntegerField()
+    )
+
+
+    if current_user.is_program_officer():
+
+        if request.method == 'POST' and 'respond_ticket' in request.POST:
             ticket_id = request.POST.get("ticket_id")
             response_message = request.POST.get("response_message")
-            ticket = Ticket.objects.get(id=ticket_id)
-            if ticket.answers!=None:
-                ticket.answers += "\n" 
-            else :
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+
+ 
+            if ticket.answers:
+                ticket.answers += "\n"
+            else:
                 ticket.answers = ""
             ticket.answers += f"Response by {current_user.username}: {response_message}"
-            ticket.save()  
 
-            ticket_activity = TicketActivity.objects.create(
+            ticket.latest_action = 'responded'
+            ticket.save()
+
+
+            TicketActivity.objects.create(
                 ticket=ticket,
                 action='responded',
                 action_by=current_user,
                 comment=response_message
             )
-            ticket_activity.save()
-            return redirect('dashboard') 
-    if current_user.is_program_officer():
-        if search_query:
-            all_tickets = Ticket.objects.filter(title__icontains=search_query)
-        else:
-            all_tickets = Ticket.objects.all()
 
-        ticket_stats = User.objects.filter(role='specialists').annotate(ticket_count=Count('assigned_tickets'))
+            return redirect('dashboard')
+
 
         if request.method == 'POST' and 'redirect_ticket' in request.POST:
             ticket_id = request.POST.get('ticket_id')
             new_assignee_id = request.POST.get('new_assignee_id')
-            ticket = Ticket.objects.get(id=ticket_id)
-            new_assignee = User.objects.get(id=new_assignee_id)
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            new_assignee = get_object_or_404(User, id=new_assignee_id)
+
             ticket.assigned_user = new_assignee
             ticket.latest_action = 'redirected'
+            ticket.status = 'in_progress'  
             ticket.save()
 
-            ticket_activity = TicketActivity.objects.create(
+            TicketActivity.objects.create(
                 ticket=ticket,
                 action='redirected',
                 action_by=current_user,
                 comment=f"Redirected to {new_assignee.username}"
             )
-            ticket_activity.save()
-            return redirect('dashboard') 
-            
+
+            return redirect('dashboard')
+
+
+        tickets = Ticket.objects.all()
+
+
+        if search_query:
+            tickets = tickets.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
+
+        if status_filter:
+            tickets = tickets.filter(status=status_filter)
+
+
+        if sort_option == 'date_asc':
+            tickets = tickets.order_by('created_at')
+        elif sort_option == 'date_desc':
+            tickets = tickets.order_by('-created_at')
+        elif sort_option == 'priority_asc':
+            tickets = tickets.order_by(priority_case)
+        elif sort_option == 'priority_desc':
+            tickets = tickets.order_by(-priority_case)
+
+        ticket_stats = User.objects.filter(role='specialists').annotate(
+            ticket_count=Count('assigned_tickets')
+        )
+
         return render(request, 'dashboard.html', {
             'user': current_user,
-            'all_tickets': all_tickets,
+            'all_tickets': tickets,
             'ticket_stats': ticket_stats,
         })
-    
+
+
     elif current_user.is_student():
-        student_tickets = Ticket.objects.filter(creator=current_user)
+
+
+        tickets = Ticket.objects.filter(creator=current_user)
+
+
         if search_query:
-            student_tickets = student_tickets.filter(title__icontains=search_query)
-        
+            tickets = tickets.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
+        if status_filter:
+            tickets = tickets.filter(status=status_filter)
+
+        if sort_option == 'date_asc':
+            tickets = tickets.order_by('created_at')
+        elif sort_option == 'date_desc':
+            tickets = tickets.order_by('-created_at')
+        elif sort_option == 'priority_asc':
+            tickets = tickets.order_by(priority_case)
+        elif sort_option == 'priority_desc':
+            tickets = tickets.order_by(-priority_case)
+
         return render(request, 'dashboard.html', {
             'user': current_user,
-            'student_tickets': student_tickets,
+            'student_tickets': tickets,
         })
-    
+
+
     elif current_user.is_specialist():
-        assigned_tickets = Ticket.objects.filter(assigned_user=current_user)
+
+        if request.method == 'POST' and 'respond_ticket' in request.POST:
+            ticket_id = request.POST.get("ticket_id")
+            response_message = request.POST.get("response_message")
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+
+            if ticket.answers:
+                ticket.answers += "\n"
+            else:
+                ticket.answers = ""
+            ticket.answers += f"Response by {current_user.username}: {response_message}"
+
+            ticket.latest_action = 'responded'
+            ticket.save()
+
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action='responded',
+                action_by=current_user,
+                comment=response_message
+            )
+
+            return redirect('dashboard')
+
+        tickets = Ticket.objects.filter(assigned_user=current_user)
+
+
         if search_query:
-            assigned_tickets = assigned_tickets.filter(title__icontains=search_query)
-        
+            tickets = tickets.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            )
+
+        if status_filter:
+            tickets = tickets.filter(status=status_filter)
+
+        if sort_option == 'date_asc':
+            tickets = tickets.order_by('created_at')
+        elif sort_option == 'date_desc':
+            tickets = tickets.order_by('-created_at')
+        elif sort_option == 'priority_asc':
+            tickets = tickets.order_by(priority_case)
+        elif sort_option == 'priority_desc':
+            tickets = tickets.order_by(-priority_case)
+
         return render(request, 'dashboard.html', {
             'user': current_user,
-            'assigned_tickets': assigned_tickets,
+            'assigned_tickets': tickets,
         })
 
-    return render(request, 'dashboard.html', {'user': current_user, 'message': "You do not have permission to view this dashboard."})
-
+    else:
+        return render(request, 'dashboard.html', {
+            'user': current_user,
+            'message': "You do not have permission to view this page."
+        })
+        
 
 @login_prohibited
 def home(request):
