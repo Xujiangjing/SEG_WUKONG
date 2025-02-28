@@ -1,23 +1,88 @@
 {% extends 'base.html' %}
 {% block body %}
-  <div class="container vh-100">
-    <div class="row h-100">
-      <div class="col-12 my-auto">
-        <div class="card cover-card offset-sm-2 offset-md-4 offset-lg-7">
-          <h1 class="cover-heading">Task Manager</h1>
-          <p class="cover-text">A task manager application by Team <i>Insert team name here (or revise this home screen as you see fit)</i></p>
-          <p>
-            <a href='{% url 'sign_up' %}' class="btn btn-lg btn-secondary">
-              Sign up
-            </a>
-          </p>
-          <p>
-            <a href='{% url 'log_in' %}' class="btn btn-lg btn-secondary">
-              Log in
-            </a>
-          </p>
+  <div class="container-box vh-100">
+    <div class="section-1 ">
+      <div class="tip-box ">
+        <div class="line-1"></div>
+        <div class="text"></div>
+        <div class="line-2"></div>
+      </div>
+      <div class="bg-cover"></div>
+    </div>
+    <div class="section-2">
+      <img class="logo" src="/static/images/logo.png"  />
+      <div class="header">
+        <img height="100%" class="header-light" src="/static/images/head_light.png" />
+      </div>
+      <div class="center-text"> 
+        <div class="center-box">
+          <div class="title"><div>WUKONG</div></div>
+          <div class="small-title"><div>University</div></div>
+          <div class="small-title-1"><div>Student Ticket System</div></div>
+        </div>
+        <div class="center-box-stroke">
+          <div class="title text-stroke-1"><div>WUKONG</div></div>
+          <div class="small-title text-stroke-2"><div>University</div></div>
+          <div class="small-title-1 text-stroke-2"><div>Student Ticket System</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="center-login">
+          <div>
+            <a href='{% url "log_in" %}'>LOG IN</a>
+          </div>
+        </div>
+        <div class="center-login-stroke ">
+          <div><a href='{% url "log_in" %}' class="text-stroke-3">LOG IN</a></div>
+        </div>
+      </div>
+      <div class="bottom-box">
+        <div class="left-box">
+          <div class="row">
+            <div class="col-3">
+              <a href="javascript:void(0)">Terms & conditons</a>
+            </div>
+            <div class="col">
+              <a href="javascript:void(0)">Site help</a>
+            </div>
+            <div class="col">
+              <a href="javascript:void(0)">Accessibility</a>
+            </div>
+            <div class="col">
+              <a href="javascript:void(0)">Sitemap</a>
+            </div>
+            <div class="col">
+              <a href="javascript:void(0)">Cookies</a>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-3">
+              <a href="javascript:void(0)">Privacy policy</a>
+            </div>
+            <div class="col">
+              <a href="javascript:void(0)">Modern Slavery Act Transparency Statement</a>
+            </div>
+          </div>
+        </div>
+        <div class="right-box">
+          <div class="hover-handle">
+            <div class="contact">
+              <a href="javascript:void(0)">Contact Us</a>
+              </div>
+            <div class="message">
+              <div>
+                <a href="javascript:void(0)">wukonghelpdesk@gmail.com</a>
+                </div>
+              <div>
+                <a href="javascript:void(0)">Lab 6.02, London, United Kingdom</a>
+                </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+    <div class="bg-cover-2">
+    </div>
   </div>
 {% endblock %}
+
