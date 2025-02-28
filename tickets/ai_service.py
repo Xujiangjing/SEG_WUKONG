@@ -2,7 +2,7 @@ import os
 import json
 import boto3
 from botocore.exceptions import ClientError
-from tickets.models import Ticket
+from tickets.models import Ticket, AITicketProcessing
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
@@ -59,3 +59,16 @@ def classify_department(ticket_description):
 def generate_ai_answer(ticket_description):
     prompt = f"You are a university program officer, reply the student's query in only two or three sentences, 60 words max. Please note down 3 things in your answer: 1. Output the response only. Do not include things like: Here is a concise response to the student's query, [Your Name], Dear, Sincerely,  or any reflection on the answer, etc. that are not related to the response itself. Just give the answer itself. 2. 60 words max. 3. Do not include any bold or italic formatting. Provide a concise answer for the following student query: '{ticket_description}'"
     return query_bedrock(prompt)
+
+def process_ticket(ticket):
+    """
+    Classifies the department and generates an AI response for the ticket description.
+    """
+    ai_department = classify_department(ticket.description)
+    ai_answer = generate_ai_answer(ticket.description)
+
+    AITicketProcessing.objects.create(
+        ticket=ticket,
+        ai_generated_response=ai_answer,
+        ai_assigned_department=ai_department
+    )

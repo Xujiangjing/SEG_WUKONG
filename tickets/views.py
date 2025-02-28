@@ -21,7 +21,7 @@ from tickets.forms import (LogInForm, PasswordForm, ReturnTicketForm,
 from tickets.helpers import login_prohibited
 
 from tickets.models import Ticket, TicketActivity, TicketAttachment, User, AITicketProcessing
-from .ai_service import generate_ai_answer, classify_department
+from .ai_service import process_ticket
 from .models import Ticket, TicketActivity
 
 
@@ -388,13 +388,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 action='created',
                 action_by=self.request.user
             )
-            ai_department = classify_department(ticket.description)
-            ai_answer = generate_ai_answer(ticket.description)
-            AITicketProcessing.objects.create(
-                ticket=ticket,
-                ai_generated_response=ai_answer,
-                ai_assigned_department=ai_department
-            )   
+            process_ticket(ticket)
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
 

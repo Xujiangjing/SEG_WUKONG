@@ -10,7 +10,7 @@ from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
 import os
 from django.db.models import Count
-from tickets.ai_service import generate_ai_answer, classify_department
+from tickets.ai_service import process_ticket
 
 
 class Command(BaseCommand):
@@ -91,23 +91,11 @@ class Command(BaseCommand):
                             creator=user,
                             sender_email=sender_email,
                             status="open",
-                            # assigned_department=department
                         )
-
-                        ai_department = classify_department(ticket.description)
-                        ai_answer = generate_ai_answer(ticket.description)
-                        AITicketProcessing.objects.create(
-                            ticket=ticket,
-                            ai_generated_response=ai_answer,
-                            ai_assigned_department=ai_department
-                        )
-
-                        # send a confirmation email to the student
+                        process_ticket(ticket)
+                        
                         self.send_confirmation_email(sender_email, subject)
-
-                        # print a success message
                         self.stdout.write(self.style.SUCCESS(f"🎫 Ticket created from email: {subject}"))
-
                         # mark the email as read
                         mail.store(email_id, "+FLAGS", "\\Seen")
 
