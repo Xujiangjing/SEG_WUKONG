@@ -10,7 +10,7 @@ from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
 import os
 from django.db.models import Count
-from tickets.ai_service import process_ticket
+from tickets.ai_service import ai_process_ticket
 
 
 class Command(BaseCommand):
@@ -92,8 +92,8 @@ class Command(BaseCommand):
                             sender_email=sender_email,
                             status="open",
                         )
-                        process_ticket(ticket)
-                        
+                        ai_process_ticket(ticket)
+
                         self.send_confirmation_email(sender_email, subject)
                         self.stdout.write(self.style.SUCCESS(f"🎫 Ticket created from email: {subject}"))
                         # mark the email as read
