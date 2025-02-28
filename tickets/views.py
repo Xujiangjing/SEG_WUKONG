@@ -4,7 +4,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Count, F, Q, Case, When, Value, IntegerField
+from django.db.models import Case, Count, F, IntegerField, Q, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -19,11 +19,11 @@ from tickets.forms import (LogInForm, PasswordForm, ReturnTicketForm,
                            SignUpForm, SupplementTicketForm,
                            TicketAttachmentForm, TicketForm, UserForm)
 from tickets.helpers import login_prohibited
+from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
+                            TicketAttachment, User)
 
-from tickets.models import Ticket, TicketActivity, TicketAttachment, User, AITicketProcessing
-from .ai_service import generate_ai_answer, classify_department
+from .ai_service import classify_department, generate_ai_answer
 from .models import Ticket, TicketActivity
-
 
 
 @login_required
@@ -582,6 +582,143 @@ def redirect_ticket(request, ticket_id):
         .annotate(ticket_count=Count('assigned_tickets')) \
         .order_by('ticket_count')
         
+        specialists_info = [
+            {
+                'id': specialist.id,
+                'full_name': specialist.full_name(),
+                'ticket_count': specialist.ticket_count,
+                'department_name': specialist.department.name if specialist.department else 'N/A'
+            }
+            for specialist in specialists
+        ]
+        return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
+
+    return redirect('redirect_ticket_page', ticket_id=ticket_id)
+
+
+@login_required
+def respond_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'respond_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+
+
+@login_required
+def respond_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    if request.method == "POST" and "response_message" in request.POST:
+        response_message = request.POST.get("response_message")
+        if ticket.answers:
+            ticket.answers += "\n"
+        else:
+            ticket.answers = ""
+        ticket.answers += f"Response by {request.user.username}: {response_message}"
+
+        ticket.status = 'in_progress'
+        ticket.save()
+        ticket_activity = TicketActivity.objects.create(
+            ticket=ticket,
+            action='responded',
+            action_by=request.user,
+            comment=response_message
+        )
+        ticket_activity.save()
+        activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+        formatted_activities = [{
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        } for activity in activities]
+
+        return JsonResponse({
+            'success': True,
+            'activities': formatted_activities,
+            'answers': ticket.answers
+        })
+    return render(request, 'respond_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+
+
+
+@login_required
+def redirect_ticket_page(request, ticket_id):
+    ticket = Ticket.objects.get(id=ticket_id)
+
+    # 查询所有专家，并统计每个专家已分配的工单数量
+    specialists = User.objects.filter(role='specialists') \
+    .annotate(ticket_count=Count('assigned_tickets')) \
+    .order_by('ticket_count')
+
+    return render(request, 'redirect_ticket_page.html', {
+        'ticket': ticket,
+        'specialists': specialists,
+    })
+
+
+@login_required
+@require_POST
+def redirect_ticket(request, ticket_id):
+    if not request.user.is_program_officer():
+        return redirect('redirect_ticket_page', ticket_id=ticket_id)
+    ticket = Ticket.objects.get(id=ticket_id)
+    new_assignee_id = request.POST.get('new_assignee_id')
+    if new_assignee_id:
+        new_assignee = User.objects.get(id=new_assignee_id)
+        ticket.assigned_user = new_assignee
+        ticket.status = 'in_progress'  # 更新工单状态为进行中
+        ticket.latest_action = 'redirected'
+        ticket.save()
+
+        ticket_activity = TicketActivity(
+            ticket=ticket,
+            action='redirected',
+            action_by=request.user,
+            action_time=timezone.now(),
+            comment=f'Redirected to {new_assignee.full_name()}'
+        )
+        ticket_activity.save()
+
+        updated_ticket_info = {
+            'assigned_user': ticket.assigned_user.username if ticket.assigned_user else 'Unassigned',
+            'status': ticket.status,
+            'priority': ticket.priority,
+            'assigned_department': ticket.assigned_department,
+        }
+
+        specialists = User.objects.filter(role='specialists') \
+        .annotate(ticket_count=Count('assigned_tickets')) \
+        .order_by('ticket_count')
+
         specialists_info = [
             {
                 'id': specialist.id,
