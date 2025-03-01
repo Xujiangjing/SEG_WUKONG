@@ -84,3 +84,4 @@ def ai_process_ticket(ticket):
         ai_assigned_department=ai_department,
         ai_assigned_priority=ai_priority
     )
+    ticket.priority = AITicketProcessing.objects.get(ticket=ticket).ai_assigned_priority
