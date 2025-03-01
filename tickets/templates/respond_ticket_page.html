@@ -4,7 +4,7 @@
 <div class="container my-4">
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">
-            <h1 class="text-center text-primary mb-4">Respond to Ticket: {{ ticket.title }}</h1>
+            <h1 class="text-center text-primary mb-4">Respond to Ticket</h1>
             <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-primary text-white">
                     <strong>Ticket Information</strong>
@@ -80,7 +80,7 @@
                 <div class="card-body">
                     <form id="respond-form" method="post">
                         {% csrf_token %}
-                        <textarea name="response_message" class="form-control" placeholder="Enter your response here..." required></textarea>
+                        <textarea id="response-box" name="response_message" class="form-control" required></textarea>
                         <button type="submit" name="respond_ticket" class="btn btn-lg btn-primary mt-3 w-100">Respond</button>
                     </form>
                 </div>
@@ -92,6 +92,49 @@
 </div>
 
 <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const responseBox = document.getElementById("response-box");
+        const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}"; // AI-generated response
+        let aiPlaceholderActive = false;
+
+        responseBox.addEventListener("focus", function () {
+            if (!aiPlaceholderActive && responseBox.value.trim() === "") {
+                responseBox.value = aiResponse;
+                responseBox.style.fontStyle = "italic";
+                responseBox.style.color = "grey";
+                aiPlaceholderActive = true;
+            }
+        });
+
+        responseBox.addEventListener("input", function () {
+            if (aiPlaceholderActive) {
+                responseBox.value = responseBox.value.replace(aiResponse, ""); // Remove AI text
+                responseBox.style.fontStyle = "normal";
+                responseBox.style.color = "black";
+                aiPlaceholderActive = false;
+            }
+        });
+
+        responseBox.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" && aiPlaceholderActive) {
+                event.preventDefault(); // Prevent form submission
+                responseBox.style.fontStyle = "normal"; // Confirm AI response
+                responseBox.style.color = "black";
+                aiPlaceholderActive = false;
+            }
+        });
+
+        responseBox.addEventListener("blur", function () {
+            if (responseBox.value.trim() === aiResponse || responseBox.value.trim() === "") {
+                responseBox.value = "";
+                responseBox.style.fontStyle = "normal";
+                responseBox.style.color = "black";
+                aiPlaceholderActive = false;
+            }
+        });
+    });
+
+    
     document.getElementById('respond-form').addEventListener('submit', function(event) {
         event.preventDefault();
 
