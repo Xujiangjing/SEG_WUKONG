@@ -731,3 +731,22 @@ def redirect_ticket(request, ticket_id):
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
     return redirect('redirect_ticket_page', ticket_id=ticket_id)
+
+@login_required
+def ticket_detail(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator and not request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'ticket_detail.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })

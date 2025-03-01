@@ -40,5 +40,7 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/assign/', views.redirect_ticket, name='redirect_ticket'),
     path('ticket/<uuid:ticket_id>/respond_page/', views.respond_ticket_page, name='respond_ticket_page'),
     path('ticket/<uuid:ticket_id>/respond/', views.respond_ticket, name='respond_ticket'),
+    path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
+    
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
