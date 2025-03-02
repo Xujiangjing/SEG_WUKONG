@@ -25,6 +25,22 @@ from .ai_service import generate_ai_answer, classify_department
 from .models import Ticket, TicketActivity
 
 
+def handle_uploaded_file_in_chunks(ticket, file_obj):
+    """
+    Save an uploaded file in chunks to avoid loading the entire file into memory at once.
+    """
+    # 这里可用 Django 默认的 FileField.save() 行为，它本身会在底层调用 chunks()
+    # 我们也可以手动自己写 chunks() 读取，看需求
+
+    # 创建一个空的 TicketAttachment 对象，稍后再赋 file
+    attachment = TicketAttachment(ticket=ticket)
+
+    # 直接通过 FileField.save()，其默认就会使用 chunked 方式写入
+    # (具体可参考 django.db.models.fields.files.py)
+    # 注意：file_obj.name 可能在某些情况下为空，如果你想自定义文件名，需要额外处理
+    attachment.file.save(file_obj.name, file_obj, save=True)
+
+    attachment.save()
 
 @login_required
 def dashboard(request):
@@ -379,10 +395,13 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
             return redirect('ticket_detail', pk=existing_ticket.pk)
         else:
+            
             ticket.save()
+            
+            
             files = self.request.FILES.getlist('file')
-            for file in files:
-                TicketAttachment.objects.create(ticket=ticket, file=file)
+            for f in files:
+                handle_uploaded_file_in_chunks(ticket, f)
             TicketActivity.objects.create(
                 ticket=ticket,
                 action='created',
@@ -537,7 +556,6 @@ def respond_ticket(request, ticket_id):
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
 
-    # 查询所有专家，并统计每个专家已分配的工单数量
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
@@ -558,7 +576,7 @@ def redirect_ticket(request, ticket_id):
     if new_assignee_id:
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
-        ticket.status = 'in_progress'  # 更新工单状态为进行中
+        ticket.status = 'in_progress'  
         ticket.latest_action = 'redirected'
         ticket.save()
 
