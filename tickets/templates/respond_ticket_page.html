@@ -44,15 +44,6 @@
             </div>
 
             <div class="card mb-4 shadow-lg rounded">
-                <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center" onclick="toggleSection('previous-responses', 'response-arrow')">
-                    <strong>Previous Responses</strong>
-                    <span id="response-arrow">▼</span>
-                </div>                
-                <div class="card-body" style="display: none;">
-                    <pre id="previous-responses" class="text-muted">{{ ticket.answers|default:"No responses yet." }}</pre>
-                </div>
-            </div>
-            <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
                     <strong>Activity Log</strong>
                     <span id="activity-arrow">▼</span>
