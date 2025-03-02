@@ -80,7 +80,7 @@
                 <div class="card-body">
                     <form id="respond-form" method="post">
                         {% csrf_token %}
-                        <textarea id="response-box" name="response_message" class="form-control" required></textarea>
+                        <textarea id="response-box" name="response_message" class="form-control" placeholder="Enter your response here..." required></textarea>
                         <button type="submit" name="respond_ticket" class="btn btn-lg btn-primary mt-3 w-100">Respond</button>
                     </form>
                 </div>
@@ -94,47 +94,67 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const responseBox = document.getElementById("response-box");
-        const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}"; // AI-generated response
+        const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}"; // AI response
         let aiPlaceholderActive = false;
 
+        // When the user focuses on the textarea (clicks to type)
         responseBox.addEventListener("focus", function () {
             if (!aiPlaceholderActive && responseBox.value.trim() === "") {
-                responseBox.value = aiResponse;
-                responseBox.style.fontStyle = "italic";
-                responseBox.style.color = "grey";
+                responseBox.value = aiResponse;  // Set the AI response
+                responseBox.style.fontStyle = "italic";  // Italic style
+                responseBox.style.color = "grey";  // Grey color
                 aiPlaceholderActive = true;
+
+                // Lock cursor at the beginning
+                setTimeout(() => {
+                    responseBox.setSelectionRange(0, 0);  // Move cursor to position 0
+                }, 0);
             }
         });
 
-        responseBox.addEventListener("input", function () {
-            if (aiPlaceholderActive) {
-                responseBox.value = responseBox.value.replace(aiResponse, ""); // Remove AI text
-                responseBox.style.fontStyle = "normal";
-                responseBox.style.color = "black";
-                aiPlaceholderActive = false;
-            }
-        });
-
+        // Listen for keydown (typing)
         responseBox.addEventListener("keydown", function (event) {
-            if (event.key === "Enter" && aiPlaceholderActive) {
-                event.preventDefault(); // Prevent form submission
-                responseBox.style.fontStyle = "normal"; // Confirm AI response
-                responseBox.style.color = "black";
-                aiPlaceholderActive = false;
+            if (aiPlaceholderActive) {
+                // If the user types something (except Enter)
+                if (event.key !== "Enter") {
+                    // Clear the AI response once the user starts typing
+                    responseBox.value = "";  // Clear AI text
+                    responseBox.style.fontStyle = "normal";  // Reset font style to normal
+                    responseBox.style.color = "black";  // Reset font color to black
+                    aiPlaceholderActive = false;  // Allow user to type freely
+                }
             }
         });
 
+        // When pressing Enter, set the text to normal (confirm the input)
+        responseBox.addEventListener("keydown", function (event) {
+            if (aiPlaceholderActive && event.key === "Enter") {
+                event.preventDefault(); // Prevent new line creation
+                responseBox.style.fontStyle = "normal";  // Reset font style to normal
+                responseBox.style.color = "black";  // Reset font color to black
+                aiPlaceholderActive = false;  // Allow user input freely
+            }
+        });
+
+        // Prevent the cursor from moving when AI text is active
+        responseBox.addEventListener("mousedown", function (event) {
+            if (aiPlaceholderActive) {
+                responseBox.setSelectionRange(0, 0); // Keep the cursor at the start
+                event.preventDefault();  // Prevent cursor movement
+            }
+        });
+
+        // If the textarea loses focus, clear AI response if not typed over
         responseBox.addEventListener("blur", function () {
-            if (responseBox.value.trim() === aiResponse || responseBox.value.trim() === "") {
-                responseBox.value = "";
-                responseBox.style.fontStyle = "normal";
-                responseBox.style.color = "black";
+            if (aiPlaceholderActive && responseBox.value.trim() === aiResponse) {
+                responseBox.value = "";  // Clear AI text
+                responseBox.style.fontStyle = "normal";  // Reset font style to normal
+                responseBox.style.color = "black";  // Reset font color to black
                 aiPlaceholderActive = false;
             }
         });
     });
 
-    
     document.getElementById('respond-form').addEventListener('submit', function(event) {
         event.preventDefault();
 
