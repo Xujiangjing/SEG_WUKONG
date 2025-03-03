@@ -201,9 +201,17 @@ def dashboard(request):
         elif sort_option == 'priority_desc':
             tickets = tickets.order_by(-priority_case)
 
+        responded_tickets_list = []
+        assigned_tickets_list = []
+        for ticket in tickets:
+            if ticket.answers:
+                responded_tickets_list.append(ticket)
+            else:
+                assigned_tickets_list.append(ticket)
         return render(request, 'dashboard.html', {
             'user': current_user,
-            'assigned_tickets': tickets,
+            'assigned_tickets': assigned_tickets_list,
+            'responded_tickets': responded_tickets_list,
         })
 
     else:
