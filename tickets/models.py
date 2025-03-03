@@ -209,6 +209,12 @@ class AITicketProcessing(models.Model):
         default='general_enquiry',
         help_text="AI-suggested department classification."
     )
+    ai_assigned_priority = models.CharField(
+        max_length=20,
+        choices=Ticket.PRIORITY_CHOICES,
+        default='low',
+        help_text="AI-suggested priority level."
+    )
 
     def __str__(self):
         return f"AI Processing for Ticket {self.ticket.id}"

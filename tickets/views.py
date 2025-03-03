@@ -22,7 +22,8 @@ from tickets.helpers import login_prohibited
 from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
-from .ai_service import classify_department, generate_ai_answer
+from tickets.models import Ticket, TicketActivity, TicketAttachment, User
+from .ai_service import ai_process_ticket
 from .models import Ticket, TicketActivity
 
 
@@ -414,15 +415,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 action='created',
                 action_by=self.request.user
             )
-            
-            ai_department = classify_department(ticket.description)
-            ai_answer = generate_ai_answer(ticket.description)
-            AITicketProcessing.objects.create(
-                ticket=ticket,
-                ai_generated_response=ai_answer,
-                ai_assigned_department=ai_department
-            )
-            
+            ai_process_ticket(ticket)
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
 
