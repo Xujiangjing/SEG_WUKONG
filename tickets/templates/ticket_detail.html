@@ -72,61 +72,9 @@
                     </ul>
                 </div>
             </div>
-
-            <div class="card mb-4 shadow-lg rounded">
-                <div class="card-header bg-primary text-white">
-                    <strong>Submit Your Response</strong>
-                </div>
-                <div class="card-body">
-                    <form id="respond-form" method="post">
-                        {% csrf_token %}
-                        <textarea name="response_message" class="form-control" placeholder="Enter your response here..." required></textarea>
-                        <button type="submit" name="respond_ticket" class="btn btn-lg btn-primary mt-3 w-100">Respond</button>
-                    </form>
-                </div>
-            </div>
-
             <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
         </div>
     </div>
 </div>
-
-<script>
-    document.getElementById('respond-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-
-        let form = this;
-        let formData = new FormData(form);
-        fetch("{% url 'respond_ticket' ticket.id %}", {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('previous-responses').innerText = data.answers;
-
-                let activityLog = document.getElementById('activity-log');
-                activityLog.innerHTML = '<ul class="timeline">';
-                data.activities.forEach(activity => {
-                    activityLog.innerHTML += `
-                        <li class="timeline-item">
-                            <div class="timeline-point bg-info"></div>
-                            <div class="timeline-content">
-                                <h5><strong>${activity.username}</strong> - ${activity.action}</h5>
-                                <p><small class="text-muted">${activity.action_time}</small></p>
-                                <p>${activity.comment}</p>
-                            </div>
-                        </li>
-                    `;
-                });
-                activityLog.innerHTML += '</ul>';
-            } else {
-                alert('Error: Could not submit response');
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    });
-</script>
 
 {% endblock %}

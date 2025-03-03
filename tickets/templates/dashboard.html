@@ -158,20 +158,13 @@
                       </td>
                       <td>
                         <!-- Redirect Ticket Button -->
-                        <form method="post" action="">
+                        <form method="post" action="{% url 'redirect_ticket_page' ticket.id %}">
                           {% csrf_token %}
-                          <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
-                          <select name="new_assignee_id" required>
-                            <option value="" disabled selected>Select a specialist</option>
-                            {% for specialist in ticket_stats %}
-                              <option value="{{ specialist.id }}">{{ specialist.full_name }} - {{ specialist.department }}</option>
-                            {% endfor %}
-                          </select>
-                          <button type="submit" name="redirect_ticket" class="btn btn-sm btn-warning">Redirect to Specialist</button>
-                        </form>
+                          <button type="submit" class="btn btn-sm btn-warning">Redirect</button>
+                      </form> 
                         <br>
                         <!-- Respond to Ticket Form -->
-                        <form method="post" action="">
+                        <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
                         </form>
@@ -232,9 +225,16 @@
                       <td>{{ ticket.status }}</td>
                       <td>{{ ticket.priority }}</td>
                       <td>
-                        <pre>{{ ticket.answers }}</pre>
+                        {% if ticket.answers %}
+                          Answered
+                        {% else %}
+                          Not yet answered
+                        {% endif %}
                       </td>
                       <td>
+                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
+                        <br>
+                        <br>
                         {% if ticket.status == 'open' %}
                           <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
                         {% endif %}
@@ -277,15 +277,16 @@
                       <td>{{ ticket.status }}</td>
                       <td>{{ ticket.priority }}</td>
                       <td>
-                        <pre>{{ ticket.answers }}</pre>
+                        {% if ticket.answers %}
+                          Answered
+                        {% else %}
+                          Not yet answered
+                        {% endif %}
                       </td>
                       <td>
-                        <!-- Respond Ticket Form -->
-                        <form method="post" action="">
+                        <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
                           {% csrf_token %}
-                          <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
-                          <textarea name="response_message" placeholder="Enter your response here..." required></textarea>
-                          <button type="submit" name="respond_ticket" class="btn btn-sm btn-primary">Respond</button>
+                          <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
                         </form>
                       </td>
                     </tr>
