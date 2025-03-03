@@ -91,10 +91,10 @@
 
         if (section.style.display === "none" || section.style.display === "") {
             section.style.display = "block";
-            arrow.innerHTML = "▲";  // Change to up arrow
+            arrow.innerHTML = "▲"; 
         } else {
             section.style.display = "none";
-            arrow.innerHTML = "▼";  // Change to down arrow
+            arrow.innerHTML = "▼";
         }
     }
 </script>
@@ -159,23 +159,27 @@
             }
         });
     });
+</script>
 
+<script>
     document.getElementById('respond-form').addEventListener('submit', function(event) {
-        event.preventDefault();
+        event.preventDefault(); // Prevent default form submission
 
         let form = this;
         let formData = new FormData(form);
+
         fetch("{% url 'respond_ticket' ticket.id %}", {
             method: 'POST',
             body: formData
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                document.getElementById('previous-responses').innerText = data.answers;
+            console.log("Server Response:", data); // Debugging - Check response in console
 
+            if (data.success) {
                 let activityLog = document.getElementById('activity-log');
-                activityLog.innerHTML = '<ul class="timeline">';
+                activityLog.innerHTML = '<ul class="timeline">'; // Reset content
+                
                 data.activities.forEach(activity => {
                     activityLog.innerHTML += `
                         <li class="timeline-item">
@@ -189,12 +193,17 @@
                     `;
                 });
                 activityLog.innerHTML += '</ul>';
+
+                // Show the updated activity log if it was hidden
+                activityLog.style.display = "block";
+                document.getElementById("activity-arrow").innerHTML = "▲";
             } else {
                 alert('Error: Could not submit response');
             }
         })
         .catch(error => console.error('Error:', error));
     });
+
 </script>
 
 <style>
