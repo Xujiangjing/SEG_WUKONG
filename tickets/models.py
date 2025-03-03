@@ -172,7 +172,7 @@ class Ticket(models.Model):
 
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='attachments/')
+    file = models.FileField(upload_to='attachments/%Y/%m/%d/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -27,6 +27,14 @@ from .ai_service import ai_process_ticket
 from .models import Ticket, TicketActivity
 
 
+def handle_uploaded_file_in_chunks(ticket, file_obj):
+
+    attachment = TicketAttachment(ticket=ticket)
+    
+    attachment.file.save(file_obj.name, file_obj, save=True)
+
+    attachment.save()
+
 @login_required
 def dashboard(request):
     current_user = request.user
@@ -202,9 +210,17 @@ def dashboard(request):
         elif sort_option == 'priority_desc':
             tickets = tickets.order_by(-priority_case)
 
+        responded_tickets_list = []
+        assigned_tickets_list = []
+        for ticket in tickets:
+            if ticket.answers:
+                responded_tickets_list.append(ticket)
+            else:
+                assigned_tickets_list.append(ticket)
         return render(request, 'dashboard.html', {
             'user': current_user,
-            'assigned_tickets': tickets,
+            'assigned_tickets': assigned_tickets_list,
+            'responded_tickets': responded_tickets_list,
         })
 
     else:
@@ -360,12 +376,22 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     template_name = 'tickets/create_ticket.html'
     success_url = '/tickets/'
 
+    def get_form_kwargs(self):
+
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # 关键：将 user 传给表单
+        return kwargs
+
     def form_valid(self, form):
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = 'open'
+
+        if self.request.user.is_student():
+            ticket.priority = 'low'
+
+
         existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
-        
         if existing_ticket:
             existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
                 ticket.id, ticket.description)
@@ -376,14 +402,14 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 action_by=self.request.user,
                 comment=f'Merged with ticket {ticket.id}'
             )
-            
             messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
             return redirect('ticket_detail', pk=existing_ticket.pk)
         else:
             ticket.save()
             files = self.request.FILES.getlist('file')
-            for file in files:
-                TicketAttachment.objects.create(ticket=ticket, file=file)
+            for f in files:
+                handle_uploaded_file_in_chunks(ticket, f)
+                
             TicketActivity.objects.create(
                 ticket=ticket,
                 action='created',
@@ -532,11 +558,15 @@ def respond_ticket(request, ticket_id):
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
 
-    # 查询所有专家，并统计每个专家已分配的工单数量
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
-
+    
+    returned_specialist_list = []
+    ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
+    for activity in ticket_activity:
+        returned_specialist_list.append(activity.action_by) 
+    specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
         'specialists': specialists,
@@ -553,7 +583,7 @@ def redirect_ticket(request, ticket_id):
     if new_assignee_id:
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
-        ticket.status = 'in_progress'  # 更新工单状态为进行中
+        ticket.status = 'in_progress'  
         ticket.latest_action = 'redirected'
         ticket.save()
 
@@ -577,6 +607,11 @@ def redirect_ticket(request, ticket_id):
         .annotate(ticket_count=Count('assigned_tickets')) \
         .order_by('ticket_count')
         
+        returned_specialist_list = []
+        ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
+        for activity in ticket_activity:
+            returned_specialist_list.append(activity.action_by) 
+
         specialists_info = [
             {
                 'id': specialist.id,
@@ -584,7 +619,7 @@ def redirect_ticket(request, ticket_id):
                 'ticket_count': specialist.ticket_count,
                 'department_name': specialist.department.name if specialist.department else 'N/A'
             }
-            for specialist in specialists
+            for specialist in specialists if specialist not in returned_specialist_list
         ]
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
@@ -664,65 +699,63 @@ def respond_ticket(request, ticket_id):
     })
 
 
-
 @login_required
-def redirect_ticket_page(request, ticket_id):
-    ticket = Ticket.objects.get(id=ticket_id)
-
-    # 查询所有专家，并统计每个专家已分配的工单数量
-    specialists = User.objects.filter(role='specialists') \
-    .annotate(ticket_count=Count('assigned_tickets')) \
-    .order_by('ticket_count')
-
-    return render(request, 'redirect_ticket_page.html', {
+def ticket_detail(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'ticket_detail.html', {
         'ticket': ticket,
-        'specialists': specialists,
+        'activities': formatted_activities,
     })
 
-
 @login_required
-@require_POST
-def redirect_ticket(request, ticket_id):
-    if not request.user.is_program_officer():
-        return redirect('redirect_ticket_page', ticket_id=ticket_id)
-    ticket = Ticket.objects.get(id=ticket_id)
-    new_assignee_id = request.POST.get('new_assignee_id')
-    if new_assignee_id:
-        new_assignee = User.objects.get(id=new_assignee_id)
-        ticket.assigned_user = new_assignee
-        ticket.status = 'in_progress'  # 更新工单状态为进行中
-        ticket.latest_action = 'redirected'
-        ticket.save()
+def return_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'return_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+    
+@login_required
+def return_ticket_specailist(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
 
+    if request.method == 'POST' and 'return_reason' in request.POST:
+        return_reason = request.POST.get('return_reason')
+        ticket.status = 'returned'
+        ticket.assigned_user = None
+        ticket.return_reason = return_reason
         ticket_activity = TicketActivity(
             ticket=ticket,
-            action='redirected',
+            action='returned',
             action_by=request.user,
             action_time=timezone.now(),
-            comment=f'Redirected to {new_assignee.full_name()}'
+            comment=return_reason
         )
         ticket_activity.save()
-
-        updated_ticket_info = {
-            'assigned_user': ticket.assigned_user.username if ticket.assigned_user else 'Unassigned',
-            'status': ticket.status,
-            'priority': ticket.priority,
-            'assigned_department': ticket.assigned_department,
-        }
-
-        specialists = User.objects.filter(role='specialists') \
-        .annotate(ticket_count=Count('assigned_tickets')) \
-        .order_by('ticket_count')
-
-        specialists_info = [
-            {
-                'id': specialist.id,
-                'full_name': specialist.full_name(),
-                'ticket_count': specialist.ticket_count,
-                'department_name': specialist.department.name if specialist.department else 'N/A'
-            }
-            for specialist in specialists
-        ]
-        return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
-
-    return redirect('redirect_ticket_page', ticket_id=ticket_id)
+        ticket.save()
+        return redirect('dashboard')
+    return redirect('return_ticket_page', ticket_id=ticket_id)
