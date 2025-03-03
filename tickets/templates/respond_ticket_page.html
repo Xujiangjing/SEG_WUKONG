@@ -43,6 +43,10 @@
                 </div>
             </div>
 
+            <div class="card mb-4 rounded">  
+                <div id="response-success" class="alert alert-success rounded m-0" style="display: none;"></div>
+            </div>
+
             <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
                     <strong>Activity Log</strong>
@@ -105,7 +109,6 @@
         const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}";
         let aiPlaceholderActive = false;
 
-        // When the user focuses on the textarea (clicks to type)
         responseBox.addEventListener("focus", function () {
             if (!aiPlaceholderActive && responseBox.value.trim() === "") {
                 responseBox.value = aiResponse;
@@ -118,7 +121,6 @@
             }
         });
 
-        // Listen for keydown (typing)
         responseBox.addEventListener("keydown", function (event) {
             if (aiPlaceholderActive) {
                 if (event.key !== "Enter") {
@@ -163,7 +165,7 @@
 
 <script>
     document.getElementById('respond-form').addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
         let form = this;
         let formData = new FormData(form);
@@ -174,11 +176,15 @@
         })
         .then(response => response.json())
         .then(data => {
-            console.log("Server Response:", data); // Debugging - Check response in console
-
             if (data.success) {
+                document.getElementById('response-box').value = '';
+
+                let notification = document.getElementById('response-success');
+                    notification.innerText = "Response submitted successfully!";
+                    notification.style.display = "block"; 
+
                 let activityLog = document.getElementById('activity-log');
-                activityLog.innerHTML = '<ul class="timeline">'; // Reset content
+                activityLog.innerHTML = '<ul class="timeline">';
                 
                 data.activities.forEach(activity => {
                     activityLog.innerHTML += `
