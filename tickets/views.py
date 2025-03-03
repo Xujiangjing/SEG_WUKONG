@@ -26,6 +26,14 @@ from .ai_service import classify_department, generate_ai_answer
 from .models import Ticket, TicketActivity
 
 
+def handle_uploaded_file_in_chunks(ticket, file_obj):
+
+    attachment = TicketAttachment(ticket=ticket)
+    
+    attachment.file.save(file_obj.name, file_obj, save=True)
+
+    attachment.save()
+
 @login_required
 def dashboard(request):
     current_user = request.user
@@ -367,12 +375,22 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     template_name = 'tickets/create_ticket.html'
     success_url = '/tickets/'
 
+    def get_form_kwargs(self):
+
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # 关键：将 user 传给表单
+        return kwargs
+
     def form_valid(self, form):
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = 'open'
+
+        if self.request.user.is_student():
+            ticket.priority = 'low'
+
+
         existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
-        
         if existing_ticket:
             existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
                 ticket.id, ticket.description)
@@ -383,26 +401,28 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 action_by=self.request.user,
                 comment=f'Merged with ticket {ticket.id}'
             )
-            
             messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
             return redirect('ticket_detail', pk=existing_ticket.pk)
         else:
             ticket.save()
             files = self.request.FILES.getlist('file')
-            for file in files:
-                TicketAttachment.objects.create(ticket=ticket, file=file)
+            for f in files:
+                handle_uploaded_file_in_chunks(ticket, f)
+                
             TicketActivity.objects.create(
                 ticket=ticket,
                 action='created',
                 action_by=self.request.user
             )
+            
             ai_department = classify_department(ticket.description)
             ai_answer = generate_ai_answer(ticket.description)
             AITicketProcessing.objects.create(
                 ticket=ticket,
                 ai_generated_response=ai_answer,
                 ai_assigned_department=ai_department
-            )   
+            )
+            
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
 
@@ -545,7 +565,6 @@ def respond_ticket(request, ticket_id):
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
 
-    # 查询所有专家，并统计每个专家已分配的工单数量
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
@@ -571,7 +590,7 @@ def redirect_ticket(request, ticket_id):
     if new_assignee_id:
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
-        ticket.status = 'in_progress'  # 更新工单状态为进行中
+        ticket.status = 'in_progress'  
         ticket.latest_action = 'redirected'
         ticket.save()
 

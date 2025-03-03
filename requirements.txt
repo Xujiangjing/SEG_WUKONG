@@ -15,3 +15,6 @@ typing_extensions
 boto3
 requests
 python-dotenv
+boto3
+django-storages
+moto
