@@ -284,6 +284,11 @@
                         {% endif %}
                       </td>
                       <td>
+                        <form method="post" action="{% url 'return_ticket_page' ticket.id %}">
+                          {% csrf_token %}
+                          <button type="submit" name="return_ticket_page" class="btn btn-sm btn-danger">Return</button>
+                        </form>
+                        <br>
                         <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
@@ -325,6 +330,11 @@
                         {% endif %}
                       </td>
                       <td>
+                        <form method="post" action="{% url 'return_ticket_page' ticket.id %}">
+                          {% csrf_token %}
+                          <button type="submit" name="return_ticket_page" class="btn btn-sm btn-danger">Return</button>
+                        </form>
+                        <br>
                         <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>

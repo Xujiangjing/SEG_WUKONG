@@ -2,6 +2,8 @@
 
 {% block content %}
 <div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
     <h1 class="text-center">Redirect Ticket - {{ ticket.title }}</h1
     <div class="card mb-4 shadow-lg rounded">
         <div class="card-header bg-primary text-white">
@@ -41,34 +43,46 @@
             </table>
         </div>
     </div>
-
-    <h4 class="mt-4">Specialists</h4>
-    <table class="table" id="specialists-table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Assigned Workload</th>
-                <th>Department</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for specialist in specialists %}
-            <tr>
-                <td>{{ specialist.full_name }}</td>
-                <td>{{ specialist.ticket_count }}</td>
-                <td>{{ specialist.department.name }}</td>
-                <td>
-                    <form method="post" action="{% url 'redirect_ticket' ticket.id %}" class="redirect-ticket-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="new_assignee_id" value="{{ specialist.id }}">
-                        <button type="submit" class="btn btn-sm btn-primary">Assign</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-primary text-white text-center">
+                    <strong>Specialists</strong>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-striped text-center" id="specialists-table">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Name</th>
+                                <th>Assigned Workload</th>
+                                <th>Department</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for specialist in specialists %}
+                            <tr>
+                                <td>{{ specialist.full_name }}</td>
+                                <td>{{ specialist.ticket_count }}</td>
+                                <td>{{ specialist.department.name }}</td>
+                                <td>
+                                    <form method="post" action="{% url 'redirect_ticket' ticket.id %}" class="redirect-ticket-form">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="new_assignee_id" value="{{ specialist.id }}">
+                                        <button type="submit" class="btn btn-sm btn-primary">Assign</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        
+            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
+        </div>
+    </div>
+    
 </div>
 
 <script>

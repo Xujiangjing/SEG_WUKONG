@@ -549,7 +549,12 @@ def redirect_ticket_page(request, ticket_id):
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
-
+    
+    returned_specialist_list = []
+    ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
+    for activity in ticket_activity:
+        returned_specialist_list.append(activity.action_by) 
+    specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
         'specialists': specialists,
@@ -590,6 +595,11 @@ def redirect_ticket(request, ticket_id):
         .annotate(ticket_count=Count('assigned_tickets')) \
         .order_by('ticket_count')
         
+        returned_specialist_list = []
+        ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
+        for activity in ticket_activity:
+            returned_specialist_list.append(activity.action_by) 
+
         specialists_info = [
             {
                 'id': specialist.id,
@@ -597,7 +607,7 @@ def redirect_ticket(request, ticket_id):
                 'ticket_count': specialist.ticket_count,
                 'department_name': specialist.department.name if specialist.department else 'N/A'
             }
-            for specialist in specialists
+            for specialist in specialists if specialist not in returned_specialist_list
         ]
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
@@ -677,73 +687,10 @@ def respond_ticket(request, ticket_id):
     })
 
 
-
-@login_required
-def redirect_ticket_page(request, ticket_id):
-    ticket = Ticket.objects.get(id=ticket_id)
-
-    # 查询所有专家，并统计每个专家已分配的工单数量
-    specialists = User.objects.filter(role='specialists') \
-    .annotate(ticket_count=Count('assigned_tickets')) \
-    .order_by('ticket_count')
-
-    return render(request, 'redirect_ticket_page.html', {
-        'ticket': ticket,
-        'specialists': specialists,
-    })
-
-
-@login_required
-@require_POST
-def redirect_ticket(request, ticket_id):
-    if not request.user.is_program_officer():
-        return redirect('redirect_ticket_page', ticket_id=ticket_id)
-    ticket = Ticket.objects.get(id=ticket_id)
-    new_assignee_id = request.POST.get('new_assignee_id')
-    if new_assignee_id:
-        new_assignee = User.objects.get(id=new_assignee_id)
-        ticket.assigned_user = new_assignee
-        ticket.status = 'in_progress'  # 更新工单状态为进行中
-        ticket.latest_action = 'redirected'
-        ticket.save()
-
-        ticket_activity = TicketActivity(
-            ticket=ticket,
-            action='redirected',
-            action_by=request.user,
-            action_time=timezone.now(),
-            comment=f'Redirected to {new_assignee.full_name()}'
-        )
-        ticket_activity.save()
-
-        updated_ticket_info = {
-            'assigned_user': ticket.assigned_user.username if ticket.assigned_user else 'Unassigned',
-            'status': ticket.status,
-            'priority': ticket.priority,
-            'assigned_department': ticket.assigned_department,
-        }
-
-        specialists = User.objects.filter(role='specialists') \
-        .annotate(ticket_count=Count('assigned_tickets')) \
-        .order_by('ticket_count')
-
-        specialists_info = [
-            {
-                'id': specialist.id,
-                'full_name': specialist.full_name(),
-                'ticket_count': specialist.ticket_count,
-                'department_name': specialist.department.name if specialist.department else 'N/A'
-            }
-            for specialist in specialists
-        ]
-        return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
-
-    return redirect('redirect_ticket_page', ticket_id=ticket_id)
-
 @login_required
 def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    if request.user != ticket.creator and not request.user != ticket.assigned_user and not request.user.is_program_officer():
+    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect('dashboard')
     activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
     formatted_activities = []
@@ -758,3 +705,45 @@ def ticket_detail(request, ticket_id):
         'ticket': ticket,
         'activities': formatted_activities,
     })
+
+@login_required
+def return_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'return_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+    
+@login_required
+def return_ticket_specailist(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+
+    if request.method == 'POST' and 'return_reason' in request.POST:
+        return_reason = request.POST.get('return_reason')
+        ticket.status = 'returned'
+        ticket.assigned_user = None
+        ticket.return_reason = return_reason
+        ticket_activity = TicketActivity(
+            ticket=ticket,
+            action='returned',
+            action_by=request.user,
+            action_time=timezone.now(),
+            comment=return_reason
+        )
+        ticket_activity.save()
+        ticket.save()
+        return redirect('dashboard')
+    return redirect('return_ticket_page', ticket_id=ticket_id)
