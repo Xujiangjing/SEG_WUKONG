@@ -22,7 +22,6 @@ from tickets.helpers import login_prohibited
 from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
-from tickets.models import Ticket, TicketActivity, TicketAttachment, User
 from .ai_service import ai_process_ticket
 from .models import Ticket, TicketActivity
 
@@ -102,7 +101,7 @@ def dashboard(request):
 
             return redirect('dashboard')
 
-
+        
         tickets = Ticket.objects.all()
 
 
