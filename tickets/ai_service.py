@@ -2,7 +2,7 @@ import os
 import json
 import boto3
 from botocore.exceptions import ClientError
-from tickets.models import Ticket, AITicketProcessing
+from tickets.models import Ticket, AITicketProcessing, MergedTicket
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
@@ -85,3 +85,37 @@ def ai_process_ticket(ticket):
         ai_assigned_priority=ai_priority
     )
     ticket.priority = AITicketProcessing.objects.get(ticket=ticket).ai_assigned_priority
+
+def find_potential_tickets_to_merge(ticket):
+    """
+    Find potential tickets that can be merged with the current ticket by evaluating
+    their descriptions using the AI model.
+    """
+
+    # Fetch open tickets that are not the current ticket
+    potential_tickets = Ticket.objects.filter(status='open').exclude(id=ticket.id)
+    
+    # Generate a prompt to compare the current ticket's description with other ticket descriptions
+    similar_tickets = []
+    
+    for potential_ticket in potential_tickets:
+        prompt = f"""
+        Determine whether the following tickets should be merged. Consider their similarity.
+        The current ticket: '{ticket.title}' - {ticket.description}
+        The potential ticket: '{potential_ticket.title}' - {potential_ticket.description}
+        Should these tickets be merged? Return "Yes" or "No".
+        """
+        
+        result = query_bedrock(prompt)
+
+        if result.lower() == "yes":
+            similar_tickets.append(potential_ticket)
+    
+    # Create a new MergedTicket entry with the primary ticket and the suggested tickets
+    if similar_tickets:
+        merged_ticket = MergedTicket.objects.create(primary_ticket=ticket)
+        merged_ticket.suggested_merged_tickets.set(similar_tickets)
+        merged_ticket.save()
+
+        return merged_ticket
+    return None
