@@ -139,7 +139,7 @@ def dashboard(request):
 
 
         tickets = Ticket.objects.filter(creator=current_user)
-
+        
 
         if search_query:
             tickets = tickets.filter(
@@ -157,10 +157,16 @@ def dashboard(request):
             tickets = tickets.order_by(priority_case)
         elif sort_option == 'priority_desc':
             tickets = tickets.order_by(-priority_case)
-
+            
+        returned_tickets = []
+        for ticket in tickets:
+            if ticket.status == 'returned' and (ticket.latest_editor==None or ticket.latest_editor.is_program_officer()):
+                returned_tickets.append(ticket)
+        tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
         return render(request, 'dashboard.html', {
             'user': current_user,
             'student_tickets': tickets,
+            'returned_tickets': returned_tickets
         })
 
 
@@ -552,7 +558,66 @@ def respond_ticket(request, ticket_id):
     })
     
     
+@login_required
+def update_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.creator:
+        return redirect('dashboard')
+    
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'update_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
 
+
+@login_required
+def update_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if request.user != ticket.creator:
+        messages.error(request, "You do not have permission to modify this ticket.")
+        return redirect('dashboard')
+    if request.method == "POST" and "update_message" in request.POST:
+        update_message = request.POST.get("response_message")
+        if not ticket.description:
+            ticket.description += "\n"
+        ticket.description += f"\n\nSupplement: {request.user.username}: {update_message}"
+        
+        ticket.status = 'open'
+        ticket.latest_action = 'status_updated'
+        ticket.save()
+        ticket_activity = TicketActivity.objects.create(
+            ticket=ticket,
+            action='status_updated',
+            action_by=request.user,
+            comment=update_message
+        )
+        ticket_activity.save()
+        return redirect('dashboard')
+        # activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+        # formatted_activities = [{
+        #     'username': activity.action_by.username,
+        #     'action': activity.get_action_display(),
+        #     'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+        #     'comment': activity.comment or "No comments."
+        # } for activity in activities]
+
+        # return JsonResponse({
+        #     'success': True,
+        #     'activities': formatted_activities,
+        #     'answers': ticket.answers
+        # })
+    return redirect('update_ticket_page', ticket_id=ticket_id)
+    
 @login_required
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)

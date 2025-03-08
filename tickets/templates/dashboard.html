@@ -237,7 +237,58 @@
                         <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
                         <br>
                         <br>
-                        {% if ticket.status == 'open' %}
+                        {% if ticket.status != 'closed' %}
+                          <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% endif %}
+            <h2>Returned Tickets</h2>
+            {% if not returned_tickets %}
+              {% if request.GET.search or request.GET.status or request.GET.sort %}
+                <div class="alert alert-info" role="alert">
+                  No tickets found matching your criteria. Try a different filter or search term.
+                </div>
+              {% else %}
+                <div class="alert alert-info" role="alert">
+                  No tickets posted at the moment.
+                </div>
+              {% endif %}
+            {% else %}
+              <table class="table table-bordered table-striped table-light">
+                <thead class="table-blue">
+                  <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Answers</th>
+                    <th></th> <!-- empty heading for actions -->
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ticket in returned_tickets %}
+                    <tr>
+                      <td>{{ ticket.title }}</td>
+                      <td>{{ ticket.status }}</td>
+                      <td>{{ ticket.priority }}</td>
+                      <td>
+                        {% if ticket.answers %}
+                          Answered
+                        {% else %}
+                          Not yet answered
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
+                        <br>
+                        <br>
+                          <a href="{% url 'update_ticket' ticket.id %}" class="btn btn-sm btn-danger">Update Ticket</a>
+                        <br>
+                        <br>
+                        {% if ticket.status != 'closed' %}
                           <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
                         {% endif %}
                       </td>
