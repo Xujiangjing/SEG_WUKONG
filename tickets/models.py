@@ -219,3 +219,10 @@ class AITicketProcessing(models.Model):
     def __str__(self):
         return f"AI Processing for Ticket {self.ticket.id}"
 
+class MergedTicket(models.Model):
+    primary_ticket = models.ForeignKey(Ticket, related_name='primary_ticket', on_delete=models.CASCADE)
+    suggested_merged_tickets = models.ManyToManyField(Ticket, related_name='suggested_merged_tickets')
+    merged_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Merged into Ticket {self.primary_ticket.id}"
