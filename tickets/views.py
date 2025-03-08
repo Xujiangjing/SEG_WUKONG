@@ -564,16 +564,19 @@ def redirect_ticket_page(request, ticket_id):
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
 
-    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+    
     
     returned_specialist_list = []
     ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
     for activity in ticket_activity:
         returned_specialist_list.append(activity.action_by) 
-    specialists = [specialist for specialist in sorted_specialists if specialist not in returned_specialist_list]
+    specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
+
+    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
-        'specialists': specialists,
+        'specialists': sorted_specialists,
     })
 
 
