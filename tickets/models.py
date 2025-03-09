@@ -222,6 +222,8 @@ class AITicketProcessing(models.Model):
 class MergedTicket(models.Model):
     primary_ticket = models.ForeignKey(Ticket, related_name='primary_ticket', on_delete=models.CASCADE)
     suggested_merged_tickets = models.ManyToManyField(Ticket, related_name='suggested_merged_tickets')
+    approved_merged_tickets = models.ManyToManyField(Ticket, related_name='approved_merged_tickets')
+    
     merged_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
