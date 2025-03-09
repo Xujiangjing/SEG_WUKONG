@@ -525,3 +525,16 @@ body  {
 .login-logo img {
   width: 148px;
 }
+
+.wukong-title {
+  padding: 0 20px;
+  /* font-size: 36px;
+  color: #f0b432; */
+  text-align: center;
+  margin-bottom: 10px;
+  /* font-weight: bold; */
+}
+
+.wukong-title img {
+  width: 400px;
+}
