@@ -226,8 +226,8 @@ body  {
   height: 133px;
 }
 .section-1 .text {
-  
   background: url('./images/ScrollDown.png') no-repeat;
+  background-size: 100% 100%;
   width: 232px;
   height: 38px;
   margin: 10px 0;
