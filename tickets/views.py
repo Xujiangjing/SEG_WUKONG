@@ -101,7 +101,7 @@ def dashboard(request):
 
             return redirect('dashboard')
 
-
+        
         tickets = Ticket.objects.all()
 
 
