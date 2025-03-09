@@ -12,7 +12,8 @@
 
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav me-auto">
-        
+
+
         <li class="nav-item">
           <a class="nav-link active" href="{% url 'dashboard' %}">
             <i class="bi bi-speedometer2 d-none d-md-inline"></i>
@@ -20,7 +21,7 @@
           </a>
         </li>
 
-        
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#"
              role="button" data-bs-toggle="dropdown">
@@ -28,8 +29,9 @@
             Tickets
           </a>
           <ul class="dropdown-menu">
-            
-            {% if not user.is_student %}
+
+
+            {% if user.is_authenticated and not user.is_student %}
               <li>
                 <a class="dropdown-item" href="{% url 'ticket_list' %}">
                   <i class="bi bi-list-ul"></i> List View
@@ -37,12 +39,21 @@
               </li>
             {% endif %}
 
-            
-            {% if user.is_student %}
+
+            {% if user.is_authenticated and user.is_student %}
               <li>
                 <a class="dropdown-item" href="{% url 'create_ticket' %}">
                   <i class="bi bi-plus-square"></i> New Ticket
                 </a>
+              </li>
+            {% endif %}
+
+
+            {% if not user.is_authenticated %}
+              <li>
+                <span class="dropdown-item disabled" style="opacity: 0.7;">
+                  Please log in to access tickets
+                </span>
               </li>
             {% endif %}
           </ul>
