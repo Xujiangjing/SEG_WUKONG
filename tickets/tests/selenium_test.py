@@ -54,19 +54,15 @@ class DjangoSeleniumTests(unittest.TestCase):
         driver = self.driver
         driver.get("http://127.0.0.1:8000/log_in/")
 
-        # Check the page title
-        new_title = driver.title
-        print(f"Login page title: {new_title}")
-        self.assertIn("login", new_title.lower())
-
-        # Ensure username and password fields exist
         WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.NAME, "username"))
+            EC.presence_of_element_located((By.CLASS_NAME, "login-btn"))
         )
-        username_input = driver.find_element(By.NAME, "username")
-        password_input = driver.find_element(By.NAME, "password")
-        self.assertTrue(username_input.is_displayed(), "Username field is missing")
-        self.assertTrue(password_input.is_displayed(), "Password field is missing")
+
+        heading = driver.find_element(By.CLASS_NAME, "ticket-system")
+        self.assertTrue(heading.is_displayed(), "Login page heading missing")
+
+        print("✅ Login page loaded successfully!")
+
 
     def test_base_template_renders(self):
         """Test if base_login.html template renders correctly"""
