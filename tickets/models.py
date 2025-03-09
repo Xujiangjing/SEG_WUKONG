@@ -97,6 +97,8 @@ class Ticket(models.Model):
         ('resolved', 'Resolved'),
         ('closed', 'Closed'),
         ('returned', 'Returned'), # Returned to the student for more information
+        ('returned_student', 'Returned To Student'), # Returned to the student for more information
+        ('returned_officer', 'Returned To Officer'), # Returned to the specialist for more information
     ]
     ## get_priority_choices function 
     PRIORITY_CHOICES = [

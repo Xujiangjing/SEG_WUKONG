@@ -127,10 +127,23 @@ def dashboard(request):
         ticket_stats = User.objects.filter(role='specialists').annotate(
             ticket_count=Count('assigned_tickets')
         )
+        
+        returned_tickets = []
+        for ticket in tickets:
+            if ticket.status == 'returned_officer'or ticket.status == 'returned':
+                returned_tickets.append(ticket)
+        tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
 
+        updated_tickets = []
+        for ticket in tickets:
+            if ticket.latest_action == 'status_updated' and ticket.status == 'open':
+                updated_tickets.append(ticket)
+        tickets = [ticket for ticket in tickets if ticket not in updated_tickets]
         return render(request, 'dashboard.html', {
             'user': current_user,
             'all_tickets': tickets,
+            'returned_ticket': returned_tickets,
+            'updated_tickets': updated_tickets,
             'ticket_stats': ticket_stats,
         })
 
@@ -160,7 +173,7 @@ def dashboard(request):
             
         returned_tickets = []
         for ticket in tickets:
-            if ticket.status == 'returned' and (ticket.latest_editor==None or ticket.latest_editor.is_program_officer()):
+            if ticket.status == 'returned_student':
                 returned_tickets.append(ticket)
         tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
         return render(request, 'dashboard.html', {
@@ -735,9 +748,13 @@ def return_ticket_specailist(request, ticket_id):
 
     if request.method == 'POST' and 'return_reason' in request.POST:
         return_reason = request.POST.get('return_reason')
-        ticket.status = 'returned'
+        
         ticket.assigned_user = None
         ticket.return_reason = return_reason
+        if 'return_ticket_specailist' in request.POST:
+            ticket.status = 'returned_officer'
+        else:
+            ticket.status = 'returned_student'
         ticket_activity = TicketActivity(
             ticket=ticket,
             action='returned',
@@ -748,4 +765,6 @@ def return_ticket_specailist(request, ticket_id):
         ticket_activity.save()
         ticket.save()
         return redirect('dashboard')
+            
+            
     return redirect('return_ticket_page', ticket_id=ticket_id)
