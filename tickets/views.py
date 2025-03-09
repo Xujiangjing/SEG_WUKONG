@@ -363,6 +363,12 @@ class TicketListView(ListView):
     model = Ticket
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_student():
+            messages.error(request, 'You do not have permission to view the ticket list.')
+            return redirect('dashboard')  
+        return super().dispatch(request, *args, **kwargs)
 
 class TicketsTableView(View):
     def get(self, request):
@@ -374,6 +380,12 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     form_class = TicketForm
     template_name = 'tickets/create_ticket.html'
     success_url = '/tickets/'
+    
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_student():
+            messages.error(request, 'Only students have permission to create tickets.')
+            return redirect('dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
 
