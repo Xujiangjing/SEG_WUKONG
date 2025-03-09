@@ -499,3 +499,21 @@ body  {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
   /* width: 500px; */
 }
+
+.ticket-system {
+  position: absolute;
+  top: 9px;
+  left: 10px;
+  background-image: url("/static/images/login-ticket-bg.png");
+  /* background-size: cover; */
+  background-size: 100% 100%;
+  /* background-position: center; */
+  display: inline-block;
+  font-size: 16px;
+  /* font-weight: bold; */
+  /* color: #666; */
+  color: #472d22;
+  font-family: "Inter-Bold";
+  margin-bottom: 10px;
+  padding: 15px 25px 15px 15px;
+}
