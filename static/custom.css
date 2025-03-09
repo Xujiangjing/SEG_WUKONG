@@ -538,3 +538,24 @@ body  {
 .wukong-title img {
   width: 400px;
 }
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 18px;
+  /* color: #333; */
+  color: #fff;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  /* background: rgba(82, 52, 35, 0.2); */
+  background-color: #462b20;
+  border-radius: 5px;
+}
