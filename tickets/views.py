@@ -385,8 +385,8 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
 
-        if not request.user.is_student():
-            messages.error(request, 'Only students have permission to create tickets.')
+        if request.user.is_authenticated and not request.user.is_student():
+            messages.error(request, 'Only students can create tickets.')
             return redirect('dashboard')
         return super().dispatch(request, *args, **kwargs)
 
