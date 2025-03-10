@@ -26,17 +26,21 @@ from tickets.models import Ticket, TicketActivity, TicketAttachment, User, Respo
 
 from .ai_service import ai_process_ticket
 from .models import Ticket, TicketActivity
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.http import JsonResponse
+
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
-    
+
     attachment = TicketAttachment(ticket=ticket)
-      
+    
     attachment.file.save(file_obj.name, file_obj, save=True)
-    
+
     attachment.save()
-        
-    
+
+
 
 @login_required
 def dashboard(request):
@@ -82,7 +86,7 @@ def dashboard(request):
                 comment=response_message
             )
 
-            return redirect('dashboard')
+            return redirect('dashboard_program_officer')
 
 
         if request.method == 'POST' and 'redirect_ticket' in request.POST:
@@ -103,7 +107,7 @@ def dashboard(request):
                 comment=f"Redirected to {new_assignee.username}"
             )
 
-            return redirect('dashboard')
+            return redirect('dashboard_program_officer')
 
         
         tickets = Ticket.objects.all()
@@ -132,7 +136,7 @@ def dashboard(request):
             ticket_count=Count('assigned_tickets')
         )
 
-        return render(request, 'dashboard.html', {
+        return render(request, 'dashboard_program_officer.html', {
             'user': current_user,
             'all_tickets': tickets,
             'ticket_stats': ticket_stats,
@@ -162,7 +166,7 @@ def dashboard(request):
         elif sort_option == 'priority_desc':
             tickets = tickets.order_by(-priority_case)
 
-        return render(request, 'dashboard.html', {
+        return render(request, 'dashboard_student.html', {
             'user': current_user,
             'student_tickets': tickets,
         })
@@ -191,7 +195,7 @@ def dashboard(request):
                 comment=response_message
             )
 
-            return redirect('dashboard')
+            return redirect('dashboard_spcialist')
 
         tickets = Ticket.objects.filter(assigned_user=current_user)
 
@@ -220,7 +224,7 @@ def dashboard(request):
                 responded_tickets_list.append(ticket)
             else:
                 assigned_tickets_list.append(ticket)
-        return render(request, 'dashboard.html', {
+        return render(request, 'dashboard_specialist.html', {
             'user': current_user,
             'assigned_tickets': assigned_tickets_list,
             'responded_tickets': responded_tickets_list,
@@ -232,6 +236,20 @@ def dashboard(request):
             'message': "You do not have permission to view this page."
         })
         
+
+
+@login_required
+def get_user_role(request):
+    """Return the role of the current user."""
+    role = "unknown"
+    if request.user.is_program_officer:
+        role = "program_officer"
+    elif request.user.is_specialist:
+        role = "specialist"
+    elif request.user.is_student:
+        role = "student"
+    return JsonResponse({"role": role})
+
 @login_prohibited
 def home(request):
     """Display the application's start/home screen."""
@@ -343,29 +361,10 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         messages.add_message(self.request, messages.SUCCESS, "Profile updated!")
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
-class SignUpView(LoginProhibitedMixin, FormView):
-    form_class = SignUpForm
-    template_name = "sign_up.html"
-    redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
-
-    def form_valid(self, form):
-        self.object = form.save()
-        login(self.request, self.object)
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
-
 class TicketListView(ListView):
     model = Ticket
     template_name = 'tickets/ticket_list.html'  
     context_object_name = 'tickets'
-    
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_student():
-            messages.error(request, 'You do not have permission to view the ticket list.')
-            return redirect('dashboard')  
-        return super().dispatch(request, *args, **kwargs)
 
 class TicketsTableView(View):
     def get(self, request):
@@ -379,21 +378,13 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     template_name = 'tickets/create_ticket.html'
     success_url = '/tickets/'
 
-    def dispatch(self, request, *args, **kwargs):
-
-        if request.user.is_authenticated and not request.user.is_student():
-            messages.error(request, 'Only students can create tickets.')
-            return redirect('dashboard')
-        return super().dispatch(request, *args, **kwargs)
-
     def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
 
-        kwargs['user'] = self.request.user
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user  # 关键：将 user 传给表单
         return kwargs
 
     def form_valid(self, form):
-
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = 'open'
@@ -402,52 +393,31 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             ticket.priority = 'low'
 
 
-        ticket.save()
-        
-
-
-        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').exclude(id=ticket.id).first()
-
+        existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
         if existing_ticket:
-            
-            existing_ticket.description += (
-                f"\n\nMerged with ticket ID: {ticket.id}. "
-                f"New description: {ticket.description}"
-            )
+            existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
+                ticket.id, ticket.description)
             existing_ticket.save()
-
-
-            files = self.request.FILES.getlist('file')
-            for f in files:
-                handle_uploaded_file_in_chunks(existing_ticket, f)
-
-
             TicketActivity.objects.create(
                 ticket=existing_ticket,
                 action='merged',
                 action_by=self.request.user,
                 comment=f'Merged with ticket {ticket.id}'
             )
-
-
-            ticket.delete()
-
             messages.success(self.request, f'Ticket merged with existing ticket {existing_ticket.id} successfully!')
             return redirect('ticket_detail', pk=existing_ticket.pk)
-
         else:
+            ticket.save()
             files = self.request.FILES.getlist('file')
             for f in files:
                 handle_uploaded_file_in_chunks(ticket, f)
-
+                
             TicketActivity.objects.create(
                 ticket=ticket,
                 action='created',
                 action_by=self.request.user
             )
-
             ai_process_ticket(ticket)
-
             messages.success(self.request, 'Query submitted successfully!')
             return redirect('ticket_detail', pk=ticket.pk)
 
@@ -639,17 +609,13 @@ def respond_ticket(request, ticket_id):
         
     if request.method == "POST" and "response_message" in request.POST:
         response_message = request.POST.get("response_message")
-        
-        # Save the response to the database
-        Response.objects.create(ticket=ticket, responder=request.user, content=response_message)
-        
         if ticket.answers:
             ticket.answers += "\n"
         else:
             ticket.answers = ""
         ticket.answers += f"Response by {request.user.username}: {response_message}"
         
-        
+        Response.objects.create(ticket=ticket, responder=request.user, content=response_message)
         
         ticket.status = 'in_progress'
         ticket.save()
@@ -660,26 +626,45 @@ def respond_ticket(request, ticket_id):
             comment=response_message
         )
         ticket_activity.save()
+        activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+        formatted_activities = [{
+            'username': activity.action_by.username,            
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        } for activity in activities]
+        
         send_response_notification_email(ticket.creator.email, ticket.title, response_message, ticket.id)
-        messages.success(request, f"A response has been sent for your ticket #{ticket.title}.")
-        response = redirect('dashboard')
-        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'  # Force refresh
         
-        return response
-    
-    
-    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
-    formatted_activities = [{
-        'username': activity.action_by.username,            
-        'action': activity.get_action_display(),
-        'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
-        'comment': activity.comment or "No comments."
-    } for activity in activities]
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"ticket_{ticket.id}",
+            {
+                "type": "send_notification",
+                "message": f"Your ticket '{ticket.title}' has received a response!"
+            }
+        )
         
-    return render(request, 'respond_ticket_page.html', {
+        return JsonResponse({
+            'success': True,
+            'activities': formatted_activities,
+            'answers': ticket.answers
+        })
+        
+    return redirect(request, 'respond_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
     })
+    
+        
+        
+        
+        
+        
+        
+        
+    
+    
     
 
 @login_required

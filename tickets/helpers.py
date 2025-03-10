@@ -57,3 +57,35 @@ def send_response_notification_email(student_email, ticket_title, response_messa
         fail_silently=False,
         html_message=html_message  # HTML version
     )
+
+
+def filter_tickets(request, tickets):
+    """Filter tickets based on search query, status filter and sort option."""
+    search_query = request.GET.get('search', '')
+    status_filter = request.GET.get('status', '')
+    sort_option = request.GET.get('sort', '')
+
+    priority_case = Case(
+        When(priority='urgent', then=4),
+        When(priority='high', then=3),
+        When(priority='medium', then=2),
+        When(priority='low', then=1),
+        output_field=IntegerField()
+    )
+
+    if search_query:
+        tickets = tickets.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query))
+
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+
+    if sort_option == 'date_asc':
+        tickets = tickets.order_by('created_at')
+    elif sort_option == 'date_desc':
+        tickets = tickets.order_by('-created_at')
+    elif sort_option == 'priority_asc':
+        tickets = tickets.order_by(priority_case)
+    elif sort_option == 'priority_desc':
+        tickets = tickets.order_by(-priority_case)
+
+    return tickets

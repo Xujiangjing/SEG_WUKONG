@@ -1,0 +1,38 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container my-4">
+  <h1 class="text-center text-primary">Welcome to your dashboard, {{ user.username }}</h1>
+
+  <h2>Your Assigned Tickets</h2>
+  {% if not assigned_tickets %}
+    <div class="alert alert-info">No assigned tickets found.</div>
+  {% else %}
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Answers</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in assigned_tickets %}
+          <tr>
+            <td>{{ ticket.title }}</td>
+            <td>{{ ticket.status }}</td>
+            <td>{{ ticket.priority }}</td>
+            <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
+            <td>
+              {% if ticket.status != 'closed' %}
+                <a href="{% url 'respond_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Respond</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

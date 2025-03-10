@@ -20,6 +20,7 @@ from django.contrib import admin
 from django.urls import path
 from tickets import views
 from django.shortcuts import render
+from tickets.views import get_user_role
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,7 +30,6 @@ urlpatterns = [
     path('log_out/', views.log_out, name='log_out'),
     path('password/', views.PasswordView.as_view(), name='password'),
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
-    path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
     path('tickets/', views.TicketListView.as_view(), name='ticket_list'),
     path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     path('close_ticket/<uuid:ticket_id>/', views.close_ticket, name='close_ticket'),
@@ -44,9 +44,11 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
     path("ticket/submit/", views.submit_ticket, name="submit_ticket"),
-    path("ticket/success/", lambda request: render(request, "tickets/ticket_success.html"), name="ticket_success"),  
-
-
+    path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
+    path('dashboard_program_officer/', views.dashboard, name='dashboard_program_officer'),
+    path('dashboard_student/', views.dashboard, name='dashboard_student'),
+    path('dashboard_specialist/', views.dashboard, name='dashboard_specialist'),
+    path('get_user_role/', get_user_role, name='get_user_role'),
     
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #pragma: no cover
