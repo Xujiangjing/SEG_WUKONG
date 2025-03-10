@@ -20,7 +20,7 @@ from django.contrib import admin
 from django.urls import path
 from tickets import views
 from django.shortcuts import render
-from tickets.views import get_user_role
+from tickets.views import get_user_role, manage_tickets_for_program_officer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -49,6 +49,6 @@ urlpatterns = [
     path('dashboard_student/', views.dashboard, name='dashboard_student'),
     path('dashboard_specialist/', views.dashboard, name='dashboard_specialist'),
     path('get_user_role/', get_user_role, name='get_user_role'),
-    
+    path('manage_tickets_for_program_officer/<uuid:ticket_id>/', views.manage_tickets_for_program_officer, name="manage_tickets_for_program_officer"),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #pragma: no cover

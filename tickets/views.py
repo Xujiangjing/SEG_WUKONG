@@ -789,3 +789,52 @@ def submit_ticket(request):
     return render(request, 'tickets/submit_ticket.html', {'form': form})
     
     
+@login_required
+def manage_tickets_for_program_officer(request, ticket_id):
+    
+    current_user = request.user
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if request.method == 'POST':
+        action_type = request.POST.get('action_type')
+        
+        
+        if action_type == 'respond':
+            response_message = request.POST.get('response_message').strip()
+            if response_message:
+                ticket.answers = (ticket.answers or "") + f"\nResponse by {current_user.username}: {response_message}"
+                ticket.latest_action = 'responded'
+                ticket.save()
+                TicketActivity.objects.create(
+                    ticket=ticket, 
+                    action='responded', 
+                    action_by=current_user, 
+                    comment=response_message
+                )
+                ai_process_ticket(ticket)
+            return redirect('ticket_detail', ticket_id=ticket.id)
+        elif action_type == 'redirect':
+            new_assignee_id = request.POST.get('new_assignee_id')
+            new_assignee = User.objects.get(id=new_assignee_id)
+            
+            ticket.assigned_user = new_assignee
+            ticket.latest_action = 'redirected'
+            ticket.status = 'in_progress'
+            ticket.save()
+            
+            TicketActivity.objects.create(
+                ticket=ticket, 
+                action='redirected', 
+                action_by=current_user, 
+                comment=f"Redirected to {new_assignee.username}"
+            )
+        
+            return redirect('ticket_detail', ticket_id=ticket.id)
+        form = TicketForm(request.POST, instance=ticket)
+        if form.is_valid():
+            ticket = form.save()
+            messages.success(request, 'Ticket updated successfully!')
+            return redirect('ticket_detail', ticket_id=ticket.id)
+    else:
+        form = TicketForm(instance=ticket)
+    return render(request, 'manage_tickets_for_program_officer.html', {'form': form, 'ticket': ticket})
