@@ -19,12 +19,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from tickets import views
-from tickets.views import (
-    LogInView,
-    StudentDashboardView,
-    OfficerDashboardView,
-    SpecialistDashboardView
-)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -49,8 +43,5 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
     path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
-    path('dashboard/students/', StudentDashboardView.as_view(), name='dashboard_students'),
-    path('dashboard/officers/', OfficerDashboardView.as_view(), name='dashboard_officers'),
-    path('dashboard/specialists/', SpecialistDashboardView.as_view(), name='dashboard_specialists'),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #pragma: no cover
