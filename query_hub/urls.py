@@ -19,6 +19,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from tickets import views
+from django.shortcuts import render
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,7 +31,6 @@ urlpatterns = [
     path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
     path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
     path('tickets/', views.TicketListView.as_view(), name='ticket_list'),
-    path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
     path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
     path('close_ticket/<uuid:ticket_id>/', views.close_ticket, name='close_ticket'),
     path('tickets/table/', views.TicketsTableView.as_view(), name='tickets_table'),
@@ -43,6 +43,10 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
     path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
+    path("ticket/submit/", views.submit_ticket, name="submit_ticket"),
+    path("ticket/success/", lambda request: render(request, "tickets/ticket_success.html"), name="ticket_success"),  
+
+
     
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #pragma: no cover
