@@ -24,6 +24,7 @@ from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
 
 from .ai_service import ai_process_ticket
 from .models import Ticket, TicketActivity
+from django.utils.decorators import method_decorator
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
@@ -283,9 +284,21 @@ class LogInView(LoginProhibitedMixin, View):
         user = form.get_user()
         if user is not None:
             login(request, user)
-            return redirect(self.next)
+            return self.redirect_based_on_role(user)
         messages.add_message(request, messages.ERROR, "The credentials provided were invalid!")
         return self.render()
+
+    def redirect_based_on_role(self, user):
+        """Redirect user based on their role."""
+        role_redirects = {
+            'students': '/dashboard/students/',
+            'program_officers': '/dashboard/officers/',
+            'specialists': '/dashboard/specialists/',
+        }
+        if user.role in role_redirects:
+            return redirect(role_redirects[user.role])
+        messages.error(self.request, "Your account does not have a valid role.")
+        return redirect('log_in')
 
     def render(self):
         """Render log in template with blank log in form."""
@@ -293,6 +306,23 @@ class LogInView(LoginProhibitedMixin, View):
         form = LogInForm()
         return render(self.request, 'log_in.html', {'form': form, 'next': self.next})
 
+@method_decorator(login_required, name='dispatch')
+class StudentDashboardView(View):
+    """Dashboard for students."""
+    def get(self, request):
+        return render(request, 'dashboard_students.html')
+
+@method_decorator(login_required, name='dispatch')
+class OfficerDashboardView(View):
+    """Dashboard for program officers."""
+    def get(self, request):
+        return render(request, 'dashboard_officers.html')
+
+@method_decorator(login_required, name='dispatch')
+class SpecialistDashboardView(View):
+    """Dashboard for specialists."""
+    def get(self, request):
+        return render(request, 'dashboard_specialists.html')
 
 def log_out(request):
     """Log out the current user"""
