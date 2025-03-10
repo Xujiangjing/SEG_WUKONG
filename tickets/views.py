@@ -23,7 +23,7 @@ from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
 from .ai_service import ai_process_ticket
-from .models import Ticket, TicketActivity
+from .models import Ticket, TicketActivity, Department
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
@@ -673,18 +673,26 @@ def update_ticket(request, ticket_id):
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
 
+    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+    rec_department = get_object_or_404(Department, name=ai_assigned_department)
+
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
     .order_by('ticket_count')
+
+    
     
     returned_specialist_list = []
     ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
     for activity in ticket_activity:
         returned_specialist_list.append(activity.action_by) 
     specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
+
+    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+
     return render(request, 'redirect_ticket_page.html', {
         'ticket': ticket,
-        'specialists': specialists,
+        'specialists': sorted_specialists,
     })
 
 
@@ -720,12 +728,11 @@ def redirect_ticket(request, ticket_id):
 
         specialists = User.objects.filter(role='specialists') \
         .annotate(ticket_count=Count('assigned_tickets')) \
-        .order_by('ticket_count')
-        
-        returned_specialist_list = []
-        ticket_activity = TicketActivity.objects.filter(ticket=ticket, action='returned')
-        for activity in ticket_activity:
-            returned_specialist_list.append(activity.action_by) 
+        .order_by('ticket_count') 
+
+        ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
+        rec_department = get_object_or_404(Department, name=ai_assigned_department)
+        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
 
         specialists_info = [
             {
@@ -734,7 +741,7 @@ def redirect_ticket(request, ticket_id):
                 'ticket_count': specialist.ticket_count,
                 'department_name': specialist.department.name if specialist.department else 'N/A'
             }
-            for specialist in specialists if specialist not in returned_specialist_list
+            for specialist in sorted_specialists
         ]
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
