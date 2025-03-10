@@ -93,7 +93,11 @@ def find_potential_tickets_to_merge(ticket):
     """
 
     # Fetch open tickets that are not the current ticket
-    potential_tickets = Ticket.objects.filter(status='open').exclude(id=ticket.id)
+    ai_assigned_department = ticket.ai_processing.ai_assigned_department
+    potential_tickets = Ticket.objects.filter(
+        status='open',
+        ai_processing__ai_assigned_department=ai_assigned_department
+    ).exclude(id=ticket.id)
     
     # Generate a prompt to compare the current ticket's description with other ticket descriptions
     similar_tickets = []
