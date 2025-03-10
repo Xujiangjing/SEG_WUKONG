@@ -20,11 +20,10 @@ import pytz
 class S3IntegrationTestCase(TestCase):
 
     def setUp(self):
-        # 创建一个 fake s3 client，并生成 'test-bucket'
+
         self.s3_client = boto3.client('s3', region_name='us-east-1')
         self.s3_client.create_bucket(Bucket='test-bucket')
 
-        # 创建学生用户
         self.student = User.objects.create_user(
             username="@john",
             email="john.doe@example.org",
@@ -32,7 +31,7 @@ class S3IntegrationTestCase(TestCase):
             role="students"
         )
 
-        # 让 ticket.created_at 固定为 2025-03-09
+
         fixed_time = datetime(2025, 3, 9, 10, 0, 0, tzinfo=pytz.UTC)
         with patch("django.utils.timezone.now", return_value=fixed_time):
             self.ticket = Ticket.objects.create(
@@ -41,27 +40,22 @@ class S3IntegrationTestCase(TestCase):
             )
 
     def test_s3_upload_attachment_hello_txt(self):
-        """
-        测试：保存附件hello.txt，
-        验证自动生成 attachments/john.doe@example.org/2025-03-09/hello.txt
-        并确实上传到 mock S3
-        """
+        
         test_file = SimpleUploadedFile(
             "hello.txt", b"Hello S3 test!", content_type="text/plain"
         )
 
         attachment = TicketAttachment(ticket=self.ticket)
-        # 这里会调用 TicketAttachment 的upload_to函数 => user_directory_path
-        # 期望: "attachments/john.doe@example.org/2025-03-09/hello.txt"
+
         attachment.file.save("hello.txt", test_file, save=True)
 
-        # 断言 file.name
+
         self.assertEqual(
             attachment.file.name,
             "attachments/john.doe@example.org/2025-03-09/hello.txt"
         )
 
-        # 再检查 mock s3 是否真的有这个 key
+
         response = self.s3_client.list_objects_v2(Bucket="test-bucket")
         keys = [obj['Key'] for obj in response.get('Contents', [])]
         self.assertIn(
