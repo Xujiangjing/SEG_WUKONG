@@ -167,16 +167,18 @@
                       </td>
                       <td>
                         <!-- Redirect Ticket Button -->
-                        <form method="post" action="{% url 'redirect_ticket_page' ticket.id %}">
-                          {% csrf_token %}
-                          <button type="submit" class="btn btn-sm btn-warning">Redirect</button>
-                      </form> 
-                        <br>
-                        <!-- Respond to Ticket Form -->
-                        <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
-                          {% csrf_token %}
-                          <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
-                        </form>
+                         {%if ticket.status != 'closed' %}
+                          <form method="post" action="{% url 'redirect_ticket_page' ticket.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-warning">Redirect</button>
+                          </form> 
+                          <br>
+                          <!-- Respond to Ticket Form -->
+                          <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
+                            {% csrf_token %}
+                            <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
+                          </form>
+                        {% endif %}
                     </td>
                     </tr>
                   {% endfor %}
@@ -294,6 +296,7 @@
                         {% endif %}
                       </td>
                       <td>
+                        {%if ticket.status != 'closed' %}
                         <form method="post" action="{% url 'return_ticket_page' ticket.id %}">
                           {% csrf_token %}
                           <button type="submit" name="return_ticket_page" class="btn btn-sm btn-danger">Return</button>
@@ -303,6 +306,7 @@
                           {% csrf_token %}
                           <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
                         </form>
+                        {% endif %}
                       </td>
                     </tr>
                   {% endfor %}
