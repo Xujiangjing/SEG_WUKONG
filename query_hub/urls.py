@@ -43,6 +43,9 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
     path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
+    path('ticket/<uuid:ticket_id>/update_page/', views.update_ticket_page, name='update_ticket_page'),
+    path('ticket/<uuid:ticket_id>/update_ticket/', views.update_ticket, name='update_ticket'),
     
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) #pragma: no cover
