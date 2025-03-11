@@ -808,7 +808,7 @@ def ticket_detail(request, ticket_id):
 def return_ticket_page(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     
-    # attachments = ticket.attachments.order_by('uploaded_at')
+    attachments = ticket.attachments.order_by('uploaded_at')
     
     if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect('dashboard')
@@ -824,7 +824,7 @@ def return_ticket_page(request, ticket_id):
     return render(request, 'return_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
-        # 'attachments': attachments
+        'attachments': attachments
     })
     
 @login_required
