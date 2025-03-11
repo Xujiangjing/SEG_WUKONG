@@ -61,10 +61,10 @@
 
                                                 <a href="{{ att.file.url }}" download>
 
-                                                    {{ att.file.name|default_if_none:"(no file name)" }}
+                                                    📎{{ att.file.name}}
                                                 </a>
                                                 <small class="text-muted">
-                                                    ({{ att.uploaded_at|date:"Y-m-d H:i" }})
+                                                    ({{ att.uploaded_at|date:"Y-m-d H:i:s" }})
                                                 </small>
                                             </li>
                                         {% endfor %}
