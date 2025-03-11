@@ -1,3 +1,4 @@
+import os
 import uuid
 import re
 from django.contrib.auth.models import AbstractUser
@@ -96,11 +97,11 @@ class Ticket(models.Model):
         ('in_progress', 'In Progress'),
         ('resolved', 'Resolved'),
         ('closed', 'Closed'),
-        ('returned', 'Returned'), # Returned to the student for more information
-        ('returned_student', 'Returned To Student'), # Returned to the student for more information
-        ('returned_officer', 'Returned To Officer'), # Returned to the specialist for more information
+        ('returned', 'Returned'),
+        ('returned_student', 'Returned To Student'), 
+        ('returned_officer', 'Returned To Officer')
     ]
-    ## get_priority_choices function 
+
     PRIORITY_CHOICES = [
         ('low', 'Low'),
         ('medium', 'Medium'),
@@ -184,9 +185,18 @@ def user_directory_path(instance, filename):
     return f"attachments/{safe_email}/{date_str}/{filename}"
 
 class TicketAttachment(models.Model):
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
+    ticket = models.ForeignKey(
+        'Ticket', 
+        on_delete=models.CASCADE, 
+        related_name='attachments'
+    )
     file = models.FileField(upload_to=user_directory_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def filename(self):
+
+        return os.path.basename(self.file.name)
 
     def __str__(self):
         return f"Attachment {self.file} for Ticket {self.ticket.id}"
