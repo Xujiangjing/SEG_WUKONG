@@ -1,63 +1,127 @@
-{# tickets/templates/tickets/ticket_detail.html #}
 {% extends 'base_content.html' %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mt-4">{{ ticket.title }}</h1>
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
 
-    <div class="card">
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Submission Time:</dt>
-                <dd class="col-sm-9">{{ ticket.created_at|date:"Y-m-d H:i" }}</dd>
-                <!-- Priority-->
-                <dt class="col-sm-3">Priority:</dt>
-                <dd class="col-sm-9">
-                    <span class="badge bg-{{ ticket.get_priority_class }}">
-                        {{ ticket.get_priority_display }}
-                    </span>
-                </dd>
 
-                <!-- Status -->
-                <dt class="col-sm-3">Status:</dt>
-                <dd class="col-sm-9">{{ ticket.get_status_display }}</dd>
+            <h1 class="text-center text-primary mb-4">Ticket Detail: {{ ticket.title }}</h1>
 
-                <!-- Submitted By -->
-                <dt class="col-sm-3">Assigned Department:</dt>
-                <dd class="col-sm-9">{{ ticket.department.name }}</dd>
-            </dl>
 
-            <!-- Description -->
-            <div class="mb-4">
-                <h4>Description</h4>
-                <p class="text-muted">{{ ticket.description|linebreaksbr }}</p>
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-primary text-white">
+                    <strong>Ticket Information</strong>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-striped">
+                        <tr>
+                            <td><strong>Title:</strong></td>
+                            <td>{{ ticket.title }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Status:</strong></td>
+                            <td>{{ ticket.get_status_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Priority:</strong></td>
+                            <td>{{ ticket.get_priority_display }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Assigned Department:</strong></td>
+                            <td>{{ ticket.get_assigned_department_display }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Created by:</strong></td>
+                            <td>{{ ticket.creator.username }} on {{ ticket.created_at }}</td>
+                        </tr>
+                        <tr class="table-info">
+                            <td><strong>Assigned to:</strong></td>
+                            <td>
+                                {% if ticket.assigned_user %}
+                                    {{ ticket.assigned_user.username }}
+                                {% else %}
+                                    Unassigned
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Description:</strong></td>
+                            <td>{{ ticket.description }}</td>
+                        </tr>
+
+
+                        <tr class="table-info">
+                            <td><strong>Attachments:</strong></td>
+                            <td>
+                                {% if attachments and attachments|length > 0 %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for att in attachments %}
+                                            <li class="mb-1">
+
+                                                <a href="{{ att.file.url }}" download>
+
+                                                    {{ att.file.name|default_if_none:"(no file name)" }}
+                                                </a>
+                                                <small class="text-muted">
+                                                    ({{ att.uploaded_at|date:"Y-m-d H:i" }})
+                                                </small>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted">No attachments</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
             </div>
 
-            <!-- Attachments -->
-            {% if ticket.attachments.all %}
-            <div class="mb-4">
-                <h4>Attachments</h4>
-                <ul class="list-unstyled">
-                    {% for attachment in ticket.attachments.all %}
-                    <li>
-                        <a href="{{ attachment.file.url }}" 
-                           target="_blank" 
-                           class="text-decoration-none">
-                            📎 {{ attachment.filename }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
+
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-secondary text-white">
+                    <strong>Previous Responses</strong>
+                </div>
+                <div class="card-body">
+                    <pre id="previous-responses" class="text-muted">
+{{ ticket.answers|default:"No responses yet." }}
+                    </pre>
+                </div>
             </div>
-            {% endif %}
+
+
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-success text-white">
+                    <strong>Activity Log</strong>
+                </div>
+                <div class="card-body" id="activity-log">
+                    <ul class="timeline">
+                        {% for activity in activities %}
+                            <li class="timeline-item">
+                                <div class="timeline-point bg-info"></div>
+                                <div class="timeline-content">
+                                    <h5>
+                                        <strong>{{ activity.username }}</strong> - {{ activity.action }}
+                                    </h5>
+                                    <p>
+                                        <small class="text-muted">{{ activity.action_time }}</small>
+                                    </p>
+                                    <p>{{ activity.comment }}</p>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <p>No activities yet.</p>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+
+            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">
+                Back to Dashboard
+            </a>
         </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="mt-3">
-        <a href="{% url 'ticket_list' %}" class="btn btn-secondary">
-            ← Back to Ticket List
-        </a>
     </div>
 </div>
 {% endblock %}
