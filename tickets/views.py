@@ -523,11 +523,11 @@ def return_ticket(request, pk):
 def supplement_ticket(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
     if not request.user.is_student() or ticket.status != 'returned':
-        return redirect('ticket_list')
+        return redirect('dashboard')
 
     if request.user != ticket.creator:
         messages.error(request, "You do not have permission to modify this ticket.")
-        return redirect("ticket_list")
+        return redirect("dashboard")
 
     if request.method == 'POST':
         form = SupplementTicketForm(request.POST)
@@ -535,7 +535,7 @@ def supplement_ticket(request, pk):
             ticket.description += "\n\nSupplement: " + form.cleaned_data['supplement_info']
             ticket.status = 'open'
             ticket.save()
-            return redirect('ticket_list')
+            return redirect('dashboard')
     else:
         form = SupplementTicketForm()
 

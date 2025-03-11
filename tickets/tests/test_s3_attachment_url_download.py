@@ -84,7 +84,7 @@ class S3AttachmentURLDownloadTestCase(TestCase):
         )
         handle_uploaded_file_in_chunks(self.ticket, test_file2)
 
-        # 6) 常用的 URL
+        
         #    - ticket_detail
         self.ticket_detail_url = reverse("ticket_detail", kwargs={"ticket_id": self.ticket.id})
         #    - respond_ticket_page
