@@ -33,6 +33,7 @@
                 <th>AI Generated Answer</th>
                 <th>Assigned Department</th>
                 <th>AI Predicted Department</th>
+                <th>Attachments</th> <!-- 新增附件列 -->
             </tr>
         </thead>
         <tbody>
@@ -41,9 +42,41 @@
                 <td>{{ ticket.creator.username }}</td>
                 <td>{{ ticket.title }}</td>
                 <td>{{ ticket.description }}</td>
-                <td>{{ ticket.ai_processing.ai_generated_response }}</td>
+                <td>
+                    {% if ticket.ai_processing %}
+                        {{ ticket.ai_processing.ai_generated_response }}
+                    {% else %}
+                        No AI response
+                    {% endif %}
+                </td>
                 <td>{{ ticket.assigned_department }}</td>
-                <td>{{ ticket.ai_processing.ai_assigned_department }}</td>
+                <td>
+                    {% if ticket.ai_processing %}
+                        {{ ticket.ai_processing.ai_assigned_department }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+
+                <td><strong>Attachments:</strong></td>
+                <td>
+                    {% if attachments %}
+                        <ul class="list-unstyled">
+                            {% for attachment in attachments %}
+                                <li>
+                                    <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                                        📎 {{ attachment.file.name}}
+                                    </a>
+                                    <span class="text-muted">
+                                        ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="text-muted">No attachments</span>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
