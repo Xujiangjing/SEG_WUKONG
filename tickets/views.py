@@ -625,7 +625,7 @@ def update_ticket_page(request, ticket_id):
     if request.user != ticket.creator:
         return redirect('dashboard')
     
-    # attachments = ticket.attachments.order_by('uploaded_at')
+    attachments = ticket.attachments.order_by('uploaded_at')
     
     activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
     formatted_activities = []
@@ -639,7 +639,7 @@ def update_ticket_page(request, ticket_id):
     return render(request, 'update_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
-        # 'attachments': attachments
+        'attachments': attachments
     })
 
 
