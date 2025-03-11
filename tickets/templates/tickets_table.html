@@ -65,7 +65,7 @@
                             {% for attachment in attachments %}
                                 <li>
                                     <a href="{{ attachment.file.url }}" download class="text-decoration-none">
-                                        📎 {{ attachment.file.name}}
+                                        📎 {{ attachment.filename}}
                                     </a>
                                     <span class="text-muted">
                                         ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})

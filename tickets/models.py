@@ -186,8 +186,8 @@ def user_directory_path(instance, filename):
 
 class TicketAttachment(models.Model):
     ticket = models.ForeignKey(
-        'Ticket', 
-        on_delete=models.CASCADE, 
+        'Ticket',
+        on_delete=models.CASCADE,
         related_name='attachments'
     )
     file = models.FileField(upload_to=user_directory_path)
