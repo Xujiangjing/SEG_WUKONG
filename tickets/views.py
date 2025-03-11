@@ -781,12 +781,12 @@ def redirect_ticket(request, ticket_id):
 @login_required
 def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    # if request.user != ticket.creator and request.user != ticket.assigned_user \
-    #    and not request.user.is_program_officer():
-    #     return redirect('dashboard')
+    if request.user != ticket.creator and request.user != ticket.assigned_user \
+       and not request.user.is_program_officer():
+        return redirect('dashboard')
     
 
-    # attachments = ticket.attachments.order_by('uploaded_at')
+    attachments = ticket.attachments.order_by('uploaded_at')
     
     activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
     formatted_activities = [{
@@ -800,7 +800,7 @@ def ticket_detail(request, ticket_id):
     return render(request, 'ticket_detail.html', {
         'ticket': ticket,
         'activities': formatted_activities,
-        # 'attachments': attachments
+        'attachments': attachments
     })
 
 
