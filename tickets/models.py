@@ -243,12 +243,11 @@ class MergedTicket(models.Model):
         return f"Merged into Ticket {self.primary_ticket.id}"
 
 
-class WeeklyTicketClosureReport(models.Model):
-    week_start_date = models.DateField()
-    week_end_date = models.DateField()
+class DailyTicketClosureReport(models.Model):
+    date = models.DateField()
     department = models.CharField(max_length=50, choices=Ticket.DEPARTMENT_CHOICES)
     closed_by_inactivity = models.PositiveIntegerField(default=0)
     closed_manually = models.PositiveIntegerField(default=0)
 
     def __str__(self):
-        return f"Report for week {self.week_start_date} to {self.week_end_date} for {self.department}"
+        return f"Report for {self.date} for {self.department}"

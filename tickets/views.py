@@ -606,6 +606,32 @@ def respond_ticket(request, ticket_id):
         })
     if request.method == "POST" and "response_message" in request.POST:
         response_message = request.POST.get("response_message")
+        merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
+        if merged_ticket.approved_merged_tickets.all() >0 :
+            for approved_ticket in merged_ticket.approved_merged_tickets.all():
+                if approved_ticket.answers:
+                    approved_ticket.answers += "\n"
+                else:
+                    approved_ticket.answers = ""
+                approved_ticket.answers += f"Response by {request.user.username}: {response_message}"
+                
+                approved_ticket.status = 'in_progress'
+                approved_ticket.save()
+                ticket_activity = TicketActivity.objects.create(
+                    ticket=approved_ticket,
+                    action='responded',
+                    action_by=request.user,
+                    comment=response_message
+                )
+                ticket_activity.save()
+                activities = TicketActivity.objects.filter(ticket=approved_ticket).order_by('-action_time')
+                formatted_activities = [{
+                    'username': activity.action_by.username,
+                    'action': activity.get_action_display(),
+                    'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+                    'comment': activity.comment or "No comments."
+                } for activity in activities]
+
         if ticket.answers:
             ticket.answers += "\n"
         else:
