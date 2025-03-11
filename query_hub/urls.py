@@ -45,6 +45,7 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
     path('ticket/<uuid:ticket_id>/update_page/', views.update_ticket_page, name='update_ticket_page'),
     path('ticket/<uuid:ticket_id>/update_ticket/', views.update_ticket, name='update_ticket'),
+    path('ticket/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', views.merge_ticket, name='merge_ticket'),
     
 
 ]

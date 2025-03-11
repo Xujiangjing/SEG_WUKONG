@@ -22,8 +22,9 @@ from tickets.helpers import login_prohibited
 from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
-from .ai_service import ai_process_ticket
-from .models import Ticket, TicketActivity, Department
+from .ai_service import ai_process_ticket,find_potential_tickets_to_merge
+
+from .models import Ticket, TicketActivity, Department,MergedTicket
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
@@ -33,8 +34,6 @@ def handle_uploaded_file_in_chunks(ticket, file_obj):
     attachment.file.save(file_obj.name, file_obj, save=True)
     
     attachment.save()
-        
-    
 
 @login_required
 def dashboard(request):
@@ -551,10 +550,42 @@ def respond_ticket_page(request, ticket_id):
             'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
             'comment': activity.comment or "No comments."
         })
+
+    
+    potential_tickets = find_potential_tickets_to_merge(ticket)
+    merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
+    approved_merged_tickets = merged_ticket.approved_merged_tickets.all() if merged_ticket else []
+
     return render(request, 'respond_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
+        'potential_tickets': potential_tickets,
+        'approved_merged_tickets': approved_merged_tickets,
+        
     })
+
+@login_required
+@require_POST
+def merge_ticket(request, ticket_id, potential_ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    potential_ticket = get_object_or_404(Ticket, id=potential_ticket_id)
+    merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
+
+    if potential_ticket in merged_ticket.approved_merged_tickets.all():
+        merged_ticket.approved_merged_tickets.remove(potential_ticket)
+        action = 'unmerged'
+    else:
+        merged_ticket.approved_merged_tickets.add(potential_ticket)
+        action = 'merged'
+
+    merged_ticket.save()
+
+    approved_tickets = merged_ticket.approved_merged_tickets.all()
+    suggested_tickets = merged_ticket.suggested_merged_tickets.all()
+    print(f"Approved merged tickets for primary ticket '{ticket.title}': {[t.title for t in approved_tickets]}")
+    print(f"Suggested merged tickets for primary ticket '{ticket.title}': {[t.title for t in suggested_tickets]}")
+
+    return redirect('respond_ticket_page', ticket_id=ticket.id)
 
 
 @login_required
@@ -603,9 +634,11 @@ def respond_ticket(request, ticket_id):
             'activities': formatted_activities,
             'answers': ticket.answers
         })
+    potential_tickets = find_potential_tickets_to_merge(ticket)
     return render(request, 'respond_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
+        'potential_tickets': potential_tickets,
     })
     
     

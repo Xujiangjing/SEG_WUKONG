@@ -103,6 +103,7 @@ def find_potential_tickets_to_merge(ticket):
     similar_tickets = []
     
     for potential_ticket in potential_tickets:
+        print(f"Checking ticket {potential_ticket.id}...")
         prompt = f"""
         Determine whether the following tickets should be merged. Consider their similarity.
         The current ticket: '{ticket.title}' - {ticket.description}
@@ -117,9 +118,8 @@ def find_potential_tickets_to_merge(ticket):
     
     # Create a new MergedTicket entry with the primary ticket and the suggested tickets
     if similar_tickets:
-        merged_ticket = MergedTicket.objects.create(primary_ticket=ticket)
+        merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
         merged_ticket.suggested_merged_tickets.set(similar_tickets)
         merged_ticket.save()
 
-        return merged_ticket
-    return None
+    return similar_tickets
