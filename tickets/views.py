@@ -686,20 +686,20 @@ def update_ticket(request, ticket_id):
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
     
-    # attachments = ticket.attachments.order_by('uploaded_at')
+    attachments = ticket.attachments.order_by('uploaded_at')
     
-    # ai_obj = getattr(ticket, 'ai_processing', None)
+    ai_obj = getattr(ticket, 'ai_processing', None)
 
-    # if ai_obj:
-    #     ai_assigned_department = ai_obj.ai_assigned_department
-    # else:
-    #     ai_assigned_department = None
+    if ai_obj:
+        ai_assigned_department = ai_obj.ai_assigned_department
+    else:
+        ai_assigned_department = None
 
     
-    # if ai_assigned_department:
-    #     rec_department = get_object_or_404(Department, name=ai_assigned_department)
-    # else:
-    #     rec_department = None
+    if ai_assigned_department:
+        rec_department = get_object_or_404(Department, name=ai_assigned_department)
+    else:
+        rec_department = None
 
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
@@ -713,17 +713,17 @@ def redirect_ticket_page(request, ticket_id):
         returned_specialist_list.append(activity.action_by) 
     specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
 
-    # if rec_department:
-    #     sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
-    # else:
-    #     sorted_specialists = sorted(specialists, key=lambda s: s.ticket_count)
+    if rec_department:
+        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+    else:
+        sorted_specialists = sorted(specialists, key=lambda s: s.ticket_count)
 
 
     return render(
         request, 'redirect_ticket_page.html', {
         'ticket': ticket,
         'specialists': sorted_specialists,
-        # 'attachments': attachments
+        'attachments': attachments
     })
 
 
