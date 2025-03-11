@@ -196,7 +196,7 @@ class TicketAttachment(models.Model):
     @property
     def filename(self):
 
-        return os.path.basename(self.filename)
+        return os.path.basename(self.file.name)
 
     def __str__(self):
         return f"Attachment {self.file} for Ticket {self.ticket.id}"
