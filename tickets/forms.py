@@ -147,6 +147,10 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
 # tickets/forms.py
 
 class TicketForm(forms.ModelForm):
+    """Form allowing users to create and update tickets."""
+     
+     
+     
     class Meta:
         model = Ticket
         fields = ['title', 'description', 'priority']  
