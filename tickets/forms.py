@@ -178,6 +178,7 @@ class MultipleFileInput(forms.ClearableFileInput):
 ##
 class MultipleFileField(forms.FileField):
     """Custom file field allowing multiple file uploads."""
+    
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("widget", MultipleFileInput())
         super().__init__(*args, **kwargs)
@@ -185,6 +186,10 @@ class MultipleFileField(forms.FileField):
 ## MultipleFileField is a custom field that allows multiple files to be uploaded at once.
 
 class TicketAttachmentForm(forms.ModelForm):
+    """Form for handling ticket attachments."""
+     
+     
+    
     file = MultipleFileField()
     
     ## The Meta class is used to define the model and fields that the form will use.
