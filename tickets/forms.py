@@ -169,6 +169,10 @@ class TicketForm(forms.ModelForm):
 
 
 class MultipleFileInput(forms.ClearableFileInput):
+    
+    """Custom file input widget that allows multiple file uploads."""
+    
+    
     allow_multiple_selected = True
 
 ##
