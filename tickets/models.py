@@ -1,5 +1,6 @@
-import uuid
 import re
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
@@ -8,6 +9,10 @@ from libgravatar import Gravatar
 
 
 class Department(models.Model):
+    """
+    Represents a department within the system.
+    Used to categorize users and tickets by department.
+    """
     """Model used to represent a department in Django Admin."""
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
