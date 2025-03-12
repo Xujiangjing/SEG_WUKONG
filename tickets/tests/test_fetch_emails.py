@@ -166,9 +166,9 @@ class FetchEmailsTest(TransactionTestCase):
             self.existing_ticket.refresh_from_db()
         
         duplicate_ticket = self.command.is_duplicate_ticket(
-        self.sender_email,
-        self.subject,
-        self.body
+            self.sender_email,
+            self.subject,
+            self.body
         )
         
         self.assertIsNotNone(duplicate_ticket)  # Should detect a duplicate

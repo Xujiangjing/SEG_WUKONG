@@ -1,0 +1,9 @@
+{% extends "base_content.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Success!</h2>
+    <p>Your ticket has been successfully submitted. A confirmation email has been sent to you.</p>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Go to Dashboard</a>
+</div>
+{% endblock %}

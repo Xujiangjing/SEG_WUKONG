@@ -1,0 +1,49 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container my-4">
+    <h1>Manage Ticket - {{ ticket.title }}</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="action_type">Choose an Action:</label>
+            <select id="action_type" name="action_type" class="form-select" required>
+                <option value="respond">Respond to Ticket</option>
+                <option value="redirect">Redirect Ticket</option>
+            </select>
+        </div>
+
+        <!-- Respond Section -->
+        <div id="respond-section">
+            <label for="response_message">Response:</label>
+            <textarea id="response_message" name="response_message" class="form-control"></textarea>
+        </div>
+
+        <!-- Redirect Section -->
+        <div id="redirect-section" style="display: none;">
+            <label for="new_assignee_id">Assign to:</label>
+            <select id="new_assignee_id" name="new_assignee_id" class="form-select">
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }} ({{ user.role }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    </form>
+</div>
+
+<script>
+document.getElementById("action_type").addEventListener("change", function () {
+    if (this.value === "respond") {
+        document.getElementById("respond-section").style.display = "block";
+        document.getElementById("redirect-section").style.display = "none";
+    } else {
+        document.getElementById("respond-section").style.display = "none";
+        document.getElementById("redirect-section").style.display = "block";
+    }
+});
+</script>
+
+{% endblock %}

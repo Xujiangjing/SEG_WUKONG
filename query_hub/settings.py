@@ -81,7 +81,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'widget_tweaks',
     'tickets',
-    'storages'
+    'storages',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -114,6 +115,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'query_hub.wsgi.application'
 
+ASGI_APPLICATION = "WUKONG.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

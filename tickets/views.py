@@ -18,14 +18,20 @@ from django.views.generic.edit import CreateView, FormView, UpdateView
 from tickets.forms import (LogInForm, PasswordForm, ReturnTicketForm,
                            SignUpForm, SupplementTicketForm,
                            TicketAttachmentForm, TicketForm, UserForm)
-from tickets.helpers import login_prohibited
+from tickets.helpers import login_prohibited, send_ticket_confirmation_email, send_response_notification_email
 from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
 
-from .ai_service import ai_process_ticket,find_potential_tickets_to_merge
+from tickets.models import Ticket, TicketActivity, TicketAttachment, User, Response, Department,MergedTicket
 
-from .models import Ticket, TicketActivity, Department,MergedTicket
+from .ai_service import ai_process_ticket, find_potential_tickets_to_merge
+from .models import Ticket, TicketActivity
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.http import JsonResponse
+
+
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
@@ -35,6 +41,8 @@ def handle_uploaded_file_in_chunks(ticket, file_obj):
     attachment.file.save(file_obj.name, file_obj, save=True)
     
     attachment.save()
+
+
 
 @login_required
 def dashboard(request):
@@ -80,7 +88,7 @@ def dashboard(request):
                 comment=response_message
             )
 
-            return redirect('dashboard')
+            return redirect('dashboard_program_officer')
 
 
         if request.method == 'POST' and 'redirect_ticket' in request.POST:
@@ -101,7 +109,7 @@ def dashboard(request):
                 comment=f"Redirected to {new_assignee.username}"
             )
 
-            return redirect('dashboard')
+            return redirect('dashboard_program_officer')
 
         
         tickets = Ticket.objects.all()
@@ -136,12 +144,14 @@ def dashboard(request):
                 returned_tickets.append(ticket)
         tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
 
+
         updated_tickets = []
         for ticket in tickets:
             if ticket.latest_action == 'status_updated' and ticket.status == 'open' and ticket.latest_editor == current_user:
                 updated_tickets.append(ticket)
         tickets = [ticket for ticket in tickets if ticket not in updated_tickets]
-        return render(request, 'dashboard.html', {
+        return render(request, 'dashboard_program_officer.html', {
+
             'user': current_user,
             'all_tickets': tickets,
             'returned_ticket': returned_tickets,
@@ -172,13 +182,15 @@ def dashboard(request):
             tickets = tickets.order_by(priority_case)
         elif sort_option == 'priority_desc':
             tickets = tickets.order_by(-priority_case)
+
             
         returned_tickets = []
         for ticket in tickets:
             if ticket.status == 'returned_student':
                 returned_tickets.append(ticket)
         tickets = [ticket for ticket in tickets if ticket not in returned_tickets]
-        return render(request, 'dashboard.html', {
+        return render(request, 'dashboard_student.html', {
+
             'user': current_user,
             'student_tickets': tickets,
             'returned_tickets': returned_tickets
@@ -208,7 +220,7 @@ def dashboard(request):
                 comment=response_message
             )
 
-            return redirect('dashboard')
+            return redirect('dashboard_spcialist')
 
         tickets = Ticket.objects.filter(assigned_user=current_user)
 
@@ -237,11 +249,13 @@ def dashboard(request):
                 responded_tickets_list.append(ticket)
             else:
                 assigned_tickets_list.append(ticket)
+
         updated_tickets = []
         for ticket in tickets:
             if ticket.latest_action == 'status_updated' and ticket.status == 'open' and ticket.latest_editor == current_user:
                 updated_tickets.append(ticket)
-        return render(request, 'dashboard.html', {
+        return render(request, 'dashboard_specialist.html', {
+
             'user': current_user,
             'assigned_tickets': assigned_tickets_list,
             'responded_tickets': responded_tickets_list,
@@ -255,12 +269,24 @@ def dashboard(request):
         })
         
 
+
+@login_required
+def get_user_role(request):
+    """Return the role of the current user."""
+    role = "unknown"
+    if request.user.is_program_officer:
+        role = "program_officer"
+    elif request.user.is_specialist:
+        role = "specialist"
+    elif request.user.is_student:
+        role = "student"
+    return JsonResponse({"role": role})
+
 @login_prohibited
 def home(request):
     """Display the application's start/home screen."""
 
     return render(request, 'home.html')
-
 
 class LoginProhibitedMixin:
     """Mixin that redirects when a user is logged in."""
@@ -287,7 +313,6 @@ class LoginProhibitedMixin:
             )
         else:
             return self.redirect_when_logged_in_url
-
 
 class LogInView(LoginProhibitedMixin, View):
     """Display login screen and handle user login."""
@@ -320,14 +345,11 @@ class LogInView(LoginProhibitedMixin, View):
         return render(self.request, 'log_in.html', {'form': form, 'next': self.next})
 
 
-
-
 def log_out(request):
     """Log out the current user"""
 
     logout(request)
     return redirect('home')
-
 
 class PasswordView(LoginRequiredMixin, FormView):
     """Display password change screen and handle password change requests."""
@@ -355,7 +377,6 @@ class PasswordView(LoginRequiredMixin, FormView):
         messages.add_message(self.request, messages.SUCCESS, "Password updated!")
         return reverse('dashboard')
 
-
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     """Display user profile editing screen, and handle profile modifications."""
 
@@ -373,20 +394,6 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         messages.add_message(self.request, messages.SUCCESS, "Profile updated!")
         return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
 
-
-class SignUpView(LoginProhibitedMixin, FormView):
-    form_class = SignUpForm
-    template_name = "sign_up.html"
-    redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN
-
-    def form_valid(self, form):
-        self.object = form.save()
-        login(self.request, self.object)
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse(settings.REDIRECT_URL_WHEN_LOGGED_IN)
-
 class TicketListView(ListView):
     model = Ticket
     template_name = 'tickets/ticket_list.html'  
@@ -402,6 +409,7 @@ class TicketsTableView(View):
     def get(self, request):
         tickets = Ticket.objects.select_related('ai_processing', 'creator')
         return render(request, 'tickets_table.html', {'tickets': tickets})
+
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
     model = Ticket
@@ -487,7 +495,6 @@ class TicketDetailView(DetailView):
     template_name = 'tickets/ticket_detail.html'
     context_object_name = 'ticket'
 
-
 @login_required
 def close_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -517,7 +524,6 @@ def return_ticket(request, pk):
 
     return render(request, 'tickets/return_ticket.html', {'form': form, 'ticket': ticket})
 
-
 @login_required
 def supplement_ticket(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
@@ -539,7 +545,6 @@ def supplement_ticket(request, pk):
         form = SupplementTicketForm()
 
     return render(request, 'tickets/supplement_ticket.html', {'form': form, 'ticket': ticket})
-
 
 @login_required
 def respond_ticket_page(request, ticket_id):
@@ -760,7 +765,7 @@ def redirect_ticket_page(request, ticket_id):
         'specialists': sorted_specialists,
     })
 
-@login_required
+
 def merge_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     
@@ -830,6 +835,7 @@ def merge_ticket_page(request, ticket_id):
         'activities': activities,
     })
 
+
 @login_required
 @require_POST
 def redirect_ticket(request, ticket_id):
@@ -880,6 +886,104 @@ def redirect_ticket(request, ticket_id):
         return JsonResponse({'ticket_info': updated_ticket_info, 'specialists': specialists_info})
 
     return redirect('redirect_ticket_page', ticket_id=ticket_id)
+
+
+@login_required
+def respond_ticket_page(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+    return render(request, 'respond_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+
+@login_required
+def respond_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if request.user != ticket.assigned_user and not request.user.is_program_officer():
+        return redirect('dashboard')
+
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+    formatted_activities = []
+    for activity in activities:
+        formatted_activities.append({
+            'username': activity.action_by.username,
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        })
+        
+    if request.method == "POST" and "response_message" in request.POST:
+        response_message = request.POST.get("response_message")
+        if ticket.answers:
+            ticket.answers += "\n"
+        else:
+            ticket.answers = ""
+        ticket.answers += f"Response by {request.user.username}: {response_message}"
+        
+        Response.objects.create(ticket=ticket, responder=request.user, content=response_message)
+        
+        ticket.status = 'in_progress'
+        ticket.save()
+        ticket_activity = TicketActivity.objects.create(
+            ticket=ticket,
+            action='responded',
+            action_by=request.user,
+            comment=response_message
+        )
+        ticket_activity.save()
+        activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
+        formatted_activities = [{
+            'username': activity.action_by.username,            
+            'action': activity.get_action_display(),
+            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+            'comment': activity.comment or "No comments."
+        } for activity in activities]
+        
+        send_response_notification_email(ticket.creator.email, ticket.title, response_message, ticket.id)
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"ticket_{ticket.id}",
+            {
+                "type": "send_notification",
+                "message": f"Your ticket '{ticket.title}' has received a response!"
+            }
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'activities': formatted_activities,
+            'answers': ticket.answers
+        })
+        
+    return redirect(request, 'respond_ticket_page.html', {
+        'ticket': ticket,
+        'activities': formatted_activities,
+    })
+    
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
 
 @login_required
 def ticket_detail(request, ticket_id):
@@ -945,6 +1049,117 @@ def return_ticket_specailist(request, ticket_id):
         ticket_activity.save()
         ticket.save()
         return redirect('dashboard')
-            
-            
+
     return redirect('return_ticket_page', ticket_id=ticket_id)
+
+@login_required
+def submit_ticket(request):
+    if request.method == 'POST':
+        form = TicketForm(request.POST, request.FILES)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.creator = request.user  
+            ticket.status = 'open'
+
+            # Allow student to select priority
+            ticket.priority = form.cleaned_data['priority']
+
+            # Check for duplicate tickets with the same title
+            existing_ticket = Ticket.objects.filter(title=ticket.title, status='open').first()
+            if existing_ticket:
+                # Merge duplicate ticket descriptions
+                existing_ticket.description += "\n\nMerged with ticket ID: {}. New description: {}".format(
+                    ticket.id, ticket.description
+                )
+                existing_ticket.save()
+
+                # Log the merge action
+                TicketActivity.objects.create(
+                    ticket=existing_ticket,
+                    action='merged',
+                    action_by=request.user,
+                    comment=f'Merged with ticket {ticket.id}'
+                )
+
+                messages.success(request, f'You have already send the same ticket!')
+                return redirect('ticket_detail', ticket_id=existing_ticket.id)
+            else:
+                # Save the new ticket if it's unique
+                ticket.save()
+
+                # Handle file uploads
+                files = request.FILES.getlist('file')
+                for file in files:
+                    TicketAttachment.objects.create(ticket=ticket, file=file)
+
+                # Log ticket creation
+                TicketActivity.objects.create(
+                    ticket=ticket,
+                    action='created',
+                    action_by=request.user
+                )
+
+                # AI processing (optional)
+                ai_process_ticket(ticket)
+
+                # Send confirmation email
+                send_ticket_confirmation_email(ticket)
+
+                messages.success(request, 'Your ticket has been submitted successfully!')
+                return redirect('ticket_detail', ticket_id=ticket.id)
+    else:
+        form = TicketForm()
+
+    return render(request, 'tickets/submit_ticket.html', {'form': form})
+    
+    
+@login_required
+def manage_tickets_for_program_officer(request, ticket_id):
+    
+    current_user = request.user
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    if request.method == 'POST':
+        action_type = request.POST.get('action_type')
+        
+        
+        if action_type == 'respond':
+            response_message = request.POST.get('response_message').strip()
+            if response_message:
+                ticket.answers = (ticket.answers or "") + f"\nResponse by {current_user.username}: {response_message}"
+                ticket.latest_action = 'responded'
+                ticket.save()
+                TicketActivity.objects.create(
+                    ticket=ticket, 
+                    action='responded', 
+                    action_by=current_user, 
+                    comment=response_message
+                )
+                ai_process_ticket(ticket)
+            return redirect('ticket_detail', ticket_id=ticket.id)
+        elif action_type == 'redirect':
+            new_assignee_id = request.POST.get('new_assignee_id')
+            new_assignee = User.objects.get(id=new_assignee_id)
+            
+            ticket.assigned_user = new_assignee
+            ticket.latest_action = 'redirected'
+            ticket.status = 'in_progress'
+            ticket.save()
+            
+            TicketActivity.objects.create(
+                ticket=ticket, 
+                action='redirected', 
+                action_by=current_user, 
+                comment=f"Redirected to {new_assignee.username}"
+            )
+        
+            return redirect('ticket_detail', ticket_id=ticket.id)
+        form = TicketForm(request.POST, instance=ticket)
+        if form.is_valid():
+            ticket = form.save()
+            messages.success(request, 'Ticket updated successfully!')
+            return redirect('ticket_detail', ticket_id=ticket.id)
+    else:
+        form = TicketForm(instance=ticket)
+    return render(request, 'manage_tickets_for_program_officer.html', {'form': form, 'ticket': ticket})
+
