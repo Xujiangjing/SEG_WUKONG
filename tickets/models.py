@@ -220,9 +220,6 @@ class TicketAttachment(models.Model):
         return f"Attachment {self.file} for Ticket {self.ticket.id}"
 
 class TicketActivity(models.Model):
-    """
-    Represents a response to a ticket, typically from an assigned user.
-    """
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='activity_log')
     action = models.CharField(max_length=100, choices=Ticket.ACTION_CHOICES)
     action_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='action_taken_by')
@@ -234,6 +231,9 @@ class TicketActivity(models.Model):
 
 
 class Response(models.Model):
+    """
+    Represents a response to a ticket, typically from an assigned user.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses') 
     responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank = True, related_name='user_responses')
