@@ -59,7 +59,9 @@ class User(AbstractUser):
 
     class Meta:
         """Model options."""
-
+        """
+        Defines ordering for the User model.
+        """
         ordering = ['last_name', 'first_name']
     
     def clean(self):
