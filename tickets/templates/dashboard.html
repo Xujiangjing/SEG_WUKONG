@@ -157,6 +157,25 @@
                         {% endif %}
                       </td>
                       <td>
+                        <!--这里逻辑重复-->
+                        {%if ticket.status != 'closed' %}
+                        <form method="post" action="{% url 'redirect_ticket_page' ticket.id %}">
+                          {% csrf_token %}
+                          <button type="submit" class="btn btn-sm btn-warning">Redirect</button>
+                        </form> 
+                        <br>
+                        <!-- Respond to Ticket Form -->
+                        <form method="post" action="{% url 'respond_ticket_page' ticket.id %}">
+                          {% csrf_token %}
+                          <button type="submit" name="respond_ticket_page" class="btn btn-sm btn-primary">Respond</button>
+                        </form>
+                        <br>
+                        <form method="post" action="{% url 'merge_ticket_page' ticket.id %}">
+                          {% csrf_token %}
+                          <button type="submit" name="merge_ticket_page" class="btn btn-sm btn-warning">Merge  </button>
+                        </form>
+                         {% endif %}
+                        <!--这里的逻辑重复-->
                         <!-- Redirect Ticket Button -->
                         {%if ticket.status != 'closed' %}
                          <form method="post" action="{% url 'redirect_ticket_page' ticket.id %}">
@@ -175,6 +194,7 @@
                             <button type="submit" name="return_ticket_page" class="btn btn-sm btn-danger">Return</button>
                           </form>
                         {% endif %}
+                        <!--这里逻辑重复-->
                     </td>
                     </tr>
                   {% endfor %}
