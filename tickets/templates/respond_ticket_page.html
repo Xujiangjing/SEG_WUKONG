@@ -247,8 +247,11 @@
                 alert('Error: Could not submit response');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+    alert("Error submitting response: " + error);
+    console.error("Error:", error);
     });
+});
 
 </script>
 

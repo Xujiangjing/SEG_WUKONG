@@ -607,7 +607,7 @@ def respond_ticket(request, ticket_id):
     if request.method == "POST" and "response_message" in request.POST:
         response_message = request.POST.get("response_message")
         merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
-        if merged_ticket.approved_merged_tickets.all() >0 :
+        if merged_ticket and len(merged_ticket.approved_merged_tickets.all()) >0 :
             for approved_ticket in merged_ticket.approved_merged_tickets.all():
                 if approved_ticket.answers:
                     approved_ticket.answers += "\n"
