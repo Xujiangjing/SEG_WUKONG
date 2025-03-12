@@ -13,7 +13,7 @@ It includes:
 
 1. **LogInForm** - Handles user authentication via username and password.
 2. **UserForm** - Allows users to update their profile information.
-
+3. **PasswordForm** - Enables users to change their password.
 """
 
 class LogInForm(forms.Form):
