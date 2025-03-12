@@ -64,6 +64,9 @@ class UserForm(forms.ModelForm):
 class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""
 
+    """Form allowing authenticated users to change their password."""
+
+
     new_password = forms.CharField(
         label='Password',
         widget=forms.PasswordInput(),
