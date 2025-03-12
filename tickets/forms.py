@@ -177,6 +177,7 @@ class MultipleFileInput(forms.ClearableFileInput):
 
 ##
 class MultipleFileField(forms.FileField):
+    """Custom file field allowing multiple file uploads."""
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("widget", MultipleFileInput())
         super().__init__(*args, **kwargs)
