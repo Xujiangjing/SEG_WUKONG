@@ -124,6 +124,7 @@ class PasswordForm(NewPasswordMixin):
 class SignUpForm(NewPasswordMixin, forms.ModelForm):
     """Form enabling unregistered users to sign up."""
 
+    """Form enabling new users to sign up and create an account."""
     class Meta:
         """Form options."""
 
