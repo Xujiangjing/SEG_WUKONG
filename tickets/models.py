@@ -79,6 +79,7 @@ class User(AbstractUser):
         return f'{self.first_name} {self.last_name}'
 
     def gravatar(self, size=120):
+        """Returns the Gravatar URL for the user."""
         """Return a URL to the user's gravatar."""
 
         gravatar_object = Gravatar(self.email)
