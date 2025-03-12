@@ -20,7 +20,7 @@ It includes:
 7. **MultipleFileInput & MultipleFileField** - Custom field and widget enabling multiple file uploads.
 8. **TicketAttachmentForm** - Handles file attachments for tickets.
 9. **ReturnTicketForm** - Allows users to provide reasons when returning a ticket.
-
+10. **SupplementTicketForm** - Enables users to supplement additional information to an existing ticket.
 """
 
 class LogInForm(forms.Form):
