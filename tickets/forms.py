@@ -5,6 +5,15 @@ from django.core.validators import RegexValidator
 
 from .models import Ticket, TicketAttachment, User
 
+"""
+Forms for the tickets app.
+
+This module defines several Django forms used for authentication, user management, and ticket handling in the application. 
+It includes:
+
+1. **LogInForm** - Handles user authentication via username and password.
+
+"""
 
 class LogInForm(forms.Form):
     """Form enabling registered users to log in."""
