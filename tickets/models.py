@@ -65,6 +65,9 @@ class User(AbstractUser):
         ordering = ['last_name', 'first_name']
     
     def clean(self):
+        """
+        Ensures that specialists must be assigned to a department.
+        """
         # Specialists must have a department
         if self.role == 'specialists' and not self.department:
             raise ValidationError("Specialists must have a department.")
