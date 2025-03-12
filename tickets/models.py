@@ -209,6 +209,9 @@ def user_directory_path(instance, filename):
     return f"attachments/{safe_email}/{date_str}/{filename}"
 
 class TicketAttachment(models.Model):
+    """
+    Stores file attachments related to tickets.
+    """
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to=user_directory_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
