@@ -188,6 +188,7 @@ class Ticket(models.Model):
     return_reason = models.TextField(blank=True, null=True) # Reason for returning the ticket
     
     def __str__(self):
+        """Returns a readable string representation of the ticket."""
         return f"Ticket {self.id}: {self.title} ({self.status})"
 
     def save(self, *args, **kwargs):
