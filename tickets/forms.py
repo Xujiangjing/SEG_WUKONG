@@ -48,6 +48,10 @@ class LogInForm(forms.Form):
 class UserForm(forms.ModelForm):
     """Form to update user profiles."""
 
+
+    """Form to allow users to update their profile details such as first name, last name, username, and email."""
+    
+    
     class Meta:
         """Form options."""
 
