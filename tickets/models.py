@@ -87,6 +87,7 @@ class User(AbstractUser):
         return gravatar_url
 
     def mini_gravatar(self):
+        """Returns a smaller version of the Gravatar."""
         """Return a URL to a miniature version of the user's gravatar."""
         
         return self.gravatar(size=60)
