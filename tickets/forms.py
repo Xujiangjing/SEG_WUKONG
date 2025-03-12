@@ -21,6 +21,7 @@ It includes:
 8. **TicketAttachmentForm** - Handles file attachments for tickets.
 9. **ReturnTicketForm** - Allows users to provide reasons when returning a ticket.
 10. **SupplementTicketForm** - Enables users to supplement additional information to an existing ticket.
+Each form ensures data integrity, user validation, and proper interaction with the models.
 """
 
 class LogInForm(forms.Form):
