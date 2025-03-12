@@ -25,6 +25,10 @@ class Department(models.Model):
         return self.name
     
 class User(AbstractUser):
+    """
+    Custom user model extending Django's AbstractUser.
+    Adds role-based access and optional department association.
+    """
     """Custom User model with roles and optional department association."""
     ROLE_CHOICES = [
         ('students', 'Students'),
