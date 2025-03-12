@@ -102,6 +102,7 @@ class User(AbstractUser):
         return self.role == 'specialists'
     
     def __str__(self):
+        """String representation of the user."""
         if self.department:
             return f"{self.username} ({self.role}) - {self.department}"
         return f"{self.username} ({self.role})"
