@@ -12,6 +12,7 @@ This module defines several Django forms used for authentication, user managemen
 It includes:
 
 1. **LogInForm** - Handles user authentication via username and password.
+2. **UserForm** - Allows users to update their profile information.
 
 """
 
