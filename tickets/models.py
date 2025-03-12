@@ -36,7 +36,7 @@ class User(AbstractUser):
         ('specialists', 'Specialists'),
         ('others', 'Others'), # Admins, superusers, etc.
     ]
-
+    # Custom username validation: must start with '@' followed by at least three alphanumeric characters
     username = models.CharField(
         max_length=30,
         unique=True,
