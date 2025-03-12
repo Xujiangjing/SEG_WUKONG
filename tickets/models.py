@@ -107,6 +107,11 @@ class User(AbstractUser):
             return f"{self.username} ({self.role}) - {self.department}"
         return f"{self.username} ({self.role})"
 
+
+"""
+Represents a support ticket submitted by users.
+Tracks status, priority, assigned department, and updates.
+"""
 class Ticket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
