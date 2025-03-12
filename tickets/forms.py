@@ -15,6 +15,7 @@ It includes:
 2. **UserForm** - Allows users to update their profile information.
 3. **PasswordForm** - Enables users to change their password.
 4. **PasswordForm** - Enables users to change their password after authentication.
+5. **SignUpForm** - Allows new users to sign up with necessary details and password validation.
 
 """
 
