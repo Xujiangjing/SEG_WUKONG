@@ -54,6 +54,9 @@ class UserForm(forms.ModelForm):
     
     class Meta:
         """Form options."""
+        
+        """Specify model and fields to be included in the form."""
+
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
