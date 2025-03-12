@@ -73,6 +73,7 @@ class User(AbstractUser):
             raise ValidationError("Specialists must have a department.")
 
     def full_name(self):
+        """Returns the user's full name."""
         """Return a string containing the user's full name."""
 
         return f'{self.first_name} {self.last_name}'
