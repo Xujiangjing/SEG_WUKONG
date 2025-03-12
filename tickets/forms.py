@@ -17,6 +17,7 @@ It includes:
 4. **PasswordForm** - Enables users to change their password after authentication.
 5. **SignUpForm** - Allows new users to sign up with necessary details and password validation.
 6. **TicketForm** - Facilitates ticket creation and editing, allowing students to submit requests.
+7. **MultipleFileInput & MultipleFileField** - Custom field and widget enabling multiple file uploads.
 
 """
 
