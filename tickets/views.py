@@ -23,7 +23,7 @@ from tickets.models import (AITicketProcessing, Ticket, TicketActivity,
                             TicketAttachment, User)
 
 from .ai_service import ai_process_ticket
-from .models import Ticket, TicketActivity, Department
+from .models import Department, Ticket, TicketActivity
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj):
@@ -138,7 +138,7 @@ def dashboard(request):
 
         updated_tickets = []
         for ticket in tickets:
-            if ticket.latest_action == 'status_updated' and ticket.status == 'open':
+            if ticket.latest_action == 'status_updated' and ticket.status == 'open' and ticket.latest_editor == current_user:
                 updated_tickets.append(ticket)
         tickets = [ticket for ticket in tickets if ticket not in updated_tickets]
         return render(request, 'dashboard.html', {
@@ -237,10 +237,15 @@ def dashboard(request):
                 responded_tickets_list.append(ticket)
             else:
                 assigned_tickets_list.append(ticket)
+        updated_tickets = []
+        for ticket in tickets:
+            if ticket.latest_action == 'status_updated' and ticket.status == 'open' and ticket.latest_editor == current_user:
+                updated_tickets.append(ticket)
         return render(request, 'dashboard.html', {
             'user': current_user,
             'assigned_tickets': assigned_tickets_list,
             'responded_tickets': responded_tickets_list,
+             'updated_tickets': updated_tickets,
         })
 
     else:
@@ -869,6 +874,7 @@ def return_ticket_specailist(request, ticket_id):
             ticket.status = 'returned_officer'
         else:
             ticket.status = 'returned_student'
+        ticket.latest_editor = request.user
         ticket_activity = TicketActivity(
             ticket=ticket,
             action='returned',
