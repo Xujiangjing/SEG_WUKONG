@@ -192,6 +192,7 @@ class Ticket(models.Model):
         return f"Ticket {self.id}: {self.title} ({self.status})"
 
     def save(self, *args, **kwargs):
+        """Sets the default latest action if not provided."""
         if self.latest_action is None:  # If no action has yet been recorded, set a default action
             self.latest_action = 'created'
         super().save(*args, **kwargs)
