@@ -231,9 +231,6 @@ class TicketActivity(models.Model):
 
 
 class Response(models.Model):
-    """
-    Represents a response to a ticket, typically from an assigned user.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses') 
     responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank = True, related_name='user_responses')
