@@ -232,3 +232,22 @@ class AITicketProcessing(models.Model):
     def __str__(self):
         return f"AI Processing for Ticket {self.ticket.id}"
 
+class MergedTicket(models.Model):
+    primary_ticket = models.ForeignKey(Ticket, related_name='primary_ticket', on_delete=models.CASCADE,unique=True)
+    suggested_merged_tickets = models.ManyToManyField(Ticket, related_name='suggested_merged_tickets')
+    approved_merged_tickets = models.ManyToManyField(Ticket, related_name='approved_merged_tickets')
+    
+    merged_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Merged into Ticket {self.primary_ticket.id}"
+
+
+class DailyTicketClosureReport(models.Model):
+    date = models.DateField()
+    department = models.CharField(max_length=50, choices=Ticket.DEPARTMENT_CHOICES)
+    closed_by_inactivity = models.PositiveIntegerField(default=0)
+    closed_manually = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"Report for {self.date} for {self.department}"
