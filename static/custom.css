@@ -580,8 +580,7 @@ body  {
   transform: translateY(-2px);
 }
 
-/* 侧边栏最简样式 */
-/* 让侧边栏自身占满高度，并左对齐 */
+/* 侧边栏 */
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -598,6 +597,16 @@ body  {
   left: 0;
   bottom: 0;
 }
+
+.sidebar-header {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  align-items: center;     /* 垂直居中 */
+  width: 100%;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
 
 /* 放大logo */
 .sidebar-logo {
@@ -621,6 +630,15 @@ body  {
   display: flex;
   align-items: center;
 }
+
+.fog-box {
+  background: rgba(255, 255, 255, 0.2); /* 半透明背景 */
+  backdrop-filter: blur(10px);           /* 应用 8px 模糊 */
+  -webkit-backdrop-filter: blur(8px);   /* Safari 支持 */
+  padding: 20px;                        /* 内边距，可根据需要调整 */
+  border-radius: 10px;                  /* 圆角效果 */
+}
+
 
 .dashboard-bg {
   position: fixed;         /* 固定定位，覆盖整个视窗 */
