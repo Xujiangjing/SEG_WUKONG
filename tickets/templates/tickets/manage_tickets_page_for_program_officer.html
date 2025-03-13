@@ -1,0 +1,119 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container">
+    <h1>Manage Ticket - {{ ticket.title }}</h1>
+    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.username }}</p>
+    <p><strong>Status:</strong> {{ ticket.status }}</p>
+    <p><strong>Priority:</strong> {{ ticket.priority }}</p>
+    <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
+    <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
+    <p><strong>Description:</strong> {{ ticket.description }}</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="action_type">Choose an Action:</label>
+            <select id="action_type" name="action_type" class="form-select" required>
+                <option value="">-- Select an action --</option>
+                <option value="respond_ticket">Respond to Ticket</option>
+                <option value="redirect_ticket">Redirect Ticket</option>
+                <option value="merge_ticket">Merge Ticket</option>
+                <option value="return_to_student">Return back to student</option>
+            </select>
+        </div>
+
+        <!-- Respond Section -->
+        <div id="respond-section" style="display: none;">
+            <label for="response_message">Response:</label>
+            <textarea id="response_message" name="response_message" class="form-control"></textarea>
+        </div>
+
+        <!-- Redirect Section -->
+        <div id="redirect-section" style="display: none;">
+            <label for="new_assignee_id">Assign to:</label>
+            <select id="new_assignee_id" name="new_assignee_id" class="form-select">
+                {% for specialist in specialists %}
+                <option value="{{ specialist.id }}">
+                    {{ specialist.username }} - {{ specialist.assigned_department }} ({{ specialist.open_tickets }} open tickets)
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Merge Section -->
+        <div id="merge-section" style="display: none;">
+            <label for="merge_ticket">Merge With:</label>
+            <select id="merge_ticket" name="merge_ticket" class="form-select">
+                {% for potential in potential_tickets %}
+                    <option value="{{ potential.id }}">{{ potential.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!--Return to student-->
+        <div id="return-section" style="display: none;">
+            <label for="return_reason">Return Reason:</label>
+            <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    </form>
+
+    <h3>Activity Log:</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Time</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for activity in activities %}
+                <tr>
+                    <td>{{ activity.username }}</td>
+                    <td>{{ activity.action }}</td>
+                    <td>{{ activity.action_time }}</td>
+                    <td>{{ activity.comment }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    let actionType = document.getElementById("action_type");
+    let respondSection = document.getElementById("respond-section");
+    let redirectSection = document.getElementById("redirect-section");
+    let mergeSection = document.getElementById("merge-section");
+    let returnSection = document.getElementById("return-section");
+
+    function updateActionVisibility() {
+        let selectedValue = actionType.value;
+
+       
+        respondSection.style.display = "none";
+        redirectSection.style.display = "none";
+        mergeSection.style.display = "none";
+        returnSection.style.display = "none";
+        
+        if (selectedValue === "respond_ticket") {
+            respondSection.style.display = "block";
+        } else if (selectedValue === "redirect_ticket") {
+            redirectSection.style.display = "block";
+        } else if (selectedValue === "merge_ticket") {
+            mergeSection.style.display = "block";
+        } else if (selectedValue === "return_to_student") {
+            returnSection.style.display = "block";
+        }
+    }
+
+    updateActionVisibility();
+
+    actionType.addEventListener("change", updateActionVisibility);
+});
+</script>
+
+{% endblock %}

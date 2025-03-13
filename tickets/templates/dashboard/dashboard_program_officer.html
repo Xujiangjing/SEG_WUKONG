@@ -77,10 +77,9 @@
                   <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
                   <td>
                     {% if ticket.status != 'closed' %}
-                      <form method="post" action="{% url 'manage_tickets_for_program_officer' ticket.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-warning">Manage</button>
-                      </form>
+                      <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-warning">
+                        Manage
+                      </a>
                     {% endif %}
                   </td>
                 </tr>
