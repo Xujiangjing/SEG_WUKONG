@@ -579,3 +579,65 @@ body  {
 .login-btn:hover {
   transform: translateY(-2px);
 }
+
+/* 侧边栏最简样式 */
+/* 让侧边栏自身占满高度，并左对齐 */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* 水平居中所有子元素 */
+  justify-content: flex-start;  /* 从上往下排列，底部留给mt-auto的Logout */
+  width: 15vw;           /* 或你想要的固定/百分比宽度 */
+  min-width: 200px;
+  max-width: 400px;
+  background-color: transparent;
+  overflow-y: auto;
+  z-index: 1030;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+/* 放大logo */
+.sidebar-logo {
+  width: clamp(200px, 10vw, 300px);  /* 在最小100px，最大150px之间，根据视口宽度调整 */
+  height: auto;
+  display: block;
+  margin-bottom: 20px;
+}
+
+/* 让菜单图标自适应，使用 clamp() 确保不会太小或太大 */
+.nav-icon {
+  width: clamp(20px, 2vw, 32px); /* 根据视口大小自动调整图标宽度 */
+  height: auto;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* 让菜单文字也自适应 */
+.nav-link {
+  font-size: clamp(1rem, 1.2vw, 1.5rem);  /* 最小1rem，最大1.5rem，介于两者之间随视口调整 */
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-bg {
+  position: fixed;         /* 固定定位，覆盖整个视窗 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url("./images/background-section4.png") no-repeat center center;
+  background-size: cover;
+  z-index: -1;             /* 放在最底层 */
+}
+
+
+/* 主内容区域，留出侧边栏的宽度 */
+.content-area {
+  margin-left: 15vw;    /* 跟上面 sidebar 的宽度保持一致 */
+  min-height: 100vh;
+  padding: 20px;
+  /* 也可加 min-width / max-width 等 */
+}
