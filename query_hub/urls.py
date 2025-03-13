@@ -20,7 +20,7 @@ from django.urls import path
 from django.conf.urls.static import static
 from django.conf import settings
 from tickets.views import *
-from tickets.views.base_views import get_user_role
+from tickets.views.user_management import get_user_role
 from tickets.views import (
     authentication,
     user_management,
@@ -53,11 +53,6 @@ urlpatterns = [
     path("password/", authentication.PasswordView.as_view(), name="password"),
     path("profile/", user_management.ProfileUpdateView.as_view(), name="profile"),
     path("tickets/", base_views.TicketListView.as_view(), name="ticket_list"),
-    path(
-        "tickets/<uuid:pk>/",
-        base_views.TicketDetailView.as_view(),
-        name="ticket_detail",
-    ),
     path(
         "close_ticket/<uuid:ticket_id>/",
         ticket_operations.close_ticket,

@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views import View
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 from django.views.generic.detail import DetailView
@@ -46,36 +47,6 @@ def home(request):
     """Display the application's start/home screen."""
 
     return render(request, "home.html")
-
-
-@login_required
-def ticket_detail(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    if (
-        request.user != ticket.creator
-        and request.user != ticket.assigned_user
-        and not request.user.is_program_officer()
-    ):
-        return redirect("dashboard")
-    activities = TicketActivity.objects.filter(ticket=ticket).order_by("-action_time")
-    formatted_activities = []
-    for activity in activities:
-        formatted_activities.append(
-            {
-                "username": activity.action_by.username,
-                "action": activity.get_action_display(),
-                "action_time": date_format(activity.action_time, "F j, Y, g:i a"),
-                "comment": activity.comment or "No comments.",
-            }
-        )
-    return render(
-        request,
-        "ticket_detail.html",
-        {
-            "ticket": ticket,
-            "activities": formatted_activities,
-        },
-    )
 
 
 class TicketListView(ListView):
@@ -170,20 +141,35 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             return redirect("ticket_detail", pk=ticket.pk)
 
 
-class TicketDetailView(DetailView):
-    model = Ticket
-    template_name = "tickets/ticket_detail.html"
-    context_object_name = "ticket"
-
-
 @login_required
-def get_user_role(request):
-    """Return the role of the current user."""
-    role = "unknown"
-    if request.user.is_program_officer:
-        role = "program_officer"
-    elif request.user.is_specialist:
-        role = "specialist"
-    elif request.user.is_student:
-        role = "student"
-    return JsonResponse({"role": role})
+def ticket_detail(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    if (
+        request.user != ticket.creator
+        and request.user != ticket.assigned_user
+        and not request.user.is_program_officer()
+    ):
+        return redirect("dashboard")
+
+    attachments = ticket.attachments.order_by("uploaded_at")
+
+    activities = TicketActivity.objects.filter(ticket=ticket).order_by("-action_time")
+    formatted_activities = [
+        {
+            "username": activity.action_by.username,
+            "action": activity.get_action_display(),
+            "action_time": date_format(activity.action_time, "F j, Y, g:i a"),
+            "comment": activity.comment or "No comments.",
+        }
+        for activity in activities
+    ]
+
+    return render(
+        request,
+        "tickets/ticket_detail.html",
+        {
+            "ticket": ticket,
+            "activities": formatted_activities,
+            "attachments": attachments,
+        },
+    )

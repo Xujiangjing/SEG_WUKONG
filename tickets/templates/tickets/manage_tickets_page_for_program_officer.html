@@ -34,7 +34,7 @@
             <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                 {% for specialist in specialists %}
                 <option value="{{ specialist.id }}">
-                    {{ specialist.username }} - {{ specialist.assigned_department }} ({{ specialist.open_tickets }} open tickets)
+                    {{ specialist.username }} - {{ specialist.department__name }} ({{ specialist.open_tickets }} open tickets)
                 {% endfor %}
             </select>
         </div>
@@ -103,16 +103,12 @@
             button.addEventListener("click", function () {
                 let selectedAction = this.getAttribute("data-action");
     
-                // 设置隐藏的 input 值
                 actionTypeInput.value = selectedAction;
-    
-                // 显示表单
+
                 actionForm.style.display = "block";
     
-                // 隐藏所有输入框
                 hideAllSections();
     
-                // 显示对应的输入框
                 if (selectedAction === "respond_ticket") {
                     respondSection.style.display = "block";
                 } else if (selectedAction === "redirect_ticket") {
@@ -123,12 +119,10 @@
                     returnSection.style.display = "block";
                 }
     
-                // 显示 Submit 按钮
                 submitBtn.style.display = "block";
             });
         });
     
-        // 确保初始状态隐藏 submit 按钮
         submitBtn.style.display = "none";
     });
 </script>

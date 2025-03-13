@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Value
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -17,6 +17,7 @@ from tickets.models import (
     Department,
     MergedTicket,
 )
+from django.db.models.functions import Coalesce
 
 
 @login_required
@@ -50,6 +51,36 @@ def return_ticket(request, pk):
     return render(
         request, "tickets/return_ticket.html", {"form": form, "ticket": ticket}
     )
+
+
+@login_required
+def redirect_ticket(request, ticket_id):
+    if not request.user.is_program_officer():
+        return redirect("dashboard")
+
+    ticket = Ticket.objects.get(id=ticket_id)
+    new_assignee_id = request.POST.get("new_assignee_id")
+
+    if new_assignee_id:
+        new_assignee = User.objects.get(id=new_assignee_id)
+        ticket.assigned_user = new_assignee
+        ticket.status = "in_progress"
+        ticket.latest_action = "redirected"
+        ticket.save()
+
+        ticket_activity = TicketActivity(
+            ticket=ticket,
+            action="redirected",
+            action_by=request.user,
+            action_time=timezone.now(),
+            comment=f"Redirected to {new_assignee.full_name()}",
+        )
+        ticket_activity.save()
+
+        messages.success(
+            request, f"Ticket successfully redirected to {new_assignee.username}."
+        )
+        return redirect("ticket_detail", ticket_id=ticket.id)
 
 
 @login_required
@@ -194,14 +225,19 @@ def manage_ticket_page(request, ticket_id):
         )
 
         specialists = (
-            User.objects.filter(role="specialist")
+            User.objects.filter(role="specialists")
             .annotate(
-                open_tickets=Count(
-                    "assigned_tickets",
-                    filter=Q(assigned_tickets__status="open"),
+                open_tickets=Coalesce(
+                    Count(
+                        "assigned_tickets",
+                        filter=Q(assigned_tickets__status="open"),
+                        distinct=True,
+                    ),
+                    Value(0),
                 )
             )
-            .order_by("username", "department", "open_tickets")
+            .values("id", "username", "department__name", "open_tickets")
+            .order_by("username", "department__name", "open_tickets")
         )
 
         if request.method == "POST":
@@ -210,7 +246,7 @@ def manage_ticket_page(request, ticket_id):
             if action == "respond_ticket":
                 return respond_ticket(request, ticket_id)
             elif action == "redirect_ticket":
-                return redirect("redirect_ticket", ticket_id=ticket.id)
+                return redirect_ticket(request, ticket_id)
             elif action == "merge_ticket":
                 return merge_ticket(request, ticket_id=ticket.id)
             elif action == "return_to_student":
