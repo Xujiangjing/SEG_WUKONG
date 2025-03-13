@@ -1053,7 +1053,7 @@ def return_ticket_specailist(request, ticket_id):
     return redirect('return_ticket_page', ticket_id=ticket_id)
 
 @login_required
-def submit_ticket(request):
+def create_ticket(request):
     if request.method == 'POST':
         form = TicketForm(request.POST, request.FILES)
         if form.is_valid():
@@ -1110,7 +1110,7 @@ def submit_ticket(request):
     else:
         form = TicketForm()
 
-    return render(request, 'tickets/submit_ticket.html', {'form': form})
+    return render(request, 'tickets/create_ticket.html', {'form': form})
     
     
 @login_required
