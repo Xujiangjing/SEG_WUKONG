@@ -42,7 +42,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><strong>Discription:</strong></td>
+                            <td><strong>Description:</strong></td>
                             <td>{{ ticket.description }}</td>
                         </tr>
 
@@ -97,6 +97,46 @@
                             <p>No activities yet.</p>
                         {% endfor %}
                     </ul>
+                </div>
+            </div>
+
+            <!-- New section for potential tickets to merge -->
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-warning text-white">
+                    <strong>Potential Tickets to Merge</strong>
+                </div>
+                <div class="card-body">
+                    {% if potential_tickets %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for potential_ticket in potential_tickets %}
+                                    <tr>
+                                        <td>{{ potential_ticket.title }}</td>
+                                        <td>{{ potential_ticket.description }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'merge_ticket' ticket.id potential_ticket.id %}">
+                                                {% csrf_token %}    
+                                                {% if potential_ticket in approved_merged_tickets %}
+                                                    <button type="submit" class="btn btn-danger">Undo</button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-success">Merge</button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No potential tickets to merge found.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -230,8 +270,12 @@
                 alert('Error: Could not submit response');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+    alert("Error submitting response: " + error);
+    console.error("Error:", error);
     });
+});
+
 </script>
 
 <style>

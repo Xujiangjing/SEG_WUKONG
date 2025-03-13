@@ -40,11 +40,14 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/assign/', views.redirect_ticket, name='redirect_ticket'),
     path('ticket/<uuid:ticket_id>/respond_page/', views.respond_ticket_page, name='respond_ticket_page'),
     path('ticket/<uuid:ticket_id>/respond/', views.respond_ticket, name='respond_ticket'),
+    path('ticket/<uuid:ticket_id>/merge_page/', views.merge_ticket_page, name='merge_ticket_page'),
+    path('ticket/<uuid:ticket_id>/merge/', views.merge_ticket, name='merge_ticket'),
     path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
     path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
     path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
     path('ticket/<uuid:ticket_id>/update_page/', views.update_ticket_page, name='update_ticket_page'),
     path('ticket/<uuid:ticket_id>/update_ticket/', views.update_ticket, name='update_ticket'),
+    path('ticket/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', views.merge_ticket, name='merge_ticket'),
     
 
 ]

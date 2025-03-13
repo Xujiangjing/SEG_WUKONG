@@ -1,6 +1,7 @@
 import os
-import uuid
 import re
+import uuid
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
@@ -9,6 +10,10 @@ from libgravatar import Gravatar
 
 
 class Department(models.Model):
+    """
+    Represents a department within the system.
+    Used to categorize users and tickets by department.
+    """
     """Model used to represent a department in Django Admin."""
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
@@ -21,6 +26,10 @@ class Department(models.Model):
         return self.name
     
 class User(AbstractUser):
+    """
+    Custom user model extending Django's AbstractUser.
+    Adds role-based access and optional department association.
+    """
     """Custom User model with roles and optional department association."""
     ROLE_CHOICES = [
         ('students', 'Students'),
@@ -28,7 +37,7 @@ class User(AbstractUser):
         ('specialists', 'Specialists'),
         ('others', 'Others'), # Admins, superusers, etc.
     ]
-
+    # Custom username validation: must start with '@' followed by at least three alphanumeric characters
     username = models.CharField(
         max_length=30,
         unique=True,
@@ -51,20 +60,27 @@ class User(AbstractUser):
 
     class Meta:
         """Model options."""
-
+        """
+        Defines ordering for the User model.
+        """
         ordering = ['last_name', 'first_name']
     
     def clean(self):
+        """
+        Ensures that specialists must be assigned to a department.
+        """
         # Specialists must have a department
         if self.role == 'specialists' and not self.department:
             raise ValidationError("Specialists must have a department.")
 
     def full_name(self):
+        """Returns the user's full name."""
         """Return a string containing the user's full name."""
 
         return f'{self.first_name} {self.last_name}'
 
     def gravatar(self, size=120):
+        """Returns the Gravatar URL for the user."""
         """Return a URL to the user's gravatar."""
 
         gravatar_object = Gravatar(self.email)
@@ -72,6 +88,7 @@ class User(AbstractUser):
         return gravatar_url
 
     def mini_gravatar(self):
+        """Returns a smaller version of the Gravatar."""
         """Return a URL to a miniature version of the user's gravatar."""
         
         return self.gravatar(size=60)
@@ -86,10 +103,16 @@ class User(AbstractUser):
         return self.role == 'specialists'
     
     def __str__(self):
+        """String representation of the user."""
         if self.department:
             return f"{self.username} ({self.role}) - {self.department}"
         return f"{self.username} ({self.role})"
 
+
+"""
+Represents a support ticket submitted by users.
+Tracks status, priority, assigned department, and updates.
+"""
 class Ticket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
@@ -166,9 +189,11 @@ class Ticket(models.Model):
     return_reason = models.TextField(blank=True, null=True) # Reason for returning the ticket
     
     def __str__(self):
+        """Returns a readable string representation of the ticket."""
         return f"Ticket {self.id}: {self.title} ({self.status})"
 
     def save(self, *args, **kwargs):
+        """Sets the default latest action if not provided."""
         if self.latest_action is None:  # If no action has yet been recorded, set a default action
             self.latest_action = 'created'
         super().save(*args, **kwargs)
@@ -185,11 +210,10 @@ def user_directory_path(instance, filename):
     return f"attachments/{safe_email}/{date_str}/{filename}"
 
 class TicketAttachment(models.Model):
-    ticket = models.ForeignKey(
-        'Ticket',
-        on_delete=models.CASCADE,
-        related_name='attachments'
-    )
+    """
+    Stores file attachments related to tickets.
+    """
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
     file = models.FileField(upload_to=user_directory_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -213,6 +237,9 @@ class TicketActivity(models.Model):
 
 
 class Response(models.Model):
+    """
+    Represents a response to a ticket, typically from an assigned user.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses') 
     responder = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank = True, related_name='user_responses')
@@ -242,3 +269,22 @@ class AITicketProcessing(models.Model):
     def __str__(self):
         return f"AI Processing for Ticket {self.ticket.id}"
 
+class MergedTicket(models.Model):
+    primary_ticket = models.ForeignKey(Ticket, related_name='primary_ticket', on_delete=models.CASCADE,unique=True)
+    suggested_merged_tickets = models.ManyToManyField(Ticket, related_name='suggested_merged_tickets')
+    approved_merged_tickets = models.ManyToManyField(Ticket, related_name='approved_merged_tickets')
+    
+    merged_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Merged into Ticket {self.primary_ticket.id}"
+
+
+class DailyTicketClosureReport(models.Model):
+    date = models.DateField()
+    department = models.CharField(max_length=50, choices=Ticket.DEPARTMENT_CHOICES)
+    closed_by_inactivity = models.PositiveIntegerField(default=0)
+    closed_manually = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"Report for {self.date} for {self.department}"
