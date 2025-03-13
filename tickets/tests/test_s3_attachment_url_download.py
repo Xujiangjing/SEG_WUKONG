@@ -9,7 +9,7 @@ from django.utils.timezone import now
 from moto import mock_s3
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from tickets.models import User, Department, Ticket, TicketAttachment
+from tickets.models import AITicketProcessing, User, Department, Ticket, TicketAttachment
 from tickets.views import handle_uploaded_file_in_chunks
 
 @mock_s3
@@ -66,6 +66,11 @@ class S3AttachmentURLDownloadTestCase(TestCase):
             status="open",
             assigned_department=self.department.name,
             assigned_user=self.specialist_user,
+        )
+        
+        AITicketProcessing.objects.create(
+            ticket=self.ticket,
+            ai_assigned_department='it_support'
         )
 
 
