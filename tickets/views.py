@@ -574,7 +574,7 @@ def respond_ticket_page(request, ticket_id):
     return render(request, 'respond_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
-        'attachments': attachments
+        'attachments': attachments,
         'potential_tickets': potential_tickets,
         'approved_merged_tickets': approved_merged_tickets,
     })
