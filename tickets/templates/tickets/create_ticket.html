@@ -1,20 +1,39 @@
-{# tickets/templates/tickets/create_ticket.html #}
-{% extends 'base_content.html' %}
-{% load widget_tweaks %}
+{% extends "base_content.html" %}
 
 {% block content %}
-<div class="container">
-    <!-- Create a New Ticket -->
-  <h1>Create a New Ticket</h1>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {% include 'partials/bootstrap_form.html' with form=form %}
-    <div class="mb-3">
-      <label for="id_file" class="form-label">Attachments (optional)</label>
-      <input type="file" name="file" id="id_file" class="form-control" multiple>
-    </div>
+<div class="container mt-5">
+    <h2 class="mb-4">Submit a Ticket</h2>
 
-    <button type="submit" class="btn btn-primary">Submit</button>
-  </form>
+    <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-light">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="id_title" class="form-label">Title:</label>
+            {{ form.title }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_description" class="form-label">Description:</label>
+            {{ form.description }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_priority" class="form-label">Priority:</label>
+            {{ form.priority }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_assigned_department" class="form-label">Department:</label>
+            {{ form.assigned_department }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_file" class="form-label">Attach Files:</label>
+            <input type="file" name="file" id="id_file" class="form-control" multiple>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Ticket</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
 </div>
 {% endblock %}
