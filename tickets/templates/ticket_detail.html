@@ -4,7 +4,11 @@
 <div class="container my-4">
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">
-            <h1 class="text-center text-primary mb-4">Respond to Ticket: {{ ticket.title }}</h1>
+
+
+            <h1 class="text-center text-primary mb-4">Ticket Detail: {{ ticket.title }}</h1>
+
+
             <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-primary text-white">
                     <strong>Ticket Information</strong>
@@ -29,15 +33,47 @@
                         </tr>
                         <tr>
                             <td><strong>Created by:</strong></td>
-                            <td>{{ ticket.creator.username }} on {{ ticket.created_at }}</td>
+                            <td>
+                                {{ ticket.creator.username }} 
+                                <span class="text-muted"> on {{ ticket.created_at }}</span>
+                            </td>
                         </tr>
                         <tr class="table-info">
                             <td><strong>Assigned to:</strong></td>
-                            <td>{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
+                            <td>
+                                {% if ticket.assigned_user %}
+                                    {{ ticket.assigned_user.username }}
+                                {% else %}
+                                    Unassigned
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
-                            <td><strong>Discription:</strong></td>
-                            <td>{{ ticket.description }}</td>
+                            <td><strong>Description:</strong></td>
+                            <td>{{ ticket.description|linebreaksbr }}</td>
+                        </tr>
+
+
+                        <tr class="table-info">
+                            <td><strong>Attachments:</strong></td>
+                            <td>
+                                {% if attachments %}
+                                    <ul class="list-unstyled">
+                                        {% for attachment in attachments %}
+                                            <li>
+                                                <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                                                    📎 {{ attachment.filename}}
+                                                </a>
+                                                <span class="text-muted">
+                                                    ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted">No attachments</span>
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -48,21 +84,32 @@
                     <strong>Previous Responses</strong>
                 </div>
                 <div class="card-body">
-                    <pre id="previous-responses" class="text-muted">{{ ticket.answers|default:"No responses yet." }}</pre>
+                    <pre id="previous-responses" class="text-muted">
+{{ ticket.answers|default:"No responses yet." }}
+                    </pre>
                 </div>
             </div>
+
+            <!-- Activity Log -->
             <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-success text-white">
                     <strong>Activity Log</strong>
                 </div>
-                <div class="card-body" id="activity-log">
+                <div class="card-body">
                     <ul class="timeline">
                         {% for activity in activities %}
                             <li class="timeline-item">
                                 <div class="timeline-point bg-info"></div>
                                 <div class="timeline-content">
-                                    <h5><strong>{{ activity.username }}</strong> - {{ activity.action }}</h5>
-                                    <p><small class="text-muted">{{ activity.action_time }}</small></p>
+                                    <h5>
+                                        <strong>{{ activity.username }}</strong>
+                                        - {{ activity.action }}
+                                    </h5>
+                                    <p>
+                                        <small class="text-muted">
+                                            {{ activity.action_time }}
+                                        </small>
+                                    </p>
                                     <p>{{ activity.comment }}</p>
                                 </div>
                             </li>
@@ -72,9 +119,11 @@
                     </ul>
                 </div>
             </div>
-            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">Back to Dashboard</a>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">
+                Back to Dashboard
+            </a>
         </div>
     </div>
 </div>
-
 {% endblock %}

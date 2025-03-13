@@ -486,6 +486,12 @@ class TicketDetailView(DetailView):
     model = Ticket
     template_name = 'tickets/ticket_detail.html'
     context_object_name = 'ticket'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        context['attachments'] = self.object.attachments.order_by('uploaded_at')
+        return context
 
 
 @login_required
@@ -522,11 +528,11 @@ def return_ticket(request, pk):
 def supplement_ticket(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
     if not request.user.is_student() or ticket.status != 'returned':
-        return redirect('ticket_list')
+        return redirect('dashboard')
 
     if request.user != ticket.creator:
         messages.error(request, "You do not have permission to modify this ticket.")
-        return redirect("ticket_list")
+        return redirect("dashboard")
 
     if request.method == 'POST':
         form = SupplementTicketForm(request.POST)
@@ -534,7 +540,7 @@ def supplement_ticket(request, pk):
             ticket.description += "\n\nSupplement: " + form.cleaned_data['supplement_info']
             ticket.status = 'open'
             ticket.save()
-            return redirect('ticket_list')
+            return redirect('dashboard')
     else:
         form = SupplementTicketForm()
 
@@ -544,6 +550,9 @@ def supplement_ticket(request, pk):
 @login_required
 def respond_ticket_page(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    attachments = ticket.attachments.order_by('uploaded_at')
+
     if request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect('dashboard')
     
@@ -565,9 +574,9 @@ def respond_ticket_page(request, ticket_id):
     return render(request, 'respond_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
+        'attachments': attachments
         'potential_tickets': potential_tickets,
         'approved_merged_tickets': approved_merged_tickets,
-        
     })
 
 @login_required
@@ -680,6 +689,8 @@ def update_ticket_page(request, ticket_id):
     if request.user != ticket.creator:
         return redirect('dashboard')
     
+    attachments = ticket.attachments.order_by('uploaded_at')
+    
     activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
     formatted_activities = []
     for activity in activities:
@@ -692,6 +703,7 @@ def update_ticket_page(request, ticket_id):
     return render(request, 'update_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
+        'attachments': attachments
     })
 
 
@@ -737,9 +749,21 @@ def update_ticket(request, ticket_id):
 @login_required
 def redirect_ticket_page(request, ticket_id):
     ticket = Ticket.objects.get(id=ticket_id)
+    
+    attachments = ticket.attachments.order_by('uploaded_at')
+    
+    ai_obj = getattr(ticket, 'ai_processing', None)
 
-    ai_assigned_department = ticket.ai_processing.ai_assigned_department if ticket.ai_processing else None
-    rec_department = get_object_or_404(Department, name=ai_assigned_department)
+    if ai_obj:
+        ai_assigned_department = ai_obj.ai_assigned_department
+    else:
+        ai_assigned_department = None
+
+    
+    if ai_assigned_department:
+        rec_department = get_object_or_404(Department, name=ai_assigned_department)
+    else:
+        rec_department = None
 
     specialists = User.objects.filter(role='specialists') \
     .annotate(ticket_count=Count('assigned_tickets')) \
@@ -753,11 +777,17 @@ def redirect_ticket_page(request, ticket_id):
         returned_specialist_list.append(activity.action_by) 
     specialists = [specialist for specialist in specialists if specialist not in returned_specialist_list]
 
-    sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+    if rec_department:
+        sorted_specialists = sorted(specialists, key=lambda s: (s.department != rec_department, s.ticket_count))
+    else:
+        sorted_specialists = sorted(specialists, key=lambda s: s.ticket_count)
 
-    return render(request, 'redirect_ticket_page.html', {
+
+    return render(
+        request, 'redirect_ticket_page.html', {
         'ticket': ticket,
         'specialists': sorted_specialists,
+        'attachments': attachments
     })
 
 @login_required
@@ -884,25 +914,35 @@ def redirect_ticket(request, ticket_id):
 @login_required
 def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
+    if request.user != ticket.creator and request.user != ticket.assigned_user \
+       and not request.user.is_program_officer():
         return redirect('dashboard')
+    
+
+    attachments = ticket.attachments.order_by('uploaded_at')
+    
     activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
-    formatted_activities = []
-    for activity in activities:
-        formatted_activities.append({
-            'username': activity.action_by.username,
-            'action': activity.get_action_display(),
-            'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
-            'comment': activity.comment or "No comments."
-        })
+    formatted_activities = [{
+        'username': activity.action_by.username,
+        'action': activity.get_action_display(),
+        'action_time': date_format(activity.action_time, 'F j, Y, g:i a'),
+        'comment': activity.comment or "No comments."
+    } for activity in activities]
+    
+
     return render(request, 'ticket_detail.html', {
         'ticket': ticket,
         'activities': formatted_activities,
+        'attachments': attachments
     })
+
 
 @login_required
 def return_ticket_page(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    
+    attachments = ticket.attachments.order_by('uploaded_at')
+    
     if request.user != ticket.creator and request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect('dashboard')
     activities = TicketActivity.objects.filter(ticket=ticket).order_by('-action_time')
@@ -917,6 +957,7 @@ def return_ticket_page(request, ticket_id):
     return render(request, 'return_ticket_page.html', {
         'ticket': ticket,
         'activities': formatted_activities,
+        'attachments': attachments
     })
     
 @login_required

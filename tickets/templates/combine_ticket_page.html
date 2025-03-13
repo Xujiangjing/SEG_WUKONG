@@ -40,6 +40,26 @@
                     <td><strong>Discription:</strong></td>
                     <td>{{ ticket.description }}</td>
                 </tr>
+                <td><strong>Attachments:</strong></td>
+                <td>
+                    {% if attachments and attachments|length > 0 %}
+                        <ul class="list-unstyled mb-0">
+                            {% for att in attachments %}
+                                <li class="mb-1">
+
+                                    <a href="{{ att.file.url }}" download>
+                                        📎{{ att.filename}}
+                                    </a>
+                                    <small class="text-muted">
+                                        ({{ att.uploaded_at|date:"Y-m-d H:i:s" }})
+                                    </small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="text-muted">No attachments</span>
+                    {% endif %}
+                </td>
             </table>
         </div>
     </div>

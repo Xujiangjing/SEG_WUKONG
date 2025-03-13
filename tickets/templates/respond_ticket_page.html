@@ -33,11 +33,41 @@
                         </tr>
                         <tr class="table-info">
                             <td><strong>Assigned to:</strong></td>
-                            <td>{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
+                            <td>
+                                {% if ticket.assigned_user %}
+                                    {{ ticket.assigned_user.username }}
+                                {% else %}
+                                    Unassigned
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
                             <td><strong>Description:</strong></td>
                             <td>{{ ticket.description }}</td>
+                        </tr>
+
+
+                        
+                        <tr>
+                            <td><strong>Attachments:</strong></td>
+                            <td>
+                                {% if attachments %}
+                                    <ul class="list-unstyled">
+                                        {% for attachment in attachments %}
+                                            <li>
+                                                <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                                                    📎 {{ attachment.filename}}
+                                                </a>
+                                                <span class="text-muted">
+                                                    ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted">No attachments</span>
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -51,7 +81,7 @@
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
                     <strong>Activity Log</strong>
                     <span id="activity-arrow">▼</span>
-                </div>                
+                </div>
                 <div class="card-body" id="activity-log" style="display: none;">
                     <ul class="timeline">
                         {% for activity in activities %}
@@ -164,7 +194,6 @@
         responseBox.addEventListener("keydown", function (event) {
             if (aiPlaceholderActive) {
                 if (event.key !== "Enter") {
-                    // Clear the AI response once the user starts typing
                     responseBox.value = ""; 
                     responseBox.style.fontStyle = "normal"; 
                     responseBox.style.color = "black"; 
@@ -173,7 +202,6 @@
             }
         });
 
-        // When pressing Enter, set the text to normal (confirm the input)
         responseBox.addEventListener("keydown", function (event) {
             if (aiPlaceholderActive && event.key === "Enter") {
                 event.preventDefault();
@@ -183,7 +211,6 @@
             }
         });
 
-        // Prevent the cursor from moving when AI text is active
         responseBox.addEventListener("mousedown", function (event) {
             if (aiPlaceholderActive) {
                 responseBox.setSelectionRange(0, 0);
@@ -191,7 +218,6 @@
             }
         });
 
-        // If the textarea loses focus, clear AI response if not typed over
         responseBox.addEventListener("blur", function () {
             if (aiPlaceholderActive && responseBox.value.trim() === aiResponse) {
                 responseBox.value = "";
@@ -218,7 +244,6 @@
         .then(data => {
             if (data.success) {
                 document.getElementById('response-box').value = '';
-
                 let notification = document.getElementById('response-success');
                 notification.innerText = "Response submitted successfully!";
                 notification.style.display = "block"; 
@@ -239,8 +264,6 @@
                     `;
                 });
                 activityLog.innerHTML += '</ul>';
-
-                // Show the updated activity log if it was hidden
                 activityLog.style.display = "block";
                 document.getElementById("activity-arrow").innerHTML = "▲";
             } else {
