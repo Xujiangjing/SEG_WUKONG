@@ -50,8 +50,8 @@ urlpatterns = [
     path('ticket/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', views.merge_ticket, name='merge_ticket'),
     
 
-    path("ticket/submit/", views.submit_ticket, name="submit_ticket"),
-    path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
+    path("ticket/create/", views.create_ticket, name="create_ticket"),
+    
     path('dashboard_program_officer/', views.dashboard, name='dashboard_program_officer'),
     path('dashboard_student/', views.dashboard, name='dashboard_student'),
     path('dashboard_specialist/', views.dashboard, name='dashboard_specialist'),
