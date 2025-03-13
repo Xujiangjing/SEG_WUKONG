@@ -49,7 +49,13 @@ def program_officer_dashboard(request):
     sort_option = request.GET.get("sort", "")
 
     tickets = get_filtered_tickets(
-        request.user, Ticket.objects.all(), search_query, status_filter, sort_option
+        request.user,
+        Ticket.objects.exclude(status="closed")
+        .exclude(answers__isnull=False)
+        .exclude(answers=""),
+        search_query,
+        status_filter,
+        sort_option,
     )
 
     return render(

@@ -2,6 +2,7 @@
 {% block content %}
 <div class="container">
     <h1>Manage Ticket - {{ ticket.title }}</h1>
+    <p><strong>Student:</strong> {{ ticket.student.username }}</p>
     <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.username }}</p>
     <p><strong>Status:</strong> {{ ticket.status }}</p>
     <p><strong>Priority:</strong> {{ ticket.priority }}</p>
@@ -9,19 +10,17 @@
     <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
     <p><strong>Description:</strong> {{ ticket.description }}</p>
 
-    <form method="POST">
+    <div class="mb-3">
+        <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
+        <button type="button" class="btn btn-warning action-btn" data-action="redirect_ticket">Redirect</button>
+        <button type="button" class="btn btn-primary action-btn" data-action="merge_ticket">Merge</button>
+        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">Return to Student</button>
+    </div>
+
+    <form method="POST" id="action_form" style="display: none;">
         {% csrf_token %}
-        
-        <div class="mb-3">
-            <label for="action_type">Choose an Action:</label>
-            <select id="action_type" name="action_type" class="form-select" required>
-                <option value="">-- Select an action --</option>
-                <option value="respond_ticket">Respond to Ticket</option>
-                <option value="redirect_ticket">Redirect Ticket</option>
-                <option value="merge_ticket">Merge Ticket</option>
-                <option value="return_to_student">Return back to student</option>
-            </select>
-        </div>
+
+        <input type="hidden" id="action_type" name="action_type">
 
         <!-- Respond Section -->
         <div id="respond-section" style="display: none;">
@@ -56,7 +55,7 @@
             <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+        <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
     </form>
 
     <h3>Activity Log:</h3>
@@ -83,37 +82,55 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    let actionType = document.getElementById("action_type");
-    let respondSection = document.getElementById("respond-section");
-    let redirectSection = document.getElementById("redirect-section");
-    let mergeSection = document.getElementById("merge-section");
-    let returnSection = document.getElementById("return-section");
-
-    function updateActionVisibility() {
-        let selectedValue = actionType.value;
-
-       
-        respondSection.style.display = "none";
-        redirectSection.style.display = "none";
-        mergeSection.style.display = "none";
-        returnSection.style.display = "none";
-        
-        if (selectedValue === "respond_ticket") {
-            respondSection.style.display = "block";
-        } else if (selectedValue === "redirect_ticket") {
-            redirectSection.style.display = "block";
-        } else if (selectedValue === "merge_ticket") {
-            mergeSection.style.display = "block";
-        } else if (selectedValue === "return_to_student") {
-            returnSection.style.display = "block";
+    document.addEventListener("DOMContentLoaded", function () {
+        let actionTypeInput = document.getElementById("action_type");
+        let actionForm = document.getElementById("action_form");
+        let submitBtn = document.getElementById("submit_btn");
+    
+        let respondSection = document.getElementById("respond-section");
+        let redirectSection = document.getElementById("redirect-section");
+        let mergeSection = document.getElementById("merge-section");
+        let returnSection = document.getElementById("return-section");
+    
+        function hideAllSections() {
+            respondSection.style.display = "none";
+            redirectSection.style.display = "none";
+            mergeSection.style.display = "none";
+            returnSection.style.display = "none";
         }
-    }
-
-    updateActionVisibility();
-
-    actionType.addEventListener("change", updateActionVisibility);
-});
+    
+        document.querySelectorAll(".action-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let selectedAction = this.getAttribute("data-action");
+    
+                // 设置隐藏的 input 值
+                actionTypeInput.value = selectedAction;
+    
+                // 显示表单
+                actionForm.style.display = "block";
+    
+                // 隐藏所有输入框
+                hideAllSections();
+    
+                // 显示对应的输入框
+                if (selectedAction === "respond_ticket") {
+                    respondSection.style.display = "block";
+                } else if (selectedAction === "redirect_ticket") {
+                    redirectSection.style.display = "block";
+                } else if (selectedAction === "merge_ticket") {
+                    mergeSection.style.display = "block";
+                } else if (selectedAction === "return_to_student") {
+                    returnSection.style.display = "block";
+                }
+    
+                // 显示 Submit 按钮
+                submitBtn.style.display = "block";
+            });
+        });
+    
+        // 确保初始状态隐藏 submit 按钮
+        submitBtn.style.display = "none";
+    });
 </script>
-
+    
 {% endblock %}

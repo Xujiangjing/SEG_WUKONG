@@ -123,17 +123,12 @@ def respond_ticket(request, ticket_id):
             action_by=request.user,
             comment=response_message,
         )
-        return JsonResponse(
-            {
-                "success": True,
-                "activities": formatted_activities,
-                "answers": ticket.answers,
-            }
-        )
+        messages.success(request, "Response sent successfully.")
+        return redirect("ticket_detail", ticket_id=ticket.id)
 
     return render(
         request,
-        "respond_ticket_page.html",
+        "ticket_detail.html",
         {"ticket": ticket, "activities": formatted_activities},
     )
 
@@ -210,101 +205,16 @@ def manage_ticket_page(request, ticket_id):
         )
 
         if request.method == "POST":
-            print("DEBUG: Received a POST request!")
             action = request.POST.get("action_type")
-            print("DEBUG: Received action:", action)
 
             if action == "respond_ticket":
-                ticket.id = request.POST.get("ticket_id")
-                response_message = request.POST.get("response_message")
-                ticket = get_object_or_404(Ticket, id=ticket_id)
-
-                if response_message:
-                    ticket.answers = (
-                        ticket.answers or ""
-                    ) + f"\nResponse by {user.username}: {response_message}"
-                    ticket.status = "closed"
-                    ticket.save()
-
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        action="responded",
-                        action_by=user,
-                        comment=response_message,
-                    )
-                    messages.success(request, "Ticket response submitted successfully.")
-
-                    return redirect("dashboard")
-
+                return respond_ticket(request, ticket_id)
             elif action == "redirect_ticket":
-                new_assignee_id = request.POST.get("new_assignee_id")
-                print("DEBUG: new_assignee_id from form:", new_assignee_id)  # 调试日志
-
-                if not new_assignee_id:
-                    messages.error(request, "No user selected for redirection.")
-                    return redirect("manage_ticket_page", ticket_id=ticket.id)
-
-                try:
-                    new_assignee = User.objects.get(id=new_assignee_id)
-                except User.DoesNotExist:
-                    messages.error(
-                        request, f"User with ID {new_assignee_id} does not exist."
-                    )
-                    return redirect("manage_ticket_page", ticket_id=ticket.id)
-
-                ticket.id = request.POST.get("ticket_id")
-                ticket = get_object_or_404(Ticket, id=ticket_id)
-
-                ticket.assigned_user = new_assignee
-                ticket.status = "in_progress"
-                ticket.save()
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    action="redirected",
-                    action_by=user,
-                    comment=f"Redirected to {new_assignee.username}",
-                )
-                messages.success(
-                    request,
-                    f"Ticket successfully redirected to {new_assignee.username}.",
-                )
-                return redirect("dashboard")
-
+                return redirect("redirect_ticket", ticket_id=ticket.id)
             elif action == "merge_ticket":
-                merge_ticket_id = request.POST.get("merge_ticket")
-                merge_ticket = get_object_or_404(Ticket, id=merge_ticket_id)
-                merged_ticket, created = MergedTicket.objects.get_or_create(
-                    primary_ticket=ticket
-                )
-                merged_ticket.approved_merged_tickets.add(merge_ticket)
-                merged_ticket.save()
-                TicketActivity.objects.create(
-                    ticket=ticket,
-                    action="merged",
-                    action_by=user,
-                    comment=f"Merged with {merge_ticket.title}",
-                )
-                messages.success(
-                    request, f"Ticket successfully merged with {merge_ticket.title}."
-                )
-
+                return merge_ticket(request, ticket_id=ticket.id)
             elif action == "return_to_student":
-                return_reason = request.POST.get("return_reason")
-                print("DEBUG: Return reason:", return_reason)
-                if return_reason:
-                    ticket.status = "returned"
-                    ticket.return_reason = return_reason
-                    ticket.save()
-                    TicketActivity.objects.create(
-                        ticket=ticket,
-                        action="returned",
-                        action_by=user,
-                        comment=return_reason,
-                    )
-                    messages.success(request, "Ticket returned successfully.")
-
-            return redirect("manage_ticket_page", ticket_id=ticket.id)
-
+                return return_ticket(request, ticket_id=ticket.id)
         activities = (
             TicketActivity.objects.filter(ticket=ticket)
             .select_related("action_by")
