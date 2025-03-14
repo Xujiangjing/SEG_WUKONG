@@ -205,7 +205,7 @@ def respond_ticket(request, ticket_id):
 
     return render(
         request,
-        "ticket_detail.html",
+        "tickets/ticket_detail.html",
         {"ticket": ticket, "activities": formatted_activities},
     )
 
