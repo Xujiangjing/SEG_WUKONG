@@ -47,7 +47,7 @@ def return_ticket(request, pk):
     if request.method == "POST":
         form = ReturnTicketForm(request.POST)
         if form.is_valid():
-            ticket.status = "returned"
+            ticket.status = "in_progress"
             ticket.return_reason = form.cleaned_data["return_reason"]
             ticket.save()
             return redirect("ticket_list")
@@ -103,9 +103,17 @@ def redirect_ticket(request, ticket_id):
             action_time=timezone.now(),
             comment=f"Redirected to {ai_assigned_department} (AI recommended)",
         )
-
-        return redirect(reverse("ticket_detail", kwargs={"ticket_id": ticket.id}))
-
+        messages.success(
+            request, f"Ticket successfully redirected to {new_assignee.full_name()}!"
+        )
+        return JsonResponse(
+            {
+                "success": True,
+                "redirect_url": reverse(
+                    "ticket_detail", kwargs={"ticket_id": ticket.id}
+                ),
+            }
+        )
     try:
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
@@ -121,7 +129,28 @@ def redirect_ticket(request, ticket_id):
             comment=f"Redirected to {new_assignee.full_name()}",
         )
 
-        return redirect(reverse("ticket_detail", kwargs={"ticket_id": ticket.id}))
+        open_tickets_count = Ticket.objects.filter(
+            assigned_user=new_assignee, status="in_progress"
+        ).count()
+
+        new_assignee.open_tickets = (
+            open_tickets_count  # ✅ 只存入 Python 变量，不存数据库
+        )
+        print(
+            f"🚀 Specialist {new_assignee.username} now has {new_assignee.open_tickets} open tickets."
+        )
+
+        messages.success(
+            request, f"Ticket successfully redirected to {new_assignee.full_name()}!"
+        )
+        return JsonResponse(
+            {
+                "success": True,
+                "redirect_url": reverse(
+                    "ticket_detail", kwargs={"ticket_id": ticket.id}
+                ),
+            }
+        )
 
     except User.DoesNotExist:
         return JsonResponse({"error": "Selected specialist does not exist"}, status=400)
@@ -141,7 +170,7 @@ def supplement_ticket(request, pk):
             ticket.description += (
                 f"\n\nSupplement: {form.cleaned_data['supplement_info']}"
             )
-            ticket.status = "open"
+            ticket.status = "in_progress"
             ticket.save()
             return redirect("ticket_list")
     else:
@@ -205,7 +234,7 @@ def respond_ticket(request, ticket_id):
 
     return render(
         request,
-        "ticket_detail.html",
+        "tickets/ticket_detail.html",
         {"ticket": ticket, "activities": formatted_activities},
     )
 
@@ -222,7 +251,7 @@ def update_ticket(request, ticket_id):
         ticket.description += (
             f"\n\nSupplement: {request.user.username}: {update_message}"
         )
-        ticket.status = "open"
+        ticket.status = "in_progress"
         ticket.latest_action = "status_updated"
         ticket.save()
         TicketActivity.objects.create(
@@ -248,7 +277,7 @@ def manage_ticket_page(request, ticket_id):
 
     actions = []
     if is_student:
-        actions.extend(["update_ticket", "close_ticket"])
+        actions.extend(["update_ticket", "close_ticket", "create_ticket"])
 
         return render(
             request,
@@ -279,6 +308,8 @@ def manage_ticket_page(request, ticket_id):
                 return merge_ticket(request, ticket_id=ticket.id)
             elif action == "return_to_student":
                 return return_ticket(request, ticket_id=ticket.id)
+            elif action == "redirect_ticket":
+                return redirect_ticket(request, ticket_id=ticket.id)
 
         activities = (
             TicketActivity.objects.filter(ticket=ticket)
@@ -305,14 +336,14 @@ def submit_ticket(request):
         if form.is_valid():
             ticket = form.save(commit=False)
             ticket.creator = request.user
-            ticket.status = "open"
+            ticket.status = "in_progress"
 
             # Allow student to select priority
             ticket.priority = form.cleaned_data["priority"]
 
             # Check for duplicate tickets with the same title
             existing_ticket = Ticket.objects.filter(
-                title=ticket.title, status="open"
+                title=ticket.title, status="in_progress"
             ).first()
             if existing_ticket:
                 # Merge duplicate ticket descriptions
@@ -379,7 +410,7 @@ def get_specialists(ticket):
             open_tickets=Coalesce(
                 Count(
                     "assigned_tickets",
-                    filter=Q(assigned_tickets__status="open"),
+                    filter=Q(assigned_tickets__status="in_progress"),
                     distinct=True,
                 ),
                 Value(0),
@@ -406,7 +437,6 @@ def get_specialists(ticket):
             id="ai",
             username=f"---------- {ai_assigned_department} (recommend) ----------",
             department__name=ai_assigned_department,
-            open_tickets=0,
         )
         recommended_list = [dummy_spec]
 

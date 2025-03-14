@@ -86,7 +86,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
-        ticket.status = "open"
+        ticket.status = "in_progress"
 
         if self.request.user.is_student():
             ticket.priority = "low"
@@ -94,7 +94,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ticket.save()
 
         existing_ticket = (
-            Ticket.objects.filter(title=ticket.title, status="open")
+            Ticket.objects.filter(title=ticket.title, status="in_progress")
             .exclude(id=ticket.id)
             .first()
         )

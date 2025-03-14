@@ -30,7 +30,7 @@
                         <td data-priority="{{ ticket.get_priority_display }}" data-priority-value="{% if ticket.get_priority_display == 'Urgent' %}1{% elif ticket.get_priority_display == 'High' %}2{% elif ticket.get_priority_display == 'Medium' %}3{% elif ticket.get_priority_display == 'Low' %}4{% else %}5{% endif %}">
                             {{ ticket.get_priority_display }}
                         </td>
-                        <td data-status="{{ ticket.get_status_display }}" data-status-value="{% if ticket.get_status_display == 'Open' %}1{% elif ticket.get_status_display == 'In Progress' %}2{% elif ticket.get_status_display == 'Closed' %}3{% else %}4{% endif %}">
+                        <td data-status="{{ ticket.get_status_display }}" data-status-value="{% if ticket.get_status_display == 'In Progress' %}1{% elif ticket.get_status_display == 'Closed' %}2{% else %}3{% endif %}">
                             {{ ticket.get_status_display }}
                         </td>
                         <td data-creator="{{ ticket.creator.username }}">{{ ticket.creator.username }}</td>

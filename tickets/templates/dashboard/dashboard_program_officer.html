@@ -25,11 +25,8 @@
             <div class="col-md-3 mb-2 mb-md-0">
               <select name="status" class="form-select">
                 <option value="">-- Filter by Status --</option>
-                <option value="open" {% if request.GET.status == 'open' %}selected{% endif %}>Open</option>
-                <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>               
                 <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
-                <option value="returned" {% if request.GET.status == 'returned' %}selected{% endif %}>Returned</option>
               </select>
             </div>
             <div class="col-md-3 mb-2 mb-md-0">

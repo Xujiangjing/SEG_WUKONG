@@ -17,7 +17,7 @@
         <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">Return to Student</button>
     </div>
 
-    <form method="POST" id="action_form" action="{% url 'redirect_ticket' ticket.id %}" style="display: none;">
+    <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
         {% csrf_token %}
 
         <input type="hidden" id="action_type" name="action_type">
@@ -141,18 +141,20 @@
             }
 
             let ticketId = "{{ ticket.id }}";  // Django 变量解析
-            let url = "ticket_detail"  // ✅ 直接请求 `redirect_ticket`
+            let url = `/tickets/${ticketId}/redirect/` // ✅ 直接请求 `redirect_ticket`
 
             fetch(url, {
                 method: "POST",
                 body: formData,
+                headers: {
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+                }
             })
             .then(response => response.json())
             .then(data => {
                 console.log("🔍 AJAX Response:", data);
 
                 if (data.success) {
-                    alert("✅ Ticket successfully redirected!");
                     window.location.href = data.redirect_url;
                 } else {
                     alert("⚠️ " + data.error);

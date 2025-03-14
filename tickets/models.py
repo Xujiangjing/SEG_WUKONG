@@ -101,10 +101,8 @@ class Ticket(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     STATUS_CHOICES = [
-        ("open", "Open"),
         ("in_progress", "In Progress"),
         ("closed", "Closed"),
-        ("returned", "Returned"),  # Returned to the student for more information
     ]
     ## get_priority_choices function
     PRIORITY_CHOICES = [
@@ -149,7 +147,9 @@ class Ticket(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="in_progress"
+    )
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="low")
     assigned_department = models.CharField(
         max_length=50, choices=DEPARTMENT_CHOICES, default="general_enquiry"

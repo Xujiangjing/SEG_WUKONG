@@ -36,33 +36,40 @@ class Command(BaseCommand):
 
                     # Decode email subject
                     subject, sender_email, body = self.parse_email_message(msg)
-                    
+
                     # filter out failure notifications
-                    if "mailer-daemon" in sender_email.lower() or "delivery status notification" in subject.lower():
+                    if (
+                        "mailer-daemon" in sender_email.lower()
+                        or "delivery status notification" in subject.lower()
+                    ):
                         continue
-                    
+
                     # revise the code to create a new user if the sender is not in the database
                     user, created = User.objects.get_or_create(
                         email=sender_email,
                         defaults={
                             "username": sender_email.split("@")[0],
                             "password": "TemporaryPass123",
-                        }
+                        },
                     )
                     if created:
                         user.set_password("TemporaryPass123")
                         user.save()
-                        
+
                     # Check for AI-based spam detection
                     if self.is_spam(subject, body):
                         continue
-                    
+
                     # Check for duplicate tickets
-                    existing_ticket = self.is_duplicate_ticket(sender_email, subject, body)
+                    existing_ticket = self.is_duplicate_ticket(
+                        sender_email, subject, body
+                    )
 
                     if existing_ticket:
-                        self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
-                        continue  # Skip creating the ticket                       
+                        self.send_duplicate_notice(
+                            sender_email, subject, existing_ticket.id
+                        )
+                        continue  # Skip creating the ticket
 
                     department = self.categorize_ticket(subject, body)
 
@@ -72,8 +79,8 @@ class Command(BaseCommand):
                         description=body,
                         creator=user,
                         sender_email=sender_email,
-                        status="open",
-                        assigned_department=department
+                        status="in_progress",
+                        assigned_department=department,
                     )
 
                     ai_process_ticket(ticket)
@@ -88,11 +95,9 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"❌ Error fetching emails: {e}"))
 
-    
-    
     def categorize_ticket(self, subject, body):
         """Assigns a category based on keywords in the subject or body."""
-        
+
         categories = {
             "general": "general_enquiry",
             "course|academic|exam|grades|study": "academic_support",
@@ -115,17 +120,19 @@ class Command(BaseCommand):
 
         # Check if any keyword is present in the subject or body
         for keyword_pattern, category_name in categories.items():
-            if any(keyword in subject.lower() or keyword in body.lower() for keyword in keyword_pattern.split("|")):
+            if any(
+                keyword in subject.lower() or keyword in body.lower()
+                for keyword in keyword_pattern.split("|")
+            ):
                 return Department.objects.filter(name=category_name).first()
-            
 
         return Department.objects.filter(name="general_enquiry").first()
-    
+
     def send_confirmation_email(self, student_email, ticket_title):
         """Sends a confirmation email to the student with a signature, school logo, and styled font."""
-        
+
         subject = f"Your Ticket '{ticket_title}' Has Been Received"
-        
+
         # HTML Email Content
         # 吗的彩色的Logo和Signature打不出来 需要替换成其他的
         html_message = f"""
@@ -172,7 +179,7 @@ class Command(BaseCommand):
             </body>
         </html>
         """
-    
+
         # Sending email with HTML content
         send_mail(
             subject,
@@ -182,7 +189,7 @@ class Command(BaseCommand):
             fail_silently=False,
             html_message=html_message,  # Use the HTML content
         )
-        
+
     def is_duplicate_ticket(self, sender_email, subject, body):
         """
         Checks if a duplicate ticket exists in the last 7 days.
@@ -190,32 +197,47 @@ class Command(BaseCommand):
         """
         time_threshold = now() - timedelta(days=7)
         # search for an old ticket with the same details
-        old_ticket = Ticket.objects.annotate(response_count=Count("responses")).filter(
-            sender_email=sender_email.strip(),
-            title__iexact=subject.strip(),
-            description__iexact=body.strip(),
-            created_at__lt=time_threshold  # 7 days ago
-        ).order_by("-created_at").first()
+        old_ticket = (
+            Ticket.objects.annotate(response_count=Count("responses"))
+            .filter(
+                sender_email=sender_email.strip(),
+                title__iexact=subject.strip(),
+                description__iexact=body.strip(),
+                created_at__lt=time_threshold,  # 7 days ago
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
         if old_ticket:
-            if old_ticket.response_count == 0:  # Allow resubmission if no response over 7 days
+            if (
+                old_ticket.response_count == 0
+            ):  # Allow resubmission if no response over 7 days
                 return None
             else:
-                self.send_duplicate_notice(sender_email, subject, old_ticket.id)  # Notify student
+                self.send_duplicate_notice(
+                    sender_email, subject, old_ticket.id
+                )  # Notify student
                 return old_ticket  # Reject resubmission if there is a response even after 7 days
-    
+
         # Search for a recent ticket within 7 days
-        recent_ticket = Ticket.objects.filter(
-            sender_email=sender_email.strip(),
-            title__iexact=subject.strip(),
-            description__iexact=body.strip(),
-            created_at__gte=time_threshold  # within 7 days
-        ).order_by("-created_at").first()
-        
+        recent_ticket = (
+            Ticket.objects.filter(
+                sender_email=sender_email.strip(),
+                title__iexact=subject.strip(),
+                description__iexact=body.strip(),
+                created_at__gte=time_threshold,  # within 7 days
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
         if recent_ticket:
-            self.send_duplicate_notice(sender_email, subject, recent_ticket.id)  # Notify student
+            self.send_duplicate_notice(
+                sender_email, subject, recent_ticket.id
+            )  # Notify student
             return recent_ticket  # Check for a recent ticket within 7 days
-        
+
         return None  # No duplicate ticket found
 
     def send_duplicate_notice(self, student_email, ticket_title, ticket_id):
@@ -243,9 +265,9 @@ class Command(BaseCommand):
         """Uses Google's Perspective API to detect spam."""
         if settings.TESTING:
             return False
-        
+
         PERSPECTIVE_API_KEY = settings.PERSPECTIVE_API_KEY
-        
+
         url = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze"
         content = f"{subject} {body}"
 
@@ -262,8 +284,13 @@ class Command(BaseCommand):
             result = response.json()
 
             # Check if the spam score is above the threshold
-            spam_score = result.get("attributeScores", {}).get("SPAM", {}).get("summaryScore", {}).get("value", 0)
-            return spam_score > 0.8  
+            spam_score = (
+                result.get("attributeScores", {})
+                .get("SPAM", {})
+                .get("summaryScore", {})
+                .get("value", 0)
+            )
+            return spam_score > 0.8
         except requests.RequestException as e:
             print("❌ Error connecting to Perspective API:", e)
             return False
@@ -273,7 +300,7 @@ class Command(BaseCommand):
 
     def parse_email_message(self, msg):
         """Decodes the email message and extracts the subject, sender, and body."""
-        
+
         # Decode email subject
         subject = ""
         for part, encoding in decode_header(msg.get("Subject", "")):
@@ -282,7 +309,7 @@ class Command(BaseCommand):
             else:
                 subject += part
 
-        # Extract sender's email    
+        # Extract sender's email
         sender = msg.get("From", "")
         match = re.search(r"<(.+?)>", sender)
         sender_email = match.group(1) if match else sender
@@ -295,7 +322,10 @@ class Command(BaseCommand):
                     continue
                 content_type = part.get_content_type()
                 content_disposition = str(part.get("Content-Disposition"))
-                if content_type == "text/plain" and "attachment" not in content_disposition:
+                if (
+                    content_type == "text/plain"
+                    and "attachment" not in content_disposition
+                ):
                     part_payload = part.get_payload(decode=True)
                     if part_payload:
                         body = part_payload.decode("utf-8", errors="ignore")
@@ -304,9 +334,5 @@ class Command(BaseCommand):
             payload = msg.get_payload(decode=True)
             if payload:
                 body = payload.decode("utf-8", errors="ignore")
-            
-        return subject, sender_email, body
-    
-    
 
-      
+        return subject, sender_email, body

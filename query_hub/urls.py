@@ -109,6 +109,11 @@ urlpatterns = [
         redirect_ticket,
         name="redirect_ticket",
     ),
+    path(
+        "tickets/<uuid:ticket_id>/manage_ticket_page/",
+        manage_ticket_page,
+        name="manage_ticket_page",
+    ),
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT
