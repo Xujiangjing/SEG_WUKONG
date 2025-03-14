@@ -43,6 +43,7 @@ from tickets.views.ticket_operations import (
     update_ticket,
     manage_ticket_page,
     submit_ticket,
+    redirect_ticket,
 )
 
 urlpatterns = [
@@ -100,9 +101,14 @@ urlpatterns = [
     ),
     path("get_user_role/", get_user_role, name="get_user_role"),
     path(
-        "tickets/views/respond/<int:ticket_id>/", respond_ticket, name="respond_ticket"
+        "tickets/views/<uuid:ticket_id>/response", respond_ticket, name="respond_ticket"
     ),
-    path("tickets/views/return/<int:ticket_id>/", return_ticket, name="return_ticket"),
+    path("tickets/views/<uuid:ticket_id>/return", return_ticket, name="return_ticket"),
+    path(
+        "tickets/<uuid:ticket_id>/redirect/",
+        redirect_ticket,
+        name="redirect_ticket",
+    ),
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT
