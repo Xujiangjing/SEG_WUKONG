@@ -4,13 +4,21 @@
     <div class="container">
         <h1>All Tickets</h1>
         {% if tickets %}
-            <table class="table">
+            <div class="mb-3">
+                <label for="sort" class="form-label">Sort by:</label>
+                <select id="sort" class="form-select" onchange="sortTickets()">
+                    <option value="title" selected>Title</option>
+                    <option value="priority">Priority</option>
+                    <option value="status">Status</option>
+                    <option value="creator">Submitted By</option>
+                </select>
+            </div>
+            <table class="table" id="ticketTable">
                 <thead>
                 <tr>
                     <th>Title</th>
                     <th>Priority</th>
                     <th>Status</th>
-                    <th>Return Reason</th>
                     <th>Submitted By</th>
                     <th>Action</th>
                 </tr>
@@ -18,30 +26,14 @@
                 <tbody>
                 {% for ticket in tickets %}
                     <tr>
-                        <td>{{ ticket.title }}</td>
-                        <td>{{ ticket.get_priority_display }}</td>
-                        <td>{{ ticket.get_status_display }}</td>
-                        <td>
-                            {% if ticket.status == 'returned_student' %}
-                                <!-- show reason for return -->
-                                {{ ticket.return_reason }}
-                            {% else %}
-                                <!-- show nothing -->
-                            {% endif %}
+                        <td data-title="{{ ticket.title }}">{{ ticket.title }}</td>
+                        <td data-priority="{{ ticket.get_priority_display }}" data-priority-value="{% if ticket.get_priority_display == 'Urgent' %}1{% elif ticket.get_priority_display == 'High' %}2{% elif ticket.get_priority_display == 'Medium' %}3{% elif ticket.get_priority_display == 'Low' %}4{% else %}5{% endif %}">
+                            {{ ticket.get_priority_display }}
                         </td>
-                        <td>{{ ticket.creator.username }}</td>
+                        <td data-status="{{ ticket.get_status_display }}">{{ ticket.get_status_display }}</td>
+                        <td data-creator="{{ ticket.creator.username }}">{{ ticket.creator.username }}</td>
                         <td>
                             <a href="{% url 'ticket_detail' pk=ticket.pk %}" class="btn btn-sm btn-primary">View</a>
-
-                            {% if user.role != 'student'  and ticket.status == 'open' %}
-                                <a href="{% url 'return_ticket' pk=ticket.pk %}"
-                                   class="btn btn-sm btn-warning">Return</a>
-                            {% endif %}
-
-                            {% if user.role == 'students' and ticket.status == 'returned_student' %}
-                                <a href="{% url 'supplement_ticket' pk=ticket.pk %}" class="btn btn-sm btn-success">Supplement
-                                    Info</a>
-                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
@@ -51,4 +43,35 @@
             <p>No tickets found.</p>
         {% endif %}
     </div>
+
+    <script>
+        function sortTickets() {
+            let table = document.getElementById("ticketTable");
+            let tbody = table.getElementsByTagName("tbody")[0];
+            let rows = Array.from(tbody.getElementsByTagName("tr"));
+            let sortBy = document.getElementById("sort").value;
+            
+            rows.sort((a, b) => {
+                let aData, bData;
+                if (sortBy === "priority") {
+                    aData = parseInt(a.querySelector("[data-priority-value]").dataset.priorityValue);
+                    bData = parseInt(b.querySelector("[data-priority-value]").dataset.priorityValue);
+                    return aData - bData;
+                } else {
+                    aData = a.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
+                    bData = b.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
+                    return aData.localeCompare(bData);
+                }
+            });
+            
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
+        }
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => {
+                sortTickets(); 
+            }, 100);
+        });
+    </script>
 {% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="content-area">
+  <div class="fog-box">
+    <div class="container my-4">
+      <h1 class="text-center text-primary">Welcome to your dashboard, {{ user.username }}</h1>
+    
+      <!-- Tickets Tab -->
+      <div id="tickets">
+          <form method="GET" action="{% url 'dashboard_specialist' %}">
+            <div class="row mb-4">
+              <div class="col-md-3 mb-2 mb-md-0">
+                <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
+              </div>
+              <div class="col-md-3 mb-2 mb-md-0">
+                <select name="status" class="form-select">
+                  <option value="">-- Filter by Status --</option>
+                  <option value="open" {% if request.GET.status == 'open' %}selected{% endif %}>Open</option>
+                  <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                  <option value="resolved" {% if request.GET.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                  <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
+                  <option value="returned" {% if request.GET.status == 'returned' %}selected{% endif %}>Returned</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-2 mb-md-0">
+                <select name="sort" class="form-select">
+                  <option value="">-- Sort By --</option>
+                  <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+                  <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
+                  <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
+                  <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <div class="input-group">
+                  <button type="submit" class="btn btn-primary">Apply</button>
+                  <button type="submit" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.status.value=''; this.form.sort.value='';">Clear</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        <h2>Your Assigned Tickets</h2>
+        {% if not assigned_tickets %}
+          <div class="alert alert-info">No assigned tickets found.</div>
+        {% else %}
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Answers</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ticket in assigned_tickets %}
+                <tr>
+                  <td>{{ ticket.title }}</td>
+                  <td>{{ ticket.status }}</td>
+                  <td>{{ ticket.priority }}</td>
+                  <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
+                  <td>
+                    {% if ticket.status != 'closed' %}
+                      <a href="{% url 'respond_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Respond</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -3,7 +3,6 @@
   <!-- 头部 Logo/标题 -->
   <div class="sidebar-header">
     <a class="navbar-brand" href="{% url 'home' %}">
-      <!-- 放大 Logo -->
       <img src="{% static 'images/logo.png' %}" alt="Logo" class="sidebar-logo">
     </a>
   </div>
@@ -12,30 +11,73 @@
   <ul class="navbar-nav flex-column flex-grow-1" id="sidebarMenu">
     <!-- Dashboard -->
     <li class="nav-item mb-3">
-      <a class="nav-link text-white" href="{% url 'dashboard' %}">
-        <!-- 放大图标 -->
-        <img src="{% static 'images/dashboard_icon.png' %}" alt="Dashboard Icon" class="nav-icon">
+      <a id="dashboard-link" class="nav-link text-black" href="{% url 'dashboard' %}" onclick="setActive('dashboard')">
+        <img id="dashboard-icon" 
+             src="{% static 'images/dashboard_icon_dark.png' %}" 
+             alt="Dashboard Icon" class="nav-icon">
         Dashboard
       </a>
     </li>
 
     <!-- Profile -->
     <li class="nav-item mb-3">
-      <a class="nav-link text-white" href="{% url 'profile' %}">
-        <img src="{% static 'images/profile_icon.png' %}" alt="Profile Icon" class="nav-icon">
+      <a id="profile-link" class="nav-link text-black" href="{% url 'profile' %}" onclick="setActive('profile')">
+        <img id="profile-icon" 
+             src="{% static 'images/profile_icon.png' %}" 
+             alt="Profile Icon" class="nav-icon">
         Profile
       </a>
     </li>
 
-    <!-- Logout 放在最底部 -->
+    <!-- Logout -->
     <li class="nav-item mt-auto mb-3">
-      <a class="nav-link text-white" href="{% url 'log_out' %}">
+      <a class="nav-link text-black" href="{% url 'log_out' %}">
         <img src="{% static 'images/logout_icon.png' %}" alt="Logout Icon" class="nav-icon">
         Logout
       </a>
     </li>
   </ul>
 </nav>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let dashboardIcon = document.getElementById("dashboard-icon");
+    let profileIcon = document.getElementById("profile-icon");
+
+    // 预定义静态图片路径
+    let dashboardDefault = "{% static 'images/dashboard_icon.png' %}";
+    let dashboardDark = "{% static 'images/dashboard_icon_dark.png' %}";
+    let profileDefault = "{% static 'images/profile_icon.png' %}";
+    let profileWhite = "{% static 'images/profile_icon_white.png' %}";
+
+    let currentPath = window.location.pathname;
+    if (currentPath.includes("dashboard")) {
+        setActive("dashboard");
+    } else if (currentPath.includes("profile")) {
+        setActive("profile");
+    }
+
+    function setActive(page) {
+        let dashboard = document.getElementById("dashboard-link");
+        let profile = document.getElementById("profile-link");
+
+        if (page === "dashboard") {
+            dashboard.classList.add("active");
+            profile.classList.remove("active");
+            dashboardIcon.src = dashboardDefault; // 恢复 Dashboard 默认图标
+            profileIcon.src = profileDefault; // 恢复 Profile 默认图标
+        } else if (page === "profile") {
+            profile.classList.add("active");
+            dashboard.classList.remove("active");
+            dashboardIcon.src = dashboardDark; // Dashboard 变暗
+            profileIcon.src = profileWhite; // Profile 变白
+        }
+    }
+});
+</script>
+
+
 
 
 

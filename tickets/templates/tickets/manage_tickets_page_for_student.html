@@ -1,0 +1,37 @@
+{% extends 'base_content.html' %}
+{% block content %}
+<div class="container my-4">
+    <h1>Manage Ticket - {{ ticket.title }}</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="action_type">Choose an Action:</label>
+            <select id="action_type" name="action_type" class="form-select" required>
+                <option value="update">Update Ticket</option>
+                <option value="close">Close Ticket</option>
+            </select>
+        </div>
+
+        <!-- Update Section -->
+        <div id="update-section">
+            <label for="update_message">Update Message:</label>
+            <textarea id="update_message" name="update_message" class="form-control"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+    </form>
+</div>
+
+<script>
+document.getElementById("action_type").addEventListener("change", function () {
+    if (this.value === "update") {
+        document.getElementById("update-section").style.display = "block";
+    } else {
+        document.getElementById("update-section").style.display = "none";
+    }
+});
+</script>
+
+{% endblock %}
