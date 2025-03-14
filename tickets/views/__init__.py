@@ -19,8 +19,7 @@ from .user_management import ProfileUpdateView
 from .base_views import (
     home,
     TicketListView,
-    TicketDetailView,
     ticket_detail,
     CreateTicketView,
 )
-from .base_views import get_user_role
+from .user_management import get_user_role

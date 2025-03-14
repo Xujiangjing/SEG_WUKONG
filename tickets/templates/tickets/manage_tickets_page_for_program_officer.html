@@ -88,51 +88,83 @@
         let actionTypeInput = document.getElementById("action_type");
         let actionForm = document.getElementById("action_form");
         let submitBtn = document.getElementById("submit_btn");
-    
         let respondSection = document.getElementById("respond-section");
         let redirectSection = document.getElementById("redirect-section");
         let mergeSection = document.getElementById("merge-section");
         let returnSection = document.getElementById("return-section");
-    
         function hideAllSections() {
             respondSection.style.display = "none";
             redirectSection.style.display = "none";
             mergeSection.style.display = "none";
             returnSection.style.display = "none";
         }
-    
+
         document.querySelectorAll(".action-btn").forEach(button => {
             button.addEventListener("click", function () {
                 let selectedAction = this.getAttribute("data-action");
-    
-                // 设置隐藏的 input 值
                 actionTypeInput.value = selectedAction;
-    
-                // 显示表单
                 actionForm.style.display = "block";
-    
-                // 隐藏所有输入框
+
                 hideAllSections();
-    
-                // 显示对应的输入框
+
                 if (selectedAction === "respond_ticket") {
                     respondSection.style.display = "block";
                 } else if (selectedAction === "redirect_ticket") {
-                    redirectSection.style.display = "block";
+                    redirectSection.style.display = "block";  
                 } else if (selectedAction === "merge_ticket") {
                     mergeSection.style.display = "block";
                 } else if (selectedAction === "return_to_student") {
                     returnSection.style.display = "block";
                 }
-    
-                // 显示 Submit 按钮
-                submitBtn.style.display = "block";
+
+                submitBtn.style.display = "block"; // 显示提交按钮
             });
         });
-    
-        // 确保初始状态隐藏 submit 按钮
+
+        // ✅ 监听表单提交
+        actionForm.addEventListener("submit", function (event) {
+            let actionType = actionTypeInput.value;
+            
+            // 🚀 只拦截 "Redirect Ticket" 提交，其他的正常提交
+            if (actionType === "redirect_ticket") {
+            event.preventDefault();  // ✅ 阻止默认提交
+            console.log("🚀 Redirect Ticket 按钮被点击了！");
+
+            let formData = new FormData(actionForm);
+            let newAssigneeId = document.getElementById("new_assignee_id").value;
+
+            console.log("📩 发送数据: ", { "new_assignee_id": newAssigneeId });
+
+            if (!newAssigneeId) {
+                alert("⚠️ 请选择一个 Specialist！");
+                return;
+            }
+
+            let ticketId = "{{ ticket.id }}";  // Django 变量解析
+            let url = "ticket_detail"  // ✅ 直接请求 `redirect_ticket`
+
+            fetch(url, {
+                method: "POST",
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("🔍 AJAX Response:", data);
+
+                if (data.success) {
+                    alert("✅ Ticket successfully redirected!");
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert("⚠️ " + data.error);
+                }
+            })
+            .catch(error => console.error("❌ AJAX Error:", error));
+        }
+    });
+
         submitBtn.style.display = "none";
     });
 </script>
-    
+
+     
 {% endblock %}

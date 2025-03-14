@@ -89,24 +89,6 @@
                 </tbody>
               </table>
             {% endif %}
-    
-            <h2>Specialist Ticket Assignment Statistics</h2>
-            <table class="table table-bordered table-striped table-light">
-              <thead>
-                <tr>
-                  <th>Specialist</th>
-                  <th>Assigned Tickets</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for specialist in ticket_stats %}
-                  <tr>
-                    <td>{{ specialist.full_name }}</td>
-                    <td>{{ specialist.ticket_count }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
           </div>
         </div>
       </div>

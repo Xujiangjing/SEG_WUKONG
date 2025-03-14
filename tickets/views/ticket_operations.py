@@ -1,13 +1,19 @@
+from types import SimpleNamespace
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Value
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
+from django.urls import reverse
 from tickets.forms import ReturnTicketForm, SupplementTicketForm, TicketForm
-from tickets.ai_service import ai_process_ticket, find_potential_tickets_to_merge
+from tickets.ai_service import (
+    ai_process_ticket,
+    find_potential_tickets_to_merge,
+    classify_department,
+)
 from tickets.helpers import send_ticket_confirmation_email
 from tickets.models import (
     TicketAttachment,
@@ -17,6 +23,7 @@ from tickets.models import (
     Department,
     MergedTicket,
 )
+from django.db.models.functions import Coalesce
 
 
 @login_required
@@ -50,6 +57,76 @@ def return_ticket(request, pk):
     return render(
         request, "tickets/return_ticket.html", {"form": form, "ticket": ticket}
     )
+
+
+import sys
+
+
+@login_required
+def redirect_ticket(request, ticket_id):
+    """
+    处理工单重定向（POST），以及返回 specialists 数据（GET）。
+    """
+    print(f"🚀 redirect_ticket 被调用，ticket_id={ticket_id}")
+
+    if not request.user.is_program_officer():
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    # ✅ 处理 GET 请求：获取 specialists 并返回
+    if request.method == "GET":
+        specialists = get_specialists(ticket)
+        return JsonResponse({"specialists": specialists})
+
+    # ✅ 处理 POST 请求：执行 Redirect 逻辑
+    new_assignee_id = request.POST.get("new_assignee_id")
+
+    # 1️⃣ 获取 AI 推荐部门
+    try:
+        ai_assigned_department = classify_department(ticket.description)
+    except Exception as e:
+        print("❌ Error in classify_department:", e)
+        ai_assigned_department = ticket.assigned_department or "IT"
+
+    if new_assignee_id == "ai":
+        ticket.assigned_user = None
+        ticket.status = "in_progress"
+        ticket.latest_action = "redirected"
+        ticket.save()
+
+        # 记录日志
+        TicketActivity.objects.create(
+            ticket=ticket,
+            action="redirected",
+            action_by=request.user,
+            action_time=timezone.now(),
+            comment=f"Redirected to {ai_assigned_department} (AI recommended)",
+        )
+
+        return redirect(reverse("ticket_detail", kwargs={"ticket_id": ticket.id}))
+
+    try:
+        new_assignee = User.objects.get(id=new_assignee_id)
+        ticket.assigned_user = new_assignee
+        ticket.status = "in_progress"
+        ticket.latest_action = "redirected"
+        ticket.save()
+
+        TicketActivity.objects.create(
+            ticket=ticket,
+            action="redirected",
+            action_by=request.user,
+            action_time=timezone.now(),
+            comment=f"Redirected to {new_assignee.full_name()}",
+        )
+
+        return redirect(reverse("ticket_detail", kwargs={"ticket_id": ticket.id}))
+
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Selected specialist does not exist"}, status=400)
+
+    return JsonResponse({"error": "No specialist selected"}, status=400)
 
 
 @login_required
@@ -95,6 +172,7 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
 
 @login_required
 def respond_ticket(request, ticket_id):
+    print(f"🚀 respond_ticket 被调用，ticket_id={ticket_id}")
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect("dashboard")
@@ -123,8 +201,7 @@ def respond_ticket(request, ticket_id):
             action_by=request.user,
             comment=response_message,
         )
-        messages.success(request, "Response sent successfully.")
-        return redirect("ticket_detail", ticket_id=ticket.id)
+    messages.success(request, "Response sent successfully.")
 
     return render(
         request,
@@ -192,25 +269,12 @@ def manage_ticket_page(request, ticket_id):
         actions.extend(
             ["respond_ticket", "return_to_student", "redirect_ticket", "merge_ticket"]
         )
-
-        specialists = (
-            User.objects.filter(role="specialist")
-            .annotate(
-                open_tickets=Count(
-                    "assigned_tickets",
-                    filter=Q(assigned_tickets__status="open"),
-                )
-            )
-            .order_by("username", "department", "open_tickets")
-        )
+        specialists = get_specialists(ticket)
 
         if request.method == "POST":
             action = request.POST.get("action_type")
-
             if action == "respond_ticket":
                 return respond_ticket(request, ticket_id)
-            elif action == "redirect_ticket":
-                return redirect("redirect_ticket", ticket_id=ticket.id)
             elif action == "merge_ticket":
                 return merge_ticket(request, ticket_id=ticket.id)
             elif action == "return_to_student":
@@ -296,3 +360,53 @@ def submit_ticket(request):
         form = TicketForm()
 
     return render(request, "tickets/submit_ticket.html", {"form": form})
+
+
+def get_specialists(ticket):
+    """
+    获取所有 specialists，并将 AI 推荐的放在最前面
+    """
+    try:
+        ai_assigned_department = classify_department(ticket.description)
+    except Exception as e:
+        print("❌ Error in classify_department:", e)
+        ai_assigned_department = ticket.assigned_department or "IT"
+
+    specialists_qs = (
+        User.objects.filter(role="specialists")
+        .annotate(
+            open_tickets=Coalesce(
+                Count(
+                    "assigned_tickets",
+                    filter=Q(assigned_tickets__status="open"),
+                    distinct=True,
+                ),
+                Value(0),
+            )
+        )
+        .select_related("department")
+        .order_by("open_tickets")
+    )
+    specialists_list = list(specialists_qs)
+
+    recommended_list = []
+    non_recommended_list = []
+
+    for spec in specialists_list:
+        dept_name = spec.department.name if spec.department else ""
+        if dept_name == ai_assigned_department:
+            spec.username = f"{spec.username} (recommend)"
+            recommended_list.append(spec)
+        else:
+            non_recommended_list.append(spec)
+
+    if not recommended_list:
+        dummy_spec = SimpleNamespace(
+            id="ai",
+            username=f"---------- {ai_assigned_department} (recommend) ----------",
+            department__name=ai_assigned_department,
+            open_tickets=0,
+        )
+        recommended_list = [dummy_spec]
+
+    return recommended_list + non_recommended_list

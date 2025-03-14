@@ -30,10 +30,15 @@
                         <td data-priority="{{ ticket.get_priority_display }}" data-priority-value="{% if ticket.get_priority_display == 'Urgent' %}1{% elif ticket.get_priority_display == 'High' %}2{% elif ticket.get_priority_display == 'Medium' %}3{% elif ticket.get_priority_display == 'Low' %}4{% else %}5{% endif %}">
                             {{ ticket.get_priority_display }}
                         </td>
-                        <td data-status="{{ ticket.get_status_display }}">{{ ticket.get_status_display }}</td>
+                        <td data-status="{{ ticket.get_status_display }}" data-status-value="{% if ticket.get_status_display == 'Open' %}1{% elif ticket.get_status_display == 'In Progress' %}2{% elif ticket.get_status_display == 'Closed' %}3{% else %}4{% endif %}">
+                            {{ ticket.get_status_display }}
+                        </td>
                         <td data-creator="{{ ticket.creator.username }}">{{ ticket.creator.username }}</td>
-                        <td>
-                            <a href="{% url 'ticket_detail' pk=ticket.pk %}" class="btn btn-sm btn-primary">View</a>
+                        <td>    
+                        
+                            <a href="{% url 'ticket_detail' ticket_id=ticket.id %}?from=list" class="btn btn-sm btn-primary">View</a>
+                            
+                        
                         </td>
                     </tr>
                 {% endfor %}
@@ -56,6 +61,10 @@
                 if (sortBy === "priority") {
                     aData = parseInt(a.querySelector("[data-priority-value]").dataset.priorityValue);
                     bData = parseInt(b.querySelector("[data-priority-value]").dataset.priorityValue);
+                    return aData - bData;
+                } else if (sortBy === "status") {
+                    aData = parseInt(a.querySelector("[data-status-value]").dataset.statusValue);
+                    bData = parseInt(b.querySelector("[data-status-value]").dataset.statusValue);
                     return aData - bData;
                 } else {
                     aData = a.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
