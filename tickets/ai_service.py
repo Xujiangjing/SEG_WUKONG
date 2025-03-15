@@ -120,6 +120,9 @@ def ai_process_ticket(ticket):
 
 def find_potential_tickets_to_merge(ticket):
     """
+    Identifies similar open tickets that could be merged based on AI evaluation.
+    """
+    """
     Find potential tickets that can be merged with the current ticket by evaluating
     their descriptions using the AI model.
     """
