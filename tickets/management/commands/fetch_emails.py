@@ -16,6 +16,29 @@ from tickets.models import AITicketProcessing, Department, Ticket, User
 
 
 class Command(BaseCommand):
+    """
+    This Django management command fetches unread emails from a Gmail inbox,
+    processes them into support tickets, and categorizes them based on content.
+
+    Features:
+    - Connects to Gmail via IMAP
+    
+    - Fetches unread emails
+    
+    - Extracts subject, sender, and message body
+    
+    - Creates a new user if the sender is not found in the database
+    
+    - Detects spam using Google's Perspective API
+    
+    - Prevents duplicate ticket submissions within 7 days
+    
+    - Categorizes tickets based on predefined keywords
+    
+    - Sends confirmation emails to users
+    
+    - Marks processed emails as read
+    """
     help = "Fetch unread emails from Gmail and convert them into tickets"
 
     def handle(self, *args, **kwargs):
