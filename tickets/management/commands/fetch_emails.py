@@ -1,17 +1,18 @@
-import imaplib
 import email
+import imaplib
+import os
 import re
 import sys
-import requests
 from email.header import decode_header
-from django.core.management.base import BaseCommand
-from tickets.models import Ticket, Department, User, AITicketProcessing
+
+import requests
 from django.conf import settings
 from django.core.mail import send_mail
-from django.utils.timezone import now, timedelta
-import os
+from django.core.management.base import BaseCommand
 from django.db.models import Count
+from django.utils.timezone import now, timedelta
 from tickets.ai_service import ai_process_ticket
+from tickets.models import AITicketProcessing, Department, Ticket, User
 
 
 class Command(BaseCommand):

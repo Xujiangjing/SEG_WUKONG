@@ -1,8 +1,25 @@
-import os
 import json
+import os
+
 import boto3
 from botocore.exceptions import ClientError
-from tickets.models import Ticket, AITicketProcessing, MergedTicket
+from tickets.models import AITicketProcessing, MergedTicket, Ticket
+
+# Importing OS module to access environment variables
+# Importing JSON module for handling JSON data
+# Importing Boto3 to interact with AWS services
+# Handling AWS-specific client errors
+# Importing Django settings to access project settings
+ 
+
+"""
+SUMMARY:
+This script integrates AWS Bedrock's Meta Llama 3 70B model with a Django-based ticketing system. It performs the following tasks:
+1. **AWS Bedrock Client Initialization** - Establishes a connection to AWS Bedrock.
+2. **AI-Powered Ticket Classification & Processing** - Uses AI to classify ticket departments, predict priority levels, and generate responses.
+3. **AI-Driven Ticket Merging** - Identifies similar tickets for potential merging based on their descriptions.
+4. **Database Interaction** - Stores AI-generated insights in Django models for further processing.
+"""
 
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
