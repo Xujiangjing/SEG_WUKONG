@@ -275,6 +275,7 @@ class AITicketProcessing(models.Model):
 
 
 class MergedTicket(models.Model):
+    # A ticket that will be used as the main one to answer for the merged tickets
     primary_ticket = models.OneToOneField(
         Ticket, related_name="primary_ticket", on_delete=models.CASCADE, unique=True
     )
