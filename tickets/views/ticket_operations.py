@@ -14,7 +14,10 @@ from tickets.ai_service import (
     find_potential_tickets_to_merge,
     classify_department,
 )
-from tickets.helpers import send_ticket_confirmation_email
+from tickets.helpers import (
+    send_ticket_confirmation_email,
+    send_updated_notification_email,
+)
 from tickets.models import (
     TicketAttachment,
     User,
@@ -39,8 +42,11 @@ def close_ticket(request, ticket_id):
 
 
 @login_required
-def return_ticket(request, pk):
-    ticket = get_object_or_404(Ticket, pk=pk)
+def return_ticket(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    student_email = ticket.creator.email
+    ticket_title = ticket.title
+    response_message = request.POST.get("return_reason")
     if not request.user.is_program_officer() or ticket.status != "open":
         return redirect("ticket_list")
 
@@ -50,6 +56,10 @@ def return_ticket(request, pk):
             ticket.status = "in_progress"
             ticket.return_reason = form.cleaned_data["return_reason"]
             ticket.save()
+
+            send_updated_notification_email(
+                student_email, ticket_title, response_message, ticket_id
+            )
             return redirect("ticket_list")
     else:
         form = ReturnTicketForm()
@@ -64,9 +74,7 @@ import sys
 
 @login_required
 def redirect_ticket(request, ticket_id):
-    """
-    处理工单重定向（POST），以及返回 specialists 数据（GET）。
-    """
+
     print(f"🚀 redirect_ticket 被调用，ticket_id={ticket_id}")
 
     if not request.user.is_program_officer():
@@ -74,15 +82,12 @@ def redirect_ticket(request, ticket_id):
 
     ticket = get_object_or_404(Ticket, id=ticket_id)
 
-    # ✅ 处理 GET 请求：获取 specialists 并返回
     if request.method == "GET":
         specialists = get_specialists(ticket)
         return JsonResponse({"specialists": specialists})
 
-    # ✅ 处理 POST 请求：执行 Redirect 逻辑
     new_assignee_id = request.POST.get("new_assignee_id")
 
-    # 1️⃣ 获取 AI 推荐部门
     try:
         ai_assigned_department = classify_department(ticket.description)
     except Exception as e:
@@ -95,7 +100,6 @@ def redirect_ticket(request, ticket_id):
         ticket.latest_action = "redirected"
         ticket.save()
 
-        # 记录日志
         TicketActivity.objects.create(
             ticket=ticket,
             action="redirected",
@@ -133,9 +137,7 @@ def redirect_ticket(request, ticket_id):
             assigned_user=new_assignee, status="in_progress"
         ).count()
 
-        new_assignee.open_tickets = (
-            open_tickets_count  # ✅ 只存入 Python 变量，不存数据库
-        )
+        new_assignee.open_tickets = open_tickets_count
         print(
             f"🚀 Specialist {new_assignee.username} now has {new_assignee.open_tickets} open tickets."
         )
