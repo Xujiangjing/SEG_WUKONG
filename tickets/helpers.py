@@ -64,6 +64,34 @@ def send_response_notification_email(
     )
 
 
+# This function sends an email to the student when their ticket has been updated.
+def send_updated_notification_email(
+    student_email, ticket_title, response_message, ticket_id
+):
+    """Sends an email to notify the student that their ticket has been updated."""
+
+    subject = f"Update on Your Ticket: '{ticket_title}'"
+
+    context = {
+        "student_name": student_email.split("@")[0],
+        "ticket_title": ticket_title,
+        "response_message": response_message,
+        "ticket_id": ticket_id,
+    }
+
+    html_message = render_to_string("emails/updated_notification.html", context)
+    text_message = strip_tags(html_message)
+
+    send_mail(
+        subject,
+        text_message,  # Plain text version
+        settings.EMAIL_HOST_USER,
+        [student_email],
+        fail_silently=False,
+        html_message=html_message,  # HTML version
+    )
+
+
 def filter_tickets(request, tickets):
     """Filter tickets based on search query, status filter and sort option."""
     search_query = request.GET.get("search", "")
@@ -105,19 +133,16 @@ def get_filtered_tickets(
     Apply search, status filtering, and sorting to a base ticket queryset.
     """
     if base_queryset is None:
-        base_queryset = Ticket.objects.all()  # 默认是所有工单
+        base_queryset = Ticket.objects.all()
 
-    # 关键词搜索
     if search_query:
         base_queryset = base_queryset.filter(
             Q(title__icontains=search_query) | Q(description__icontains=search_query)
         )
 
-    # 按状态筛选
     if status_filter:
         base_queryset = base_queryset.filter(status=status_filter)
 
-    # 优先级排序规则
     priority_case = Case(
         When(priority="urgent", then=4),
         When(priority="high", then=3),
@@ -126,7 +151,6 @@ def get_filtered_tickets(
         output_field=IntegerField(),
     )
 
-    # 处理排序
     if sort_option == "date_asc":
         base_queryset = base_queryset.order_by("created_at")
     elif sort_option == "date_desc":
