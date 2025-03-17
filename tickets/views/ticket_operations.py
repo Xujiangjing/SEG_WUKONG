@@ -289,6 +289,18 @@ def manage_ticket_page(request, ticket_id):
 
     if is_specialist:
         actions.extend(["respond_ticket", "return_ticket"])
+        if request.method == "POST":
+            action = request.POST.get("action_type")
+            if action == "respond_ticket":
+                return respond_ticket(request, ticket_id)
+            elif action == "return_to_student":
+                return return_ticket(request, ticket_id=ticket.id)
+
+        activities = (
+            TicketActivity.objects.filter(ticket=ticket)
+            .select_related("action_by")
+            .order_by("-action_time")[:20]
+        )
 
         return render(
             request,
