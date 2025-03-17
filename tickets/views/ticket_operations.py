@@ -198,7 +198,31 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
         action = "merged"
 
     merged_ticket.save()
-    return redirect("respond_ticket_page", ticket_id=ticket.id)
+    potential_tickets = find_potential_tickets_to_merge(ticket)
+    approved_merged_tickets = merged_ticket.approved_merged_tickets.all() if merged_ticket else []
+
+    activities = (
+            TicketActivity.objects.filter(ticket=ticket)
+            .select_related("action_by")
+            .order_by("-action_time")[:20]
+        )
+
+    actions = ["respond_ticket", "return_to_student", "redirect_ticket", "merge_ticket"]
+    specialists = get_specialists(ticket)
+    
+
+    return render(
+            request,
+            "tickets/manage_tickets_page_for_program_officer.html",
+            {
+                "ticket": ticket,
+                "actions": actions,
+                "activities": activities,
+                "specialists": specialists,
+                'potential_tickets': potential_tickets,
+                'approved_merged_tickets': approved_merged_tickets,
+            },
+        )
 
 
 @login_required
@@ -221,6 +245,22 @@ def respond_ticket(request, ticket_id):
 
     if request.method == "POST" and "response_message" in request.POST:
         response_message = request.POST.get("response_message")
+        merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
+        if merged_ticket and len(merged_ticket.approved_merged_tickets.all()) >0 :
+            for approved_ticket in merged_ticket.approved_merged_tickets.all():
+                approved_ticket.answers = (
+                approved_ticket.answers or ""
+            ) + f"\nResponse by {request.user.username}: {response_message}"
+            approved_ticket.status = "in_progress"
+            approved_ticket.save()
+            TicketActivity.objects.create(
+                ticket=approved_ticket,
+                action="responded",
+                action_by=request.user,
+                comment=response_message,
+            )
+
+        
         ticket.answers = (
             ticket.answers or ""
         ) + f"\nResponse by {request.user.username}: {response_message}"
@@ -307,7 +347,8 @@ def manage_ticket_page(request, ticket_id):
             if action == "respond_ticket":
                 return respond_ticket(request, ticket_id)
             elif action == "merge_ticket":
-                return merge_ticket(request, ticket_id=ticket.id)
+                potential_ticket_id = request.POST.get("potential_ticket_id")
+                return merge_ticket(request, ticket_id=ticket.id, potential_ticket_id=potential_ticket_id)
             elif action == "return_to_student":
                 return return_ticket(request, ticket_id=ticket.id)
             elif action == "redirect_ticket":
@@ -318,6 +359,9 @@ def manage_ticket_page(request, ticket_id):
             .select_related("action_by")
             .order_by("-action_time")[:20]
         )
+        potential_tickets = find_potential_tickets_to_merge(ticket)
+        merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
+        approved_merged_tickets = merged_ticket.approved_merged_tickets.all() if merged_ticket else []
 
         return render(
             request,
@@ -327,6 +371,8 @@ def manage_ticket_page(request, ticket_id):
                 "actions": actions,
                 "activities": activities,
                 "specialists": specialists,
+                'potential_tickets': potential_tickets,
+                'approved_merged_tickets': approved_merged_tickets,
             },
         )
 
