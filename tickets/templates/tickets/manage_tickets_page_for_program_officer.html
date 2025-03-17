@@ -1,118 +1,121 @@
 {% extends 'base_content.html' %}
 {% block content %}
-<div class="container">
-    <h1>Manage Ticket - {{ ticket.title }}</h1>
-    <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
-    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name }}</p>
-    <p><strong>Status:</strong> {{ ticket.status }}</p>
-    <p><strong>Priority:</strong> {{ ticket.priority }}</p>
-    <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
-    <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
-    <p><strong>Description:</strong> {{ ticket.description }}</p>
+<div class="content-area">
+  <div class="fog-box">
+    <div class="container my-4">
 
-    <div class="mb-3">
-        <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
-        <button type="button" class="btn btn-warning action-btn" data-action="redirect_ticket">Redirect</button>
-        <button type="button" class="btn btn-primary action-btn" data-action="merge_ticket">Merge</button>
-        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
-    </div>
+        <h1>Manage Ticket - {{ ticket.title }}</h1>
+        <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
+        <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name }}</p>
+        <p><strong>Status:</strong> {{ ticket.status }}</p>
+        <p><strong>Priority:</strong> {{ ticket.priority }}</p>
+        <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
+        <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
+        <p><strong>Description:</strong> {{ ticket.description }}</p>
 
-    <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
-        {% csrf_token %}
-
-        <input type="hidden" id="action_type" name="action_type">
-
-        <!-- Respond Section -->
-        <div id="respond-section" style="display: none;">
-            <label for="response_message">Response:</label>
-            <textarea id="response_message" name="response_message" class="form-control"></textarea>
-
-            <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+        <div class="mb-3">
+            <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
+            <button type="button" class="btn btn-warning action-btn" data-action="redirect_ticket">Redirect</button>
+            <button type="button" class="btn btn-primary action-btn" data-action="merge_ticket">Merge</button>
+            <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
         </div>
 
-        <!-- Redirect Section -->
-        <div id="redirect-section" style="display: none;">
-            <label for="new_assignee_id">Assign to:</label>
-            <select id="new_assignee_id" name="new_assignee_id" class="form-select">
-                {% for specialist in specialists %}
-                <option value="{{ specialist.id }}">
-                    {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
-                {% endfor %}
-            </select>
+        <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
+            {% csrf_token %}
 
-            <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
-        </div>
-        <!-- Merge Section -->
-        <div id="merge-section" style="display: none;">
-            <div class="card-body">
-                {% if potential_tickets %}
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for potential_ticket in potential_tickets %}
-                                <tr>
-                                    <td>{{ potential_ticket.title }}</td>
-                                    <td>{{ potential_ticket.description }}</td>
-                                    <td>
-                                        <form method="post" class="merge-ticket-form">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="potential_ticket_id" value="{{ potential_ticket.id }}">
-                                            {% if potential_ticket in approved_merged_tickets %}
-                                                <button type="submit" class="btn btn-danger">Undo</button>
-                                            {% else %}
-                                                <button type="submit" class="btn btn-success">Merge</button>
-                                            {% endif %}
-                                        </form>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                {% else %}
-                    <p>No potential tickets to merge found.</p>
-                {% endif %}
+            <input type="hidden" id="action_type" name="action_type">
+
+            <!-- Respond Section -->
+            <div id="respond-section" style="display: none;">
+                <label for="response_message">Response:</label>
+                <textarea id="response_message" name="response_message" class="form-control"></textarea>
+
+                <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
             </div>
-        </div>
 
-        <!--Return to student-->
-        <div id="return-section" style="display: none;">
-            <label for="return_reason">Return Reason:</label>
-            <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+            <!-- Redirect Section -->
+            <div id="redirect-section" style="display: none;">
+                <label for="new_assignee_id">Assign to:</label>
+                <select id="new_assignee_id" name="new_assignee_id" class="form-select">
+                    {% for specialist in specialists %}
+                    <option value="{{ specialist.id }}">
+                        {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                    {% endfor %}
+                </select>
 
-            <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
-        </div>
+                <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+            </div>
+            <!-- Merge Section -->
+            <div id="merge-section" style="display: none;">
+                <div class="card-body">
+                    {% if potential_tickets %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for potential_ticket in potential_tickets %}
+                                    <tr>
+                                        <td>{{ potential_ticket.title }}</td>
+                                        <td>{{ potential_ticket.description }}</td>
+                                        <td>
+                                            <form method="post" class="merge-ticket-form">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="potential_ticket_id" value="{{ potential_ticket.id }}">
+                                                {% if potential_ticket in approved_merged_tickets %}
+                                                    <button type="submit" class="btn btn-danger">Undo</button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-success">Merge</button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No potential tickets to merge found.</p>
+                    {% endif %}
+                </div>
+            </div>
 
-        
-    </form>
+            <!--Return to student-->
+            <div id="return-section" style="display: none;">
+                <label for="return_reason">Return Reason:</label>
+                <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
 
-    <h3>Activity Log:</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Action</th>
-                <th>Time</th>
-                <th>Comment</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for activity in activities %}
+                <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+            </div>
+
+            
+        </form>
+
+        <h3>Activity Log:</h3>
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>{{ activity.username }}</td>
-                    <td>{{ activity.action }}</td>
-                    <td>{{ activity.action_time }}</td>
-                    <td>{{ activity.comment }}</td>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Time</th>
+                    <th>Comment</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.username }}</td>
+                        <td>{{ activity.action }}</td>
+                        <td>{{ activity.action_time }}</td>
+                        <td>{{ activity.comment }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
