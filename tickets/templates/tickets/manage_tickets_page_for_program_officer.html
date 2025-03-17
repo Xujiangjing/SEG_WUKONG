@@ -3,7 +3,7 @@
 <div class="container">
     <h1>Manage Ticket - {{ ticket.title }}</h1>
     <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
-    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.username }}</p>
+    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name }}</p>
     <p><strong>Status:</strong> {{ ticket.status }}</p>
     <p><strong>Priority:</strong> {{ ticket.priority }}</p>
     <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
@@ -34,7 +34,7 @@
             <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                 {% for specialist in specialists %}
                 <option value="{{ specialist.id }}">
-                    {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                    {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
                 {% endfor %}
             </select>
         </div>
