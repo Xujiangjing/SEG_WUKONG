@@ -27,12 +27,14 @@ from tickets.views import (
     ticket_operations,
     dashboard,
     base_views,
+    
 )
 from tickets.views.dashboard import (
     dashboard_redirect,
     program_officer_dashboard,
     student_dashboard,
     specialist_dashboard,
+    visualize_ticket_data,
 )
 from tickets.views.ticket_operations import (
     close_ticket,
@@ -113,6 +115,11 @@ urlpatterns = [
         "tickets/<uuid:ticket_id>/manage_ticket_page/",
         manage_ticket_page,
         name="manage_ticket_page",
+    ),
+    path(
+        "visualize_ticket_data/",
+        visualize_ticket_data,
+        name="visualize_ticket_data",
     ),
 ]
 urlpatterns += static(

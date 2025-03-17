@@ -15,6 +15,11 @@
     <div class="col-12">
       <h1 class="text-center text-primary">Welcome to your dashboard, {{ user.username }}</h1>
 
+      <!-- Add the button here -->
+      <div class="text-center my-4">
+        <a href="{% url 'visualize_ticket_data' %}" class="btn btn-info">Visualize Ticket Data</a>
+      </div>
+
       <!-- Tickets Tab -->
       <div id="tickets">
         <form method="GET" action="{% url 'dashboard_program_officer' %}">

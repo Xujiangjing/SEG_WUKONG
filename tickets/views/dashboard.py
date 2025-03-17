@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from tickets.helpers import get_filtered_tickets
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-from tickets.models import Ticket
+from tickets.models import Ticket, DailyTicketClosureReport
 
 
 @login_required
@@ -80,3 +80,9 @@ def specialist_dashboard(request):
     return render(
         request, "dashboard/dashboard_specialist.html", {"assigned_tickets": tickets}
     )
+
+
+@login_required
+def visualize_ticket_data(request):
+    reports = DailyTicketClosureReport.objects.all().order_by('-date')
+    return render(request, 'visualize_ticket_data.html', {'reports': reports})

@@ -25,6 +25,7 @@ from tickets.models import (
     TicketActivity,
     Department,
     MergedTicket,
+    DailyTicketClosureReport
 )
 from django.db.models.functions import Coalesce
 
@@ -35,6 +36,24 @@ def close_ticket(request, ticket_id):
     if request.user.is_student() and request.user == ticket.creator:
         ticket.status = "closed"
         ticket.save()
+
+        TicketActivity.objects.create(
+            ticket=ticket,
+            action="closed_manually",
+            action_by=request.user,
+            action_time=timezone.now(),
+            comment="Ticket closed manually by the student.",
+        )
+
+        # Update or create DailyTicketClosureReport for the department
+        today = timezone.now().date()
+        report, created = DailyTicketClosureReport.objects.get_or_create(
+            date=today,
+            department=ticket.assigned_department,
+            defaults={"closed_by_inactivity": 0, "closed_manually": 0},
+        )
+        report.closed_manually += 1
+        report.save()
         messages.success(request, "Ticket closed successfully.")
     else:
         messages.error(request, "You do not have permission to close this ticket.")
