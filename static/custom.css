@@ -125,6 +125,59 @@ h3.profile-title {
   font-style: italic;
 }
 
+.profile-actions {
+  margin-top: 30px; /* 增加与表单的间距 */
+  width: 100%;
+  box-sizing: border-box;
+  display: flex; /* 使用flex布局 */
+  justify-content: space-between; /* 两端对齐 */
+  align-items: center; /* 垂直居中 */
+}
+
+.back-btn-container {
+  width: 100%;
+  text-align: right; /* 文本右对齐 */
+  padding-right: 0; /* 确保没有右内边距 */
+}
+
+.change-password-btn {
+  background-color: #2D47B8;
+  color: white !important;
+  font-weight: bold;
+  padding: 15px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-block;
+  width: auto; /* 改为自适应宽度 */
+  min-width: 180px; /* 设置最小宽度 */
+  text-align: center;
+  font-size: 20px; /* 增大字体大小 */
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); /* 添加阴影效果 */
+}
+
+.change-password-btn:hover {
+  background-color: #253A94;
+}
+
+.back-btn {
+  background-color: #2D47B8;
+  color: white !important;
+  font-weight: bold;
+  padding: 15px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-block; /* 改为inline-block */
+  width: auto; /* 自适应宽度 */
+  min-width: 120px; /* 设置最小宽度 */
+  text-align: center;
+  font-size: 20px; /* 增大字体大小 */
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); /* 添加阴影效果 */
+}
+
+.back-btn:hover {
+  background-color: #253A94;
+}
+
 
 /*
  * Hyperlinks
@@ -151,12 +204,66 @@ h3.profile-title {
 
 
 .form-container {
-  max-width: 600px;
+  max-width: auto;
+  width: 100%;
   margin: 0 auto;
-  background: white;
+  background: transparent;
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box; /* 确保padding不会增加元素宽度 */
+}
+
+.custom-width {
+    width: 100%; /* 或你想要的固定值，例如 300px */
+    box-sizing: border-box;
+}
+
+.readonly-box {
+  background-color: #D9E0FF;
+  border-radius: 5px 0 0 5px; /* 只保留左侧圆角 */
+  color: #000;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* 文字左对齐 */
+  padding: 0 15px; /* 调整内边距 */
+  position: relative;
+  z-index: 2;
+  margin-right: 0; /* 确保没有右边距 */
+  border-right: none; /* 移除右边框 */
+  font-weight: bold;
+  width: 100%; /* 确保宽度占满容器 */
+}
+
+.form-control[readonly] {
+  background-color: white; /* 白色背景 */
+  border-radius: 0 5px 5px 0; /* 只保留右侧圆角 */
+  color: #000; 
+  height: 58px;
+  position: relative;
+  z-index: 1;
+  margin-left: -2px; /* 微调位置，确保边框对齐 */
+  padding-left: 20px; /* 增加左侧内边距，避免文字太靠左 */
+  border-left: none; /* 移除左边框 */
+  width: 100%; /* 确保宽度占满容器 */
+}
+
+.form-control[readonly]:focus {
+  box-shadow: none;
+  border-color: #c9d9ec;
+  outline: none;
+}
+
+/* 调整subtitle和输入框的布局 */
+.mb-3.row.align-items-center {
+  position: relative;
+  margin-bottom: 1.5rem !important; /* 增加行间距 */
+}
+
+/* 确保列没有内边距，使控件紧密连接 */
+.col-sm-3, .col-sm-9 {
+  padding-right: 0;
+  padding-left: 0;
 }
 
 .badge {
@@ -182,6 +289,8 @@ h3.profile-title {
 .table-striped tbody tr:nth-of-type(odd) {
   background-color: #f2faff;
 }
+
+
 
 /* "Home Page Start" */
 
@@ -578,4 +687,162 @@ body  {
 
 .login-btn:hover {
   transform: translateY(-2px);
+}
+
+/* 侧边栏 */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* 水平居中所有子元素 */
+  justify-content: flex-start;  /* 从上往下排列，底部留给mt-auto的Logout */
+  width: 15vw;           /* 或你想要的固定/百分比宽度 */
+  min-width: 200px;
+  max-width: 400px;
+  background-color: transparent;
+  overflow-y: auto;
+  z-index: 1030;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: center; /* 水平居中 */
+  align-items: center;     /* 垂直居中 */
+  width: 100%;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* 放大logo */
+.sidebar-logo {
+  width: clamp(200px, 10vw, 300px);  /* 在最小100px，最大150px之间，根据视口宽度调整 */
+  height: auto;
+  display: block;
+  margin-bottom: 20px;
+}
+
+/* 让菜单图标自适应，使用 clamp() 确保不会太小或太大 */
+.nav-icon {
+  width: clamp(28px, 3vw, 40px); /* 增大图标尺寸 */
+  height: auto;
+  margin-right: 15px; /* 减少右边距，使图标和文字更紧凑 */
+  vertical-align: middle;
+}
+
+/* 导航菜单容器 */
+.navbar-nav {
+  width: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 水平居中导航项 */
+}
+
+/* 导航项 */
+.nav-item {
+  list-style: none;
+  width: 100%;
+  display: flex;
+  justify-content: center; /* 水平居中导航链接 */
+  margin-bottom: 10px; /* 增加项目之间的间距 */
+}
+
+/* 让菜单文字也自适应 */
+.nav-link {
+  font-size: clamp(1rem, 1.2vw, 1.5rem);  /* 最小1rem，最大1.5rem，介于两者之间随视口调整 */
+  display: inline-flex; /* 改为inline-flex布局 */
+  align-items: center; /* 垂直居中 */
+  justify-content: flex-start; /* 内容左对齐 */
+  color: white;
+  text-decoration: none;
+  padding: 15px 25px; /* 调整padding */
+  width: auto; /* 自适应宽度 */
+  min-width: 180px; /* 设置最小宽度 */
+  text-align: left; /* 文本左对齐 */
+  box-sizing: border-box; /* 确保padding不会增加元素宽度 */
+  border-radius: 20px; /* 圆角效果 */
+}
+
+/* 图标样式 */
+.nav-link .nav-icon {
+  flex-shrink: 0; /* 防止图标缩小 */
+  margin-right: 20px; /* 图标和文字之间的间距 */
+}
+
+.nav-link.active {
+  background-color: #2D47B8; /* 选中的菜单项变蓝色 */
+  color: white !important; /* 选中的文字变白色 */
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+  padding-left: 15px; /* 减少左侧内边距 */
+  padding-right: 35px; /* 增加右侧内边距 */
+  min-width: 200px; /* 增加最小宽度 */
+}
+
+/* 调整logout按钮位置 */
+.nav-item.mt-auto {
+  margin-top: auto;
+  margin-bottom: 60px !important; /* 增加底部边距，使logout按钮向上移动 */
+}
+
+.fog-box {
+  background: rgba(255, 255, 255, 0.2); /* 半透明背景 */
+  backdrop-filter: blur(12px);           /* 应用 8px 模糊 */
+  -webkit-backdrop-filter: blur(12px);   /* Safari 支持 */
+  padding: 20px;                        /* 内边距，可根据需要调整 */
+  border-radius: 10px;                  /* 圆角效果 */
+  width: 100%;
+  min-height: 97vh;                    /* 最小高度，保证内容不会溢出 */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* 增加阴影，使其更立体 */
+  overflow: hidden; /* 避免模糊效果影响到外部 */
+}
+
+
+.dashboard-bg {
+  position: fixed;         /* 固定定位，覆盖整个视窗 */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: url("./images/background-section4.png") no-repeat center center;
+  background-size: cover;
+  z-index: -1;             /* 放在最底层 */
+}
+
+
+/* 主内容区域，留出侧边栏的宽度 */
+.content-area {
+  margin-left: 15vw;    /* 跟上面 sidebar 的宽度保持一致 */
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  /* 也可加 min-width / max-width 等 */
+}
+
+.create-btn {
+  background-color: #2D47B8; /* 深蓝色 */
+  border-color: #253A94; /* 深一点的边框颜色 */
+  color: white !important; /* 文字颜色 */
+  font-weight: bold; /* 让文字更醒目 */
+  padding: 10px 20px; /* 让按钮大小合适 */
+  height: 50px; /* 让高度和 Apply / Clear 按钮一致 */
+  display: inline-flex; /* 内联布局 */
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px; /* 圆角 */
+  pointer-events: auto; /* 允许点击 */
+  text-decoration: none; /* 移除可能的下划线 */
+}
+
+.create-btn:hover {
+  background-color: #253A94; /* 悬停时颜色加深 */
+  border-color: #1E2F78;
+}
+
+
+.create-icon {
+  width: 40px; /* 图标大小 */
+  height: auto;
 }

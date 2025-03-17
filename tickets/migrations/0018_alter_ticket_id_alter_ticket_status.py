@@ -7,18 +7,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tickets', '0017_dailyticketclosurereport_and_more'),
+        ("tickets", "0017_dailyticketclosurereport_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='ticket',
-            name='id',
-            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True),
+            model_name="ticket",
+            name="id",
+            field=models.UUIDField(
+                default=uuid.uuid4,
+                editable=False,
+                primary_key=True,
+                serialize=False,
+                unique=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='status',
-            field=models.CharField(choices=[('in_progress', 'In Progress'), ('closed', 'Closed')], default='in_progress', max_length=20),
+            model_name="ticket",
+            name="status",
+            field=models.CharField(
+                choices=[("in_progress", "In Progress"), ("closed", "Closed")],
+                default="in_progress",
+                max_length=20,
+            ),
         ),
     ]

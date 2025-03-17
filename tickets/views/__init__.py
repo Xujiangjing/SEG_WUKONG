@@ -12,7 +12,6 @@ from .ticket_operations import (
     respond_ticket,
     update_ticket,
     manage_ticket_page,
-    submit_ticket,
 )
 from .authentication import LoginProhibitedMixin, LogInView, log_out, PasswordView
 from .user_management import ProfileUpdateView

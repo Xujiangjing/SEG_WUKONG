@@ -35,7 +35,10 @@ from tickets.models import (
     User,
 )
 
-from tickets.helpers import handle_uploaded_file_in_chunks
+from tickets.helpers import (
+    handle_uploaded_file_in_chunks,
+    send_ticket_confirmation_email,
+)
 
 from tickets.ai_service import ai_process_ticket, find_potential_tickets_to_merge
 
@@ -124,7 +127,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 self.request,
                 f"Ticket merged with existing ticket {existing_ticket.id} successfully!",
             )
-            return redirect("ticket_detail", pk=existing_ticket.pk)
+            return redirect("ticket_detail", ticket_id=existing_ticket.id)
 
         else:
             files = self.request.FILES.getlist("file")
@@ -137,20 +140,14 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
             ai_process_ticket(ticket)
 
+            send_ticket_confirmation_email(ticket)
             messages.success(self.request, "Query submitted successfully!")
-            return redirect("ticket_detail", pk=ticket.pk)
+            return redirect("ticket_detail", ticket_id=ticket.id)
 
 
 @login_required
 def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
-    if (
-        request.user != ticket.creator
-        and request.user != ticket.assigned_user
-        and not request.user.is_program_officer()
-    ):
-        return redirect("dashboard")
-
     attachments = ticket.attachments.order_by("uploaded_at")
 
     activities = TicketActivity.objects.filter(ticket=ticket).order_by("-action_time")
@@ -163,6 +160,20 @@ def ticket_detail(request, ticket_id):
         }
         for activity in activities
     ]
+
+    if (
+        not request.user.is_student()
+        and ticket.status == "in_progress"
+        and ticket.return_reason
+    ):
+        messages.warning(request, "This ticket is waiting for the student to update.")
+
+    if (
+        request.user != ticket.creator
+        and request.user != ticket.assigned_user
+        and not request.user.is_program_officer()
+    ):
+        return redirect("dashboard")
 
     return render(
         request,

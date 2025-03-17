@@ -44,9 +44,10 @@ from tickets.views.ticket_operations import (
     respond_ticket,
     update_ticket,
     manage_ticket_page,
-    submit_ticket,
     redirect_ticket,
 )
+from tickets.views.base_views import CreateTicketView
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -76,10 +77,7 @@ urlpatterns = [
         base_views.ticket_detail,
         name="ticket_detail",
     ),
-    path("ticket/submit/", ticket_operations.submit_ticket, name="submit_ticket"),
-    path(
-        "tickets/create/", base_views.CreateTicketView.as_view(), name="create_ticket"
-    ),
+    path("tickets/create/", CreateTicketView.as_view(), name="create_ticket"),
     path("dashboard/", dashboard_redirect, name="dashboard"),
     path(
         "dashboard/dashboard_program_officer/",
@@ -105,7 +103,6 @@ urlpatterns = [
     path(
         "tickets/views/<uuid:ticket_id>/response", respond_ticket, name="respond_ticket"
     ),
-    path("tickets/views/<uuid:ticket_id>/return", return_ticket, name="return_ticket"),
     path(
         "tickets/<uuid:ticket_id>/redirect/",
         redirect_ticket,

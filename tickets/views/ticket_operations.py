@@ -63,32 +63,45 @@ def close_ticket(request, ticket_id):
 @login_required
 def return_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+
     student_email = ticket.creator.email
     ticket_title = ticket.title
     response_message = request.POST.get("return_reason")
-    if not request.user.is_program_officer() or ticket.status != "open":
-        return redirect("ticket_list")
+
+    if not request.user.is_program_officer() or ticket.status != "in_progress":
+        return redirect("ticket_detail", ticket_id=ticket_id)
 
     if request.method == "POST":
         form = ReturnTicketForm(request.POST)
         if form.is_valid():
             ticket.status = "in_progress"
             ticket.return_reason = form.cleaned_data["return_reason"]
+            ticket.latest_action = "status_updated"
+            ticket.latest_editor = request.user
             ticket.save()
 
             send_updated_notification_email(
                 student_email, ticket_title, response_message, ticket_id
             )
-            return redirect("ticket_list")
+
+            TicketActivity.objects.create(
+                ticket=ticket,
+                action="status_updated",
+                action_by=request.user,
+                action_time=timezone.now(),
+                comment=f"Return to student : {ticket.creator.full_name()}",
+            )
+
+            if ticket.return_reason:
+                return redirect("ticket_detail", ticket_id=ticket_id)
+
+            return redirect("ticket_detail", ticket_id=ticket_id)
     else:
         form = ReturnTicketForm()
 
     return render(
-        request, "tickets/return_ticket.html", {"form": form, "ticket": ticket}
+        request, "tickets/ticket_detail.html", {"form": form, "ticket": ticket}
     )
-
-
-import sys
 
 
 @login_required
@@ -282,7 +295,7 @@ def respond_ticket(request, ticket_id):
         
         ticket.answers = (
             ticket.answers or ""
-        ) + f"\nResponse by {request.user.username}: {response_message}"
+        ) + f"\nResponse by {request.user.full_name}: {response_message}"
         ticket.status = "in_progress"
         ticket.save()
         TicketActivity.objects.create(
@@ -348,6 +361,18 @@ def manage_ticket_page(request, ticket_id):
 
     if is_specialist:
         actions.extend(["respond_ticket", "return_ticket"])
+        if request.method == "POST":
+            action = request.POST.get("action_type")
+            if action == "respond_ticket":
+                return respond_ticket(request, ticket_id)
+            elif action == "return_to_student":
+                return return_ticket(request, ticket_id=ticket.id)
+
+        activities = (
+            TicketActivity.objects.filter(ticket=ticket)
+            .select_related("action_by")
+            .order_by("-action_time")[:20]
+        )
 
         return render(
             request,
@@ -394,71 +419,6 @@ def manage_ticket_page(request, ticket_id):
                 'approved_merged_tickets': approved_merged_tickets,
             },
         )
-
-
-@login_required
-def submit_ticket(request):
-    if request.method == "POST":
-        form = TicketForm(request.POST, request.FILES)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.creator = request.user
-            ticket.status = "in_progress"
-
-            # Allow student to select priority
-            ticket.priority = form.cleaned_data["priority"]
-
-            # Check for duplicate tickets with the same title
-            existing_ticket = Ticket.objects.filter(
-                title=ticket.title, status="in_progress"
-            ).first()
-            if existing_ticket:
-                # Merge duplicate ticket descriptions
-                existing_ticket.description += (
-                    "\n\nMerged with ticket ID: {}. New description: {}".format(
-                        ticket.id, ticket.description
-                    )
-                )
-                existing_ticket.save()
-
-                # Log the merge action
-                TicketActivity.objects.create(
-                    ticket=existing_ticket,
-                    action="merged",
-                    action_by=request.user,
-                    comment=f"Merged with ticket {ticket.id}",
-                )
-
-                messages.success(request, f"You have already send the same ticket!")
-                return redirect("ticket_detail", ticket_id=existing_ticket.id)
-            else:
-                # Save the new ticket if it's unique
-                ticket.save()
-
-                # Handle file uploads
-                files = request.FILES.getlist("file")
-                for file in files:
-                    TicketAttachment.objects.create(ticket=ticket, file=file)
-
-                # Log ticket creation
-                TicketActivity.objects.create(
-                    ticket=ticket, action="created", action_by=request.user
-                )
-
-                # AI processing (optional)
-                ai_process_ticket(ticket)
-
-                # Send confirmation email
-                send_ticket_confirmation_email(ticket)
-
-                messages.success(
-                    request, "Your ticket has been submitted successfully!"
-                )
-                return redirect("ticket_detail", ticket_id=ticket.id)
-    else:
-        form = TicketForm()
-
-    return render(request, "tickets/submit_ticket.html", {"form": form})
 
 
 def get_specialists(ticket):

@@ -2,8 +2,8 @@
 {% block content %}
 <div class="container">
     <h1>Manage Ticket - {{ ticket.title }}</h1>
-    <p><strong>Student:</strong> {{ ticket.student.username }}</p>
-    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.username }}</p>
+    <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
+    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name }}</p>
     <p><strong>Status:</strong> {{ ticket.status }}</p>
     <p><strong>Priority:</strong> {{ ticket.priority }}</p>
     <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
@@ -14,7 +14,7 @@
         <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
         <button type="button" class="btn btn-warning action-btn" data-action="redirect_ticket">Redirect</button>
         <button type="button" class="btn btn-primary action-btn" data-action="merge_ticket">Merge</button>
-        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">Return to Student</button>
+        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
     </div>
 
     <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
@@ -36,13 +36,12 @@
             <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                 {% for specialist in specialists %}
                 <option value="{{ specialist.id }}">
-                    {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                    {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
                 {% endfor %}
             </select>
 
             <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
         </div>
-
         <!-- Merge Section -->
         <div id="merge-section" style="display: none;">
             <div class="card-body">
@@ -120,12 +119,10 @@
         let actionTypeInput = document.getElementById("action_type");
         let actionForm = document.getElementById("action_form");
         let submitBtn = document.getElementById("submit_btn");
-
         let respondSection = document.getElementById("respond-section");
         let redirectSection = document.getElementById("redirect-section");
         let mergeSection = document.getElementById("merge-section");
         let returnSection = document.getElementById("return-section");
-
         function hideAllSections() {
             respondSection.style.display = "none";
             redirectSection.style.display = "none";
