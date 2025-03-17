@@ -36,7 +36,7 @@
             <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                 {% for specialist in specialists %}
                 <option value="{{ specialist.id }}">
-                    {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                    {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
                 {% endfor %}
             </select>
 
