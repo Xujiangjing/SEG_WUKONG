@@ -213,6 +213,11 @@ h3.profile-title {
   box-sizing: border-box; /* 确保padding不会增加元素宽度 */
 }
 
+.custom-width {
+    width: 70%; /* 或你想要的固定值，例如 300px */
+    box-sizing: border-box;
+}
+
 .readonly-box {
   background-color: #D9E0FF;
   border-radius: 5px 0 0 5px; /* 只保留左侧圆角 */
@@ -284,6 +289,8 @@ h3.profile-title {
 .table-striped tbody tr:nth-of-type(odd) {
   background-color: #f2faff;
 }
+
+
 
 /* "Home Page Start" */
 

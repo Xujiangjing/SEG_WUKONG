@@ -86,7 +86,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
-        ticket.status = "open"
+        ticket.status = "in_progress"
 
         if self.request.user.is_student():
             ticket.priority = "low"
@@ -124,7 +124,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
                 self.request,
                 f"Ticket merged with existing ticket {existing_ticket.id} successfully!",
             )
-            return redirect("ticket_detail", pk=existing_ticket.pk)
+            return redirect("ticket_detail", ticket_id=existing_ticket.id)
 
         else:
             files = self.request.FILES.getlist("file")
@@ -138,7 +138,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
             ai_process_ticket(ticket)
 
             messages.success(self.request, "Query submitted successfully!")
-            return redirect("ticket_detail", pk=ticket.pk)
+            return redirect("ticket_detail",ticket_id=ticket.id)
 
 
 @login_required

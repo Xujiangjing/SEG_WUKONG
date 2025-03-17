@@ -1,38 +1,43 @@
 {% extends "base_content.html" %}
-
+{% load widget_tweaks %}
 {% block content %}
 <div class="content-area">
-    <div class="fog-box">
-        <div class="container mt-5">
-            <h2 class="mb-4">Create a Ticket</h2>
-    
-            <form method="POST" enctype="multipart/form-data" class="card p-4 shadow-sm bg-light">
-                {% csrf_token %}
-    
-                <div class="mb-3">
-                    <label for="id_title" class="form-label">Title:</label>
-                    {{ form.title }}
+  <div class="fog-box">
+    <div class="container my-4">
+      <div class="row">
+        <div class="col-12">
+          <h1 class="text-center" style="color: #000C40; font-weight: bold;">Create New Tickets</h1>
+          <div class="form-container">
+            <form action="{% url 'create_ticket' %}" method="post" enctype="multipart/form-data">
+              {% csrf_token %}
+              <div class="mb-3 row align-items-center">
+                <label for="id_title" class="form-label">Title</label>
+                <div class="w-100">
+                  {{ form.title|add_class:"form-control custom-width" }}
                 </div>
-    
-                <div class="mb-3">
-                    <label for="id_description" class="form-label">Description:</label>
-                    {{ form.description }}
+              </div>
+              <div class="mb-3">
+                <label for="id_description" class="form-label">Description</label>
+                <div class="w-100">
+                  {{ form.description|add_class:"form-control custom-width" }}
                 </div>
-    
-                <div class="mb-3">
-                    <label for="id_priority" class="form-label">Priority:</label>
-                    {{ form.priority }}
+              </div>
+              <div class="mb-3">
+                <label for="id_file" class="form-label">Attach Files</label>
+                <div class="w-100">
+                  <input type="file" name="file" id="id_file" class="form-control" multiple>
                 </div>
-    
-                <div class="mb-3">
-                    <label for="id_file" class="form-label">Attach Files:</label>
-                    <input type="file" name="file" id="id_file" class="form-control" multiple>
-                </div>
-    
-                <button type="submit" class="btn btn-primary">Submit</button>
-                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+              </div>
+              <div class="profile-actions">
+                <input type="submit" value="Submit" class="btn change-password-btn">
+                <a href="{% url 'dashboard' %}" class="btn back-btn">← Back</a>
+              </div>
             </form>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
+
