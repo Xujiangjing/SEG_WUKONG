@@ -236,7 +236,7 @@ def respond_ticket(request, ticket_id):
         response_message = request.POST.get("response_message")
         ticket.answers = (
             ticket.answers or ""
-        ) + f"\nResponse by {request.user.username}: {response_message}"
+        ) + f"\nResponse by {request.user.full_name}: {response_message}"
         ticket.status = "in_progress"
         ticket.save()
         TicketActivity.objects.create(
