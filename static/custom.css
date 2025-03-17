@@ -214,7 +214,7 @@ h3.profile-title {
 }
 
 .custom-width {
-    width: 70%; /* 或你想要的固定值，例如 300px */
+    width: 100%; /* 或你想要的固定值，例如 300px */
     box-sizing: border-box;
 }
 
