@@ -52,7 +52,13 @@
                             <td><strong>Description:</strong></td>
                             <td>{{ ticket.description|linebreaksbr }}</td>
                         </tr>
-
+                        
+                        {% if ticket.return_reason %}
+                        <tr class="table-warning">
+                            <td><strong>Return Reason:</strong></td>
+                            <td>{{ ticket.return_reason }}</td>
+                        </tr>
+                        {% endif %}
 
                         <tr class="table-info">
                             <td><strong>Attachments:</strong></td>
