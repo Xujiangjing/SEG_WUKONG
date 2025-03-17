@@ -34,7 +34,7 @@
                         <tr>
                             <td><strong>Created by:</strong></td>
                             <td>
-                                {{ ticket.creator.username }} 
+                                {{ ticket.creator.full_name }} 
                                 <span class="text-muted"> on {{ ticket.created_at }}</span>
                             </td>
                         </tr>
@@ -42,7 +42,7 @@
                             <td><strong>Assigned to:</strong></td>
                             <td>
                                 {% if ticket.assigned_user %}
-                                    {{ ticket.assigned_user.username }}
+                                    {{ ticket.assigned_user.full_name }}
                                 {% else %}
                                     Unassigned
                                 {% endif %}
@@ -108,7 +108,7 @@
                                 <div class="timeline-point bg-info"></div>
                                 <div class="timeline-content">
                                     <h5>
-                                        <strong>{{ activity.username }}</strong>
+                                        <strong>{{ activity.full_name }}</strong>
                                         - {{ activity.action }}
                                     </h5>
                                     <p>
