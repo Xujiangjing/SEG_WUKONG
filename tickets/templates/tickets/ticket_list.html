@@ -48,39 +48,43 @@
             <p>No tickets found.</p>
         {% endif %}
     </div>
-
-    <script>
-        function sortTickets() {
-            let table = document.getElementById("ticketTable");
-            let tbody = table.getElementsByTagName("tbody")[0];
-            let rows = Array.from(tbody.getElementsByTagName("tr"));
-            let sortBy = document.getElementById("sort").value;
-            
-            rows.sort((a, b) => {
-                let aData, bData;
-                if (sortBy === "priority") {
-                    aData = parseInt(a.querySelector("[data-priority-value]").dataset.priorityValue);
-                    bData = parseInt(b.querySelector("[data-priority-value]").dataset.priorityValue);
-                    return aData - bData;
-                } else if (sortBy === "status") {
-                    aData = parseInt(a.querySelector("[data-status-value]").dataset.statusValue);
-                    bData = parseInt(b.querySelector("[data-status-value]").dataset.statusValue);
-                    return aData - bData;
-                } else {
-                    aData = a.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
-                    bData = b.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
-                    return aData.localeCompare(bData);
-                }
-            });
-            
-            tbody.innerHTML = "";
-            rows.forEach(row => tbody.appendChild(row));
-        }
-        
-        document.addEventListener("DOMContentLoaded", () => {
-            setTimeout(() => {
-                sortTickets(); 
-            }, 100);
-        });
-    </script>
+</div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    function sortTickets() {
+        let table = document.getElementById("ticketTable");
+        let tbody = table.getElementsByTagName("tbody")[0];
+        let rows = Array.from(tbody.getElementsByTagName("tr"));
+        let sortBy = document.getElementById("sort").value;
+
+        rows.sort((a, b) => {
+            let aData, bData;
+            if (sortBy === "priority") {
+                aData = parseInt(a.querySelector("[data-priority-value]").dataset.priorityValue);
+                bData = parseInt(b.querySelector("[data-priority-value]").dataset.priorityValue);
+                return aData - bData;
+            } else if (sortBy === "status") {
+                aData = parseInt(a.querySelector("[data-status-value]").dataset.statusValue);
+                bData = parseInt(b.querySelector("[data-status-value]").dataset.statusValue);
+                return aData - bData;
+            } else {
+                aData = a.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
+                bData = b.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
+                return aData.localeCompare(bData);
+            }
+        });
+
+        tbody.innerHTML = "";
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+            sortTickets();
+        }, 100);
+    });
+</script>
+{% endblock %}
+

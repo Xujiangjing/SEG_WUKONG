@@ -2,8 +2,8 @@
 {% block content %}
 <div class="container">
     <h1>Manage Ticket - {{ ticket.title }}</h1>
-    <p><strong>Student:</strong> {{ ticket.student.username }}</p>
-    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.username }}</p>
+    <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
+    <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name }}</p>
     <p><strong>Status:</strong> {{ ticket.status }}</p>
     <p><strong>Priority:</strong> {{ ticket.priority }}</p>
     <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
@@ -14,7 +14,7 @@
         <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
         <button type="button" class="btn btn-warning action-btn" data-action="redirect_ticket">Redirect</button>
         <button type="button" class="btn btn-primary action-btn" data-action="merge_ticket">Merge</button>
-        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">Return to Student</button>
+        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
     </div>
 
     <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
@@ -34,51 +34,71 @@
             <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                 {% for specialist in specialists %}
                 <option value="{{ specialist.id }}">
-                    {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                    {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
                 {% endfor %}
             </select>
         </div>
 
-        <!-- Merge Section -->
-        <div id="merge-section" style="display: none;">
-            <label for="merge_ticket">Merge With:</label>
-            <select id="merge_ticket" name="merge_ticket" class="form-select">
-                {% for potential in potential_tickets %}
-                    <option value="{{ potential.id }}">{{ potential.title }}</option>
-                {% endfor %}
-            </select>
-        </div>
+            <input type="hidden" id="action_type" name="action_type">
 
-        <!--Return to student-->
-        <div id="return-section" style="display: none;">
-            <label for="return_reason">Return Reason:</label>
-            <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
-        </div>
+            <!-- Respond Section -->
+            <div id="respond-section" style="display: none;">
+                <label for="response_message">Response:</label>
+                <textarea id="response_message" name="response_message" class="form-control"></textarea>
+            </div>
 
-        <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
-    </form>
+            <!-- Redirect Section -->
+            <div id="redirect-section" style="display: none;">
+                <label for="new_assignee_id">Assign to:</label>
+                <select id="new_assignee_id" name="new_assignee_id" class="form-select">
+                    {% for specialist in specialists %}
+                    <option value="{{ specialist.id }}">
+                        {{ specialist.username }} - {{ specialist.assigned_department }} ({{ specialist.open_tickets }} open tickets)
+                    {% endfor %}
+                </select>
+            </div>
 
-    <h3>Activity Log:</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Action</th>
-                <th>Time</th>
-                <th>Comment</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for activity in activities %}
+            <!-- Merge Section -->
+            <div id="merge-section" style="display: none;">
+                <label for="merge_ticket">Merge With:</label>
+                <select id="merge_ticket" name="merge_ticket" class="form-select">
+                    {% for potential in potential_tickets %}
+                        <option value="{{ potential.id }}">{{ potential.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!--Return to student-->
+            <div id="return-section" style="display: none;">
+                <label for="return_reason">Return Reason:</label>
+                <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+            </div>
+
+            <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+        </form>
+
+        <h3>Activity Log:</h3>
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td>{{ activity.username }}</td>
-                    <td>{{ activity.action }}</td>
-                    <td>{{ activity.action_time }}</td>
-                    <td>{{ activity.comment }}</td>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Time</th>
+                    <th>Comment</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.username }}</td>
+                        <td>{{ activity.action }}</td>
+                        <td>{{ activity.action_time }}</td>
+                        <td>{{ activity.comment }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
@@ -86,12 +106,10 @@
         let actionTypeInput = document.getElementById("action_type");
         let actionForm = document.getElementById("action_form");
         let submitBtn = document.getElementById("submit_btn");
-
         let respondSection = document.getElementById("respond-section");
         let redirectSection = document.getElementById("redirect-section");
         let mergeSection = document.getElementById("merge-section");
         let returnSection = document.getElementById("return-section");
-
         function hideAllSections() {
             respondSection.style.display = "none";
             redirectSection.style.display = "none";
