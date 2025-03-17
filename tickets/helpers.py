@@ -22,7 +22,8 @@ def login_prohibited(view_function):
 
 # Student will receive an email when they submit a ticket in tickets system
 def send_ticket_confirmation_email(ticket):
-    subject = f"Ticket #{ticket.id} Confirmation"
+    ticket_id = ticket.id
+    subject = f"Ticket #{ticket_id} Confirmation"
     recipient_email = ticket.creator.email
     context = {"user": ticket.creator, "ticket": ticket}
 

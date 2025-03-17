@@ -42,12 +42,9 @@ from tickets.views.ticket_operations import (
     respond_ticket,
     update_ticket,
     manage_ticket_page,
-    submit_ticket,
     redirect_ticket,
 )
-from tickets.views.base_views import (
-    CreateTicketView
-)
+from tickets.views.base_views import CreateTicketView
 
 
 urlpatterns = [
@@ -78,10 +75,7 @@ urlpatterns = [
         base_views.ticket_detail,
         name="ticket_detail",
     ),
-    path("ticket/submit/", ticket_operations.submit_ticket, name="submit_ticket"),
-    path(
-        "tickets/create/", CreateTicketView.as_view(), name="create_ticket"
-    ),
+    path("tickets/create/", CreateTicketView.as_view(), name="create_ticket"),
     path("dashboard/", dashboard_redirect, name="dashboard"),
     path(
         "dashboard/dashboard_program_officer/",

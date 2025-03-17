@@ -35,7 +35,10 @@ from tickets.models import (
     User,
 )
 
-from tickets.helpers import handle_uploaded_file_in_chunks
+from tickets.helpers import (
+    handle_uploaded_file_in_chunks,
+    send_ticket_confirmation_email,
+)
 
 from tickets.ai_service import ai_process_ticket, find_potential_tickets_to_merge
 
@@ -137,8 +140,9 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
             ai_process_ticket(ticket)
 
+            send_ticket_confirmation_email(ticket)
             messages.success(self.request, "Query submitted successfully!")
-            return redirect("ticket_detail",ticket_id=ticket.id)
+            return redirect("ticket_detail", ticket_id=ticket.id)
 
 
 @login_required
