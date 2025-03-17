@@ -57,7 +57,7 @@
             <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
             <td>
               {% if ticket.status != 'closed' %}
-                <a href="{% url 'respond_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Respond</a>
+                <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
               {% endif %}
             </td>
           </tr>

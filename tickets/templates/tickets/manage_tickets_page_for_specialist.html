@@ -1,45 +1,76 @@
 {% extends 'base_content.html' %}
 {% block content %}
-<div class="container my-4">
+<div class="container">
     <h1>Manage Ticket - {{ ticket.title }}</h1>
+    <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
+    <p><strong>Priority:</strong> {{ ticket.priority }}</p>
+    <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
+    <p><strong>Description:</strong> {{ ticket.description }}</p>
 
-    <form method="POST">
+    <div class="mb-3">
+        <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
+        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
+    </div>
+
+    <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
         {% csrf_token %}
-        
-        <div class="mb-3">
-            <label for="action_type">Choose an Action:</label>
-            <select id="action_type" name="action_type" class="form-select" required>
-                <option value="respond">Respond to Ticket</option>
-                <option value="return">Return to Student</option>
-            </select>
-        </div>
+
+        <input type="hidden" id="action_type" name="action_type">
 
         <!-- Respond Section -->
-        <div id="respond-section">
+        <div id="respond-section" style="display: none;">
             <label for="response_message">Response:</label>
             <textarea id="response_message" name="response_message" class="form-control"></textarea>
         </div>
 
-        <!-- Return Section -->
+        <!--Return to student-->
         <div id="return-section" style="display: none;">
             <label for="return_reason">Return Reason:</label>
             <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
         </div>
 
-        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+        <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
     </form>
-</div>
 
+</div>
 <script>
-document.getElementById("action_type").addEventListener("change", function () {
-    if (this.value === "respond") {
-        document.getElementById("respond-section").style.display = "block";
-        document.getElementById("return-section").style.display = "none";
-    } else {
-        document.getElementById("respond-section").style.display = "none";
-        document.getElementById("return-section").style.display = "block";
-    }
-});
+    document.addEventListener("DOMContentLoaded", function () {
+        let actionTypeInput = document.getElementById("action_type");
+        let actionForm = document.getElementById("action_form");
+        let submitBtn = document.getElementById("submit_btn");
+
+        let respondSection = document.getElementById("respond-section");
+        let returnSection = document.getElementById("return-section");
+
+        function hideAllSections() {
+            respondSection.style.display = "none";
+            returnSection.style.display = "none";
+        }
+
+        document.querySelectorAll(".action-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                let selectedAction = this.getAttribute("data-action");
+                actionTypeInput.value = selectedAction;
+                actionForm.style.display = "block";
+
+                hideAllSections();
+
+                if (selectedAction === "respond_ticket") {
+                    respondSection.style.display = "block";
+                } else if (selectedAction === "return_to_student") {
+                    returnSection.style.display = "block";
+                }
+
+                submitBtn.style.display = "block"; // 显示提交按钮
+            });
+        });
+
+        // ✅ 监听表单提交
+        actionForm.addEventListener("submit", function (event) {
+            let actionType = actionTypeInput.value;
+        });
+        submitBtn.style.display = "none";
+    });
 </script>
 
 {% endblock %}
