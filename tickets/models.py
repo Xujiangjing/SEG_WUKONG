@@ -181,6 +181,14 @@ class Ticket(models.Model):
     return_reason = models.TextField(
         blank=True, null=True
     )  # Reason for returning the ticket
+    can_be_managed = models.BooleanField(
+        default=True,
+        help_text="Whether the ticket can be managed by the current user.",
+    )
+    need_student_update = models.BooleanField(
+        default=False,
+        help_text="Whether the ticket needs an update from the student.",
+    )
 
     def __str__(self):
         return f"Ticket {self.id}: {self.title} ({self.status})"
