@@ -27,7 +27,6 @@ from tickets.views import (
     ticket_operations,
     dashboard,
     base_views,
-    
 )
 from tickets.views.dashboard import (
     dashboard_redirect,
@@ -95,7 +94,7 @@ urlpatterns = [
         name="dashboard_specialist",
     ),
     path(
-        "tickets/manage_ticket_page/<uuid:ticket_id>/",
+        "tickets/<uuid:ticket_id>/manage_ticket_page/",
         ticket_operations.manage_ticket_page,
         name="manage_ticket_page",
     ),
@@ -107,11 +106,6 @@ urlpatterns = [
         "tickets/<uuid:ticket_id>/redirect/",
         redirect_ticket,
         name="redirect_ticket",
-    ),
-    path(
-        "tickets/<uuid:ticket_id>/manage_ticket_page/",
-        manage_ticket_page,
-        name="manage_ticket_page",
     ),
     path(
         "visualize_ticket_data/",

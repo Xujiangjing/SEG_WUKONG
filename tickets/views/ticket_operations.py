@@ -312,7 +312,7 @@ def respond_ticket(request, ticket_id):
             comment=response_message,
         )
     messages.success(request, "Response sent successfully.")
-    ticket.status = "closed"
+    ticket.status = "in_progress"
     ticket.save()
     send_ticket_confirmation_email(ticket)
 
@@ -345,7 +345,7 @@ def update_ticket(request, ticket_id):
             comment=update_message,
         )
 
-    return redirect("dashboard")
+    return redirect("ticket_detail", ticket_id=ticket_id)
 
 
 @login_required
