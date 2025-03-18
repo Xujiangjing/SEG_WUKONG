@@ -127,7 +127,7 @@ def redirect_ticket(request, ticket_id):
         print("❌ Error in classify_department:", e)
         ai_assigned_department = ticket.assigned_department or "IT"
         ticket.assigned_department = ai_assigned_department
-        ticket.department = ticket.assigned_department.name
+        ticket.department = ticket.assigned_department
         ticket.save()
 
     if new_assignee_id == "ai":
@@ -156,7 +156,7 @@ def redirect_ticket(request, ticket_id):
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
         ticket.assigned_department = new_assignee.department.name
-        ticket.department = ticket.assigned_department.name
+        ticket.department = ticket.assigned_department
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
         ticket.save()
