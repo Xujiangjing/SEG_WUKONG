@@ -5,7 +5,10 @@
       <div class="container my-4">
         <h1>Manage Ticket - {{ ticket.title }}</h1>
         <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
-        <p><strong>Description:</strong> {{ ticket.description }}</p>
+        <p><strong>Description:</strong> {{ ticket.description|linebreaksbr }}</p>
+        {% if ticket.return_reason %}
+            <p><strong>Latest Return Reason: </strong>{{ ticket.return_reason }}</p>
+        {% endif %}
 
         <form method="POST" id="ticket_form" action="{% url 'update_ticket' ticket_id=ticket.id %}">
 

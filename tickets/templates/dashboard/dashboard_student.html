@@ -71,7 +71,17 @@
                 </td>
                 <td>
                   {% if ticket.status != 'closed' %}
-                    <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
+                    {% if ticket.need_student_update %}
+                      <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
+                        Manage
+                      </a>
+                    {% else %}
+                      <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
+                        View
+                      </a>
+                    {% endif %}
+                  {% else %}
+                    -
                   {% endif %}
                 </td>
               </tr>

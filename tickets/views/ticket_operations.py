@@ -35,6 +35,7 @@ def close_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.user.is_student() and request.user == ticket.creator:
         ticket.status = "closed"
+        ticket.can_be_managed = False
         ticket.save()
 
         TicketActivity.objects.create(
@@ -80,6 +81,8 @@ def return_ticket(request, ticket_id):
             ticket.return_reason = return_reason
             ticket.latest_action = "status_updated"
             ticket.latest_editor = request.user
+            ticket.can_be_managed = False
+            ticket.need_student_update = True
             ticket.save()
 
             ticket.refresh_from_db()
@@ -163,6 +166,7 @@ def redirect_ticket(request, ticket_id):
         ticket.department = ticket.assigned_department
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
+        ticket.can_be_managed = False
         ticket.save()
 
         TicketActivity.objects.create(
@@ -314,6 +318,9 @@ def update_ticket(request, ticket_id):
         )
         ticket.status = "in_progress"
         ticket.latest_action = "status_updated"
+        ticket.latest_editor = request.user
+        ticket.can_be_managed = True
+        ticket.need_student_update = False
         ticket.save()
         TicketActivity.objects.create(
             ticket=ticket,
