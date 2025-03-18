@@ -65,6 +65,14 @@ class TicketListView(ListView):
             return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_queryset(self):
+        if self.request.user.is_program_officer():
+            return Ticket.objects.all()
+        elif self.request.user.is_specialist():
+            return Ticket.objects.filter(assigned_user=self.request.user)
+        elif self.request.user.is_student():
+            return Ticket.objects.filter(creator=self.request.user)
+
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
     model = Ticket

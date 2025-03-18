@@ -12,14 +12,7 @@
               <div class="col-md-3 mb-2 mb-md-0">
                 <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
               </div>
-              
-              <div class="col-md-3 mb-2 mb-md-0">
-                <select name="status" class="form-select">
-                  <option value="">-- Filter by Status --</option>
-                  <option value="in_progress" {% if request.GET.status == 'in_progress' %}selected{% endif %}>In Progress</option>
-                  <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>Closed</option>
-                </select>
-              </div>
+          
               <div class="col-md-3 mb-2 mb-md-0">
                 <select name="sort" class="form-select">
                   <option value="">-- Sort By --</option>
@@ -35,10 +28,15 @@
                   <button type="submit" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.status.value=''; this.form.sort.value='';">Clear</button>
                 </div>
               </div>
+
+              <div class="col-md-3 d-flex align-items-center justify-content-end">
+                <a href="{% url 'ticket_list' %}" class="create-btn">
+                    <span class="me-2">View all my tickets</span>
+                </a>
             </div>
           </form>
       <h2>Your Assigned Tickets</h2>
-      {% if not assigned_tickets %}
+      {% if not assigned_tickets or assigned_tickets.status == 'closed'%}
         <div class="alert alert-info">No assigned tickets found.</div>
       {% else %}
         <table class="table table-bordered table-striped">
@@ -54,15 +52,15 @@
           <tbody>
             {% for ticket in assigned_tickets %}
               <tr>
-                <td>{{ ticket.title }}</td>
-                <td>{{ ticket.status }}</td>
-                <td>{{ ticket.priority }}</td>
-                <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
-                <td>
-                  {% if ticket.status != 'closed' %}
-                    <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
-                  {% endif %}
-                </td>
+                {% if ticket.status != 'closed' %}
+                  <td>{{ ticket.title }}</td>
+                  <td>{{ ticket.status }}</td>
+                  <td>{{ ticket.priority }}</td>
+                  <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
+                  <td>
+                  <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
+                  </td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>

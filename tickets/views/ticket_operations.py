@@ -68,7 +68,7 @@ def return_ticket(request, ticket_id):
     ticket_title = ticket.title
     response_message = request.POST.get("return_reason")
 
-    if not request.user.is_program_officer() or ticket.status != "in_progress":
+    if not request.user.is_specialist() or ticket.status != "in_progress":
         return redirect("ticket_detail", ticket_id=ticket_id)
 
     if request.method == "POST":
@@ -107,8 +107,6 @@ def return_ticket(request, ticket_id):
 @login_required
 def redirect_ticket(request, ticket_id):
 
-    print(f"🚀 redirect_ticket 被调用，ticket_id={ticket_id}")
-
     if not request.user.is_program_officer():
         return JsonResponse({"error": "Unauthorized"}, status=403)
 
@@ -122,9 +120,15 @@ def redirect_ticket(request, ticket_id):
 
     try:
         ai_assigned_department = classify_department(ticket.description)
+        ticket.assigned_department = ai_assigned_department
+        ticket.department = ticket.assigned_department.name
+        ticket.save()
     except Exception as e:
         print("❌ Error in classify_department:", e)
         ai_assigned_department = ticket.assigned_department or "IT"
+        ticket.assigned_department = ai_assigned_department
+        ticket.department = ticket.assigned_department.name
+        ticket.save()
 
     if new_assignee_id == "ai":
         ticket.assigned_user = None
@@ -137,11 +141,9 @@ def redirect_ticket(request, ticket_id):
             action="redirected",
             action_by=request.user,
             action_time=timezone.now(),
-            comment=f"Redirected to {ai_assigned_department} (AI recommended)",
+            comment=f"Redirected to General Enquiry (AI recommended)",
         )
-        messages.success(
-            request, f"Ticket successfully redirected to {new_assignee.username}!"
-        )
+        messages.warning(request, f"Ticket still need you to reponse, AI recommended.")
         return JsonResponse(
             {
                 "success": True,
@@ -153,6 +155,8 @@ def redirect_ticket(request, ticket_id):
     try:
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
+        ticket.assigned_department = new_assignee.department.name
+        ticket.department = ticket.assigned_department.name
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
         ticket.save()
@@ -260,7 +264,6 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
 
 @login_required
 def respond_ticket(request, ticket_id):
-    print(f"🚀 respond_ticket 被调用，ticket_id={ticket_id}")
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.user != ticket.assigned_user and not request.user.is_program_officer():
         return redirect("dashboard")
@@ -283,7 +286,7 @@ def respond_ticket(request, ticket_id):
             for approved_ticket in merged_ticket.approved_merged_tickets.all():
                 approved_ticket.answers = (
                     approved_ticket.answers or ""
-                ) + f"\nResponse by {request.user.username}: {response_message}"
+                ) + f"\nResponse by {request.user.full_name()}: {response_message}"
             approved_ticket.status = "in_progress"
             approved_ticket.save()
             TicketActivity.objects.create(
@@ -295,7 +298,7 @@ def respond_ticket(request, ticket_id):
 
         ticket.answers = (
             ticket.answers or ""
-        ) + f"\nResponse by {request.user.full_name}: {response_message}"
+        ) + f"\nResponse by {request.user.full_name()}: {response_message}"
         ticket.status = "in_progress"
         ticket.save()
         TicketActivity.objects.create(
@@ -305,6 +308,9 @@ def respond_ticket(request, ticket_id):
             comment=response_message,
         )
     messages.success(request, "Response sent successfully.")
+    ticket.status = "closed"
+    ticket.save()
+    send_ticket_confirmation_email(ticket)
 
     return render(
         request,
