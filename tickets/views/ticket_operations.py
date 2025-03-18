@@ -63,30 +63,34 @@ def close_ticket(request, ticket_id):
 @login_required
 def return_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+    if (
+        not (request.user.is_specialist() or request.user.is_program_officer())
+        or ticket.status != "in_progress"
+    ):
+        return redirect("ticket_detail", ticket_id=ticket_id)
 
     student_email = ticket.creator.email
     ticket_title = ticket.title
-    response_message = request.POST.get("return_reason")
-
-    if not request.user.is_specialist() or ticket.status != "in_progress":
-        return redirect("ticket_detail", ticket_id=ticket_id)
 
     if request.method == "POST":
         form = ReturnTicketForm(request.POST)
         if form.is_valid():
             ticket.status = "in_progress"
-            ticket.return_reason = form.cleaned_data["return_reason"]
+            return_reason = form.cleaned_data["return_reason"]
+            ticket.return_reason = return_reason
             ticket.latest_action = "status_updated"
             ticket.latest_editor = request.user
             ticket.save()
 
+            ticket.refresh_from_db()
+
             send_updated_notification_email(
-                student_email, ticket_title, response_message, ticket_id
+                student_email, ticket_title, ticket.return_reason, ticket_id
             )
 
             TicketActivity.objects.create(
                 ticket=ticket,
-                action="status_updated",
+                action="Returned",
                 action_by=request.user,
                 action_time=timezone.now(),
                 comment=f"Return to student : {ticket.creator.full_name()}",
