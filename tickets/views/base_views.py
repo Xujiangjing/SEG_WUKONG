@@ -181,7 +181,7 @@ def ticket_detail(request, ticket_id):
         and ticket.status == "in_progress"
         and ticket.can_be_managed
     ):
-        messages.warning(request, "This ticket is waiting for a response.")
+        messages.warning(request, "This ticket is waiting for the staff to process.")
     
 
     if (
