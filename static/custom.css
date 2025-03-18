@@ -821,13 +821,61 @@ body  {
   /* 也可加 min-width / max-width 等 */
 }
 
+.tickets-header {
+    display: flex;            /* 横向排列 */
+    justify-content: space-between; /* 平分宽度 */
+    color: black;              /* 如果背景是深色，可以用白字 */
+    font-weight: bold;
+    margin-bottom: 15px;      /* 与下面的内容留点间距 */
+    text-align: center;
+  }
+  
+  /* 让标题的每个小块都能占据相对均匀的空间 */
+.tickets-header > div {
+    flex: 1;
+  }
+  
+/* 每个 ticket 行：横向排列内部各项 */
+.ticket-row {
+    display: flex;
+    flex-direction: row;  /* 横向排列 */
+    align-items: center; /* 垂直居中内容 */
+    background-color: #fff;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 120px; /* 与标题行高度一致 */
+    overflow: hidden;
+}
+  
+/* 让 ticket 行内的每个字段均分宽度并与标题对齐 */
+.ticket-row > div {
+flex: 1;
+text-align: center; /* 或者根据需要改为 left */
+}
+
+.tickets-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.tickets-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #000C40;
+    margin: 0; /* 清除默认 margin，确保对齐 */
+} 
+
 .create-btn {
   background-color: #2D47B8; /* 深蓝色 */
   border-color: #253A94; /* 深一点的边框颜色 */
   color: white !important; /* 文字颜色 */
   font-weight: bold; /* 让文字更醒目 */
   padding: 10px 20px; /* 让按钮大小合适 */
-  height: 50px; /* 让高度和 Apply / Clear 按钮一致 */
+  height: 45px; /* 让高度和 Apply / Clear 按钮一致 */
   display: inline-flex; /* 内联布局 */
   align-items: center;
   justify-content: center;
@@ -846,3 +894,46 @@ body  {
   width: 40px; /* 图标大小 */
   height: auto;
 }
+
+.view-btn {
+    background-color: #2D47B8; /* 深蓝色 */
+    border-color: #253A94; /* 深一点的边框颜色 */
+    color: white !important; /* 文字颜色 */
+    font-weight: bold; /* 让文字更醒目 */
+    padding: 10px 35px; /* 让按钮大小合适 */
+    height: 45px; /* 让高度和 Apply / Clear 按钮一致 */
+    display: inline-flex; /* 内联布局 */
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px; /* 圆角 */
+    pointer-events: auto; /* 允许点击 */
+    text-decoration: none; /* 移除可能的下划线 */
+}
+
+.view-btn:hover {
+background-color: #253A94; /* 悬停时颜色加深 */
+border-color: #1E2F78;
+}
+
+
+.manage-btn {
+    background-color: #ffb200; /* 绿色背景 */
+    border: 1px solid #ffb200; /* 深绿色边框 */
+    color: white !important;
+    font-weight: bold;
+    padding: 10px 20px;
+    height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  
+  .manage-btn:hover {
+    background-color: #e6a100; /* 悬停时更深的绿色 */
+    border-color: #e6a100;
+  }
+  
+  

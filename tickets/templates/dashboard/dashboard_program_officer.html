@@ -2,104 +2,113 @@
 
 {% block content %}
 <div class="content-area">
-  <div class="fog-box">
-    <div class="container my-4">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-
-      <div class="row">
-        <div class="col-12">
-          <h1 class="text-center text-primary">Welcome to your dashboard, {{ user.username }}</h1>
-
-          <!-- Add the button here -->
-          <div class="text-center my-4">
-            <a href="{% url 'visualize_ticket_data' %}" class="btn btn-info">Visualize Ticket Data</a>
-          </div>
-
-          <!-- Tickets Tab -->
-          <div id="tickets">
-            <form method="GET" action="{% url 'dashboard_program_officer' %}">
-              <div class="row mb-4">
-                <div class="col-md-3 mb-2 mb-md-0">
-                  <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
+    <div class="fog-box">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                  <select name="sort" class="form-select">
-                    <option value="">-- Sort By --</option>
-                    <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
-                    <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
-                    <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
-                    <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
-                  </select>
-                </div>
-                <div class="col-md-3">
-                  <div class="input-group">
-                    <button type="submit" class="btn btn-primary">Apply</button>
-                    <button type="submit" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.status.value=''; this.form.sort.value='';">Clear</button>
-                  </div>
-                </div>
+            {% endfor %}
+        {% endif %}
 
-                <!-- 右侧独立的 Create 按钮 -->
-                <div class="col-md-3 d-flex align-items-center justify-content-end">
-                    <a href="{% url 'ticket_list' %}" class="create-btn">
-                        <span class="me-2">View All</span>
-                    </a>
-                </div>
-              </div>
-            </form>
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold; margin-top: 40px;">
+                    Welcome to your dashboard, {{ user.username }}
+                </h1>
 
-            <h2>Tickets</h2>
-            {% if not all_tickets %}
-              <div class="alert alert-info">No tickets found.</div>
-            {% else %}
-              <table class="table table-striped table-light">
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Assigned To</th>
-                    <th>Answers</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for ticket in all_tickets %}
-                    <tr>
-                      <td>{{ ticket.title }}</td>
-                      <td>{{ ticket.assigned_department }}</td>
-                      <td>{{ ticket.status }}</td>
-                      <td>{{ ticket.priority }}</td>
-                      <td>{{ ticket.assigned_user }}</td>
-                      <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
-                      <td>
-                        {% if ticket.status != 'closed' and not ticket.return_reason and ticket.assigned_user is None%}
-                          <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-warning">
-                            Manage
-                          </a>
-                        {% endif %}
-                        {% if ticket.status != 'closed' and ticket.return_reason or ticket.assigned_user is not None%}
-                          <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-warning">
-                            View
-                          </a>
-                        {% endif %}
-                      </td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            {% endif %}
-          </div>
+                <!-- Tickets 区域 -->
+                <div id="tickets">
+                    <form method="GET" action="{% url 'dashboard_program_officer' %}">
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <input type="text" class="form-control" name="search"
+                                    value="{{ request.GET.search }}" placeholder="Search for tickets..." />
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <select name="sort" class="form-select">
+                                    <option value="">-- Sort By --</option>
+                                    <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>
+                                        Date (Oldest First)
+                                    </option>
+                                    <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>
+                                        Date (Newest First)
+                                    </option>
+                                    <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>
+                                        Priority (Low→Urgent)
+                                    </option>
+                                    <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>
+                                        Priority (Urgent→Low)
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <button type="submit" class="btn btn-primary me-2">Apply</button>
+                                <button type="submit" class="btn btn-secondary me-2"
+                                    onclick="this.form.search.value=''; this.form.sort.value='';">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Tickets 和 View All 同行 -->
+                    <div class="tickets-header-container">
+                        <h2 class="tickets-title">Tickets</h2>
+                        <a href="{% url 'ticket_list' %}" class="create-btn">
+                            <span>View All</span>
+                        </a>
+                    </div>
+
+                    {% if not all_tickets %}
+                        <div class="alert alert-info">No tickets found.</div>
+                    {% else %}
+                        <div class="tickets-container">
+                            <div class="tickets-header">
+                                <div>Title</div>
+                                <div>Category</div>
+                                <div>Status</div>
+                                <div>Priority</div>
+                                <div>Assigned To</div>
+                                <div>Answers</div>
+                                <div>Actions</div>
+                            </div>
+
+                            <!-- 工单内容：每条工单作为一行白色框 -->
+                            {% for ticket in all_tickets %}
+                                <div class="ticket-row">
+                                    <div>{{ ticket.title }}</div>
+                                    <div>{{ ticket.assigned_department }}</div>
+                                    <div>{{ ticket.status }}</div>
+                                    <div>{{ ticket.priority }}</div>
+                                    <div>{{ ticket.assigned_user }}</div>
+                                    <div>
+                                        {% if ticket.answers %}
+                                            Answered
+                                        {% else %}
+                                            Not yet answered
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        {% if ticket.status != 'closed' and not ticket.return_reason and ticket.assigned_user is None %}
+                                            <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
+                                                Manage
+                                            </a>
+                                        {% endif %}
+                                        {% if ticket.status != 'closed' and ticket.return_reason or ticket.assigned_user is not None %}
+                                            <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
+                                                View
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}

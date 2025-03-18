@@ -19,6 +19,16 @@
       </a>
     </li>
 
+    <!-- 仅 Program Officers 可见的 Statistics 链接 -->
+    {% if user.is_program_officer %}
+    <li class="nav-item mb-3">
+        <a id="statistics-link" class="nav-link text-black" href="{% url 'visualize_ticket_data' %}" onclick="setActive('statistics')">
+            <img id="statistics-icon" src="{% static 'images/statistics_icon_dark.png' %}" alt="Statistics Icon" class="nav-icon">
+            Statistics
+        </a>
+    </li>
+    {% endif %}
+
     <!-- Profile -->
     <li class="nav-item mb-3">
       <a id="profile-link" class="nav-link text-black" href="{% url 'profile' %}" onclick="setActive('profile')">
@@ -44,34 +54,54 @@
 document.addEventListener("DOMContentLoaded", function() {
     let dashboardIcon = document.getElementById("dashboard-icon");
     let profileIcon = document.getElementById("profile-icon");
-
+    let statisticsIcon = document.getElementById("statistics-icon");
     // 预定义静态图片路径
     let dashboardDefault = "{% static 'images/dashboard_icon.png' %}";
     let dashboardDark = "{% static 'images/dashboard_icon_dark.png' %}";
     let profileDefault = "{% static 'images/profile_icon.png' %}";
     let profileWhite = "{% static 'images/profile_icon_white.png' %}";
+    let statisticsDefault = "{% static 'images/statistics_icon.png' %}";
+    let statisticsDark = "{% static 'images/statistics_icon_dark.png' %}";
 
     let currentPath = window.location.pathname;
     if (currentPath.includes("dashboard")) {
         setActive("dashboard");
     } else if (currentPath.includes("profile")) {
         setActive("profile");
+    } else if (currentPath.includes("visualize_ticket_data")) {
+        setActive("statistics");
     }
 
     function setActive(page) {
         let dashboard = document.getElementById("dashboard-link");
         let profile = document.getElementById("profile-link");
+        let statistics = document.getElementById("statistics-link");
 
         if (page === "dashboard") {
             dashboard.classList.add("active");
             profile.classList.remove("active");
-            dashboardIcon.src = dashboardDefault; // 恢复 Dashboard 默认图标
-            profileIcon.src = profileDefault; // 恢复 Profile 默认图标
+            if (statistics) {
+            statistics.classList.remove("active");
+            statisticsIcon.src = statisticsDark;
+            }
+            dashboardIcon.src = dashboardDefault; // Dashboard 默认图标
+            profileIcon.src = profileDefault; // Profile 默认图标
         } else if (page === "profile") {
             profile.classList.add("active");
             dashboard.classList.remove("active");
+            if (statistics) {
+            statistics.classList.remove("active");
+            statisticsIcon.src = statisticsDark;
+            }
             dashboardIcon.src = dashboardDark; // Dashboard 变暗
             profileIcon.src = profileWhite; // Profile 变白
+        } else if (page === "statistics" && statistics) {
+            statistics.classList.add("active");
+            dashboard.classList.remove("active");
+            profile.classList.remove("active");
+            dashboardIcon.src = dashboardDark; // Dashboard 变暗
+            profileIcon.src = profileDefault; // Profile 默认图标
+            statisticsIcon.src = statisticsDefault; // Statistics 变白
         }
     }
 });
