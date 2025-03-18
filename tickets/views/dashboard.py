@@ -57,7 +57,6 @@ def program_officer_dashboard(request):
         status_filter,
         sort_option,
     )
-
     return render(
         request, "dashboard/dashboard_program_officer.html", {"all_tickets": tickets}
     )
@@ -84,5 +83,5 @@ def specialist_dashboard(request):
 
 @login_required
 def visualize_ticket_data(request):
-    reports = DailyTicketClosureReport.objects.all().order_by('-date')
-    return render(request, 'visualize_ticket_data.html', {'reports': reports})
+    reports = DailyTicketClosureReport.objects.all().order_by("-date")
+    return render(request, "visualize_ticket_data.html", {"reports": reports})

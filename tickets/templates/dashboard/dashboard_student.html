@@ -61,8 +61,8 @@
             {% for ticket in student_tickets %}
               <tr>
                 <td>{{ ticket.title }}</td>
-                <td>{{ ticket.status }}</td>
-                <td>{{ ticket.priority }}</td>
+                <td>{{ ticket.get_status_name}}</td>
+                <td>{{ ticket.get_priority_name }}</td>
                 <td>
                   {% if ticket.answers %}
                     Answered
@@ -72,7 +72,7 @@
                 </td>
                 <td>
                   <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
-                  {% if ticket.status == 'open' %}
+                  {% if ticket.status == 'in_progress' %}
                     <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
                   {% endif %}
                 </td>

@@ -78,18 +78,12 @@
                             <!-- 工单内容：每条工单作为一行白色框 -->
                             {% for ticket in all_tickets %}
                                 <div class="ticket-row">
-                                    <div>{{ ticket.title }}</div>
-                                    <div>{{ ticket.assigned_department }}</div>
-                                    <div>{{ ticket.status }}</div>
-                                    <div>{{ ticket.priority }}</div>
-                                    <div>{{ ticket.assigned_user }}</div>
-                                    <div>
-                                        {% if ticket.answers %}
-                                            Answered
-                                        {% else %}
-                                            Not yet answered
-                                        {% endif %}
-                                    </div>
+                                    <td>{{ ticket.title }}</td>
+                                    <td>{{ ticket.get_department_name }}</td>
+                                    <td>{{ ticket.get_status_name }}</td>
+                                    <td>{{ ticket.get_priority_name }}</td>
+                                    <td>{{ ticket.assigned_user.full_name |default:"None" }}</td>
+                                    <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td> 
                                     <div>
                                         {% if ticket.status != 'closed' and not ticket.return_reason and ticket.assigned_user is None %}
                                             <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
@@ -108,7 +102,18 @@
                     {% endif %}
                 </div>
             </div>
+                <div class="col-md-3 d-flex align-items-center justify-content-end">
+                    <a href="{% url 'ticket_list' %}" class="create-btn">
+                        <span class="me-2">View All</span>
+                    </a>
+                </div>
+              </div>
+            </form>
+    
+            
+          </div>
         </div>
     </div>
 </div>
 {% endblock %}
+
