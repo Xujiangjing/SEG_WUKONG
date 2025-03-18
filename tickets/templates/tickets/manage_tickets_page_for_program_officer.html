@@ -29,8 +29,7 @@
             <div id="respond-section" style="display: none;">
                 <label for="response_message">Response:</label>
                 <textarea id="response_message" name="response_message" class="form-control"></textarea>
-
-                <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+                <button type="submit" id="respond_submit_btn" class="btn btn-success mt-3">Submit</button>
             </div>
 
             <!-- Redirect Section -->
@@ -42,8 +41,7 @@
                         {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
                     {% endfor %}
                 </select>
-
-                <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+                <button type="submit" id="redirect_submit_btn" class="btn btn-success mt-3">Submit</button>
             </div>
             <!-- Merge Section -->
             <div id="merge-section" style="display: none;">
@@ -87,8 +85,7 @@
             <div id="return-section" style="display: none;">
                 <label for="return_reason">Return Reason:</label>
                 <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
-
-                <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
+                <button type="submit" id="return_submit_btn" class="btn btn-success mt-3">Submit</button>
             </div>
 
             
@@ -156,27 +153,27 @@
             });
         });
 
-        // ✅ 监听表单提交
-        actionForm.addEventListener("submit", function (event) {
-            let actionType = actionTypeInput.value;
-            
-            // 🚀 只拦截 "Redirect Ticket" 提交，其他的正常提交
-            if (actionType === "redirect_ticket") {
-            event.preventDefault();  // ✅ 阻止默认提交
-            console.log("🚀 Redirect Ticket 按钮被点击了！");
+        document.getElementById("respond_submit_btn").addEventListener("click", function (event) {
+        let responseText = document.getElementById("response_message").value.trim();
+        if (!responseText) {
+            event.preventDefault();
+            alert("⚠️ Response message cannot be empty.");
+        }
+    });
+
+        // ✅ Redirect Ticket AJAX
+        document.getElementById("redirect_submit_btn").addEventListener("click", function (event) {
+            event.preventDefault();
 
             let formData = new FormData(actionForm);
             let newAssigneeId = document.getElementById("new_assignee_id").value;
-
-            console.log("📩 发送数据: ", { "new_assignee_id": newAssigneeId });
-
             if (!newAssigneeId) {
-                alert("⚠️ 请选择一个 Specialist！");
+                alert("⚠️ Please select a specialist.");
                 return;
             }
 
-            let ticketId = "{{ ticket.id }}";  // Django 变量解析
-            let url = `/tickets/${ticketId}/redirect/` // ✅ 直接请求 `redirect_ticket`
+            let ticketId = "{{ ticket.id }}";
+            let url = `/tickets/${ticketId}/redirect/`;
 
             fetch(url, {
                 method: "POST",
@@ -187,8 +184,6 @@
             })
             .then(response => response.json())
             .then(data => {
-                console.log("🔍 AJAX Response:", data);
-
                 if (data.success) {
                     window.location.href = data.redirect_url;
                 } else {
@@ -196,9 +191,8 @@
                 }
             })
             .catch(error => console.error("❌ AJAX Error:", error));
-        }
         });
-    });
+
 
     document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".merge-ticket-form").forEach(form => {
@@ -233,7 +227,14 @@
             });
         });
     });
-
+        document.getElementById("return_submit_btn").addEventListener("click", function (event) {
+            let returnReason = document.getElementById("return_reason").value.trim();
+            if (!returnReason) {
+                event.preventDefault();
+                alert("⚠️ Return reason cannot be empty.");
+            }
+        });
+    });
     document.addEventListener("DOMContentLoaded", function () {
         const responseBox = document.getElementById("response_message");
         const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}";
