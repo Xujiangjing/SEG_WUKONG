@@ -6,10 +6,10 @@
 
         <h1>Manage Ticket - {{ ticket.title }}</h1>
         <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
-        <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name }}</p>
-        <p><strong>Status:</strong> {{ ticket.status }}</p>
-        <p><strong>Priority:</strong> {{ ticket.priority }}</p>
-        <p><strong>Category:</strong> {{ ticket.assigned_department }}</p>
+        <p><strong>Assigned Specialist:</strong> {{ ticket.specialist.full_name | default:'None' }}</p>
+        <p><strong>Status:</strong> {{ ticket.get_status_name }}</p>
+        <p><strong>Priority:</strong> {{ ticket.get_priority_name }}</p>
+        <p><strong>Category:</strong> {{ ticket.get_department_name }}</p>
         <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
         <p><strong>Description:</strong> {{ ticket.description }}</p>
 
