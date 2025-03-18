@@ -201,29 +201,6 @@ def redirect_ticket(request, ticket_id):
 
 
 @login_required
-def supplement_ticket(request, pk):
-    ticket = get_object_or_404(Ticket, pk=pk)
-    if request.user != ticket.creator or ticket.status != "returned":
-        return redirect("ticket_list")
-
-    if request.method == "POST":
-        form = SupplementTicketForm(request.POST)
-        if form.is_valid():
-            ticket.description += (
-                f"\n\nSupplement: {form.cleaned_data['supplement_info']}"
-            )
-            ticket.status = "in_progress"
-            ticket.save()
-            return redirect("ticket_list")
-    else:
-        form = SupplementTicketForm()
-
-    return render(
-        request, "tickets/supplement_ticket.html", {"form": form, "ticket": ticket}
-    )
-
-
-@login_required
 @require_POST
 def merge_ticket(request, ticket_id, potential_ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -333,7 +310,7 @@ def update_ticket(request, ticket_id):
     if request.method == "POST" and "update_message" in request.POST:
         update_message = request.POST.get("update_message")
         ticket.description += (
-            f"\n\nSupplement: {request.user.username}: {update_message}"
+            f"\n\nAdded Information:\n{update_message}"
         )
         ticket.status = "in_progress"
         ticket.latest_action = "status_updated"

@@ -38,7 +38,6 @@ from tickets.views.dashboard import (
 from tickets.views.ticket_operations import (
     close_ticket,
     return_ticket,
-    supplement_ticket,
     merge_ticket,
     respond_ticket,
     update_ticket,
@@ -65,11 +64,6 @@ urlpatterns = [
         "ticket/<uuid:pk>/return/",
         ticket_operations.return_ticket,
         name="return_ticket",
-    ),
-    path(
-        "ticket/<uuid:pk>/supplement/",
-        ticket_operations.supplement_ticket,
-        name="supplement_ticket",
     ),
     path(
         "ticket/<uuid:ticket_id>/detail/",

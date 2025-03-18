@@ -7,7 +7,6 @@ from .dashboard import (
 from .ticket_operations import (
     close_ticket,
     return_ticket,
-    supplement_ticket,
     merge_ticket,
     respond_ticket,
     update_ticket,
