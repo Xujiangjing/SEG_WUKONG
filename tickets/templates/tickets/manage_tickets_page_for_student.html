@@ -7,7 +7,8 @@
         <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
         <p><strong>Description:</strong> {{ ticket.description }}</p>
 
-        <form method="POST" id="ticket_form" action="{{ ticket.latest_editor }}">
+        <form method="POST" id="ticket_form" action="{% url 'update_ticket' ticket_id=ticket.id %}">
+
             {% csrf_token %}
             
             <div class="mb-3">

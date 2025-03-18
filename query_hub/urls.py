@@ -112,6 +112,11 @@ urlpatterns = [
         visualize_ticket_data,
         name="visualize_ticket_data",
     ),
+    path(
+        "tickets/<uuid:ticket_id>/update/",
+        ticket_operations.update_ticket,
+        name="update_ticket",
+    ),
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT

@@ -365,7 +365,7 @@ def manage_ticket_page(request, ticket_id):
         if request.method == "POST":
             action = request.POST.get("action_type")
             if action == "update_ticket":
-                return update_ticket(request, ticket_id)
+                return update_ticket(request, ticket_id=ticket.id)
             elif action == "close_ticket":
                 return close_ticket(request, ticket_id=ticket.id)
 
