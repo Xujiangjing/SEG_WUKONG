@@ -73,10 +73,10 @@
                   {% for ticket in all_tickets %}
                     <tr>
                       <td>{{ ticket.title }}</td>
-                      <td>{{ ticket.assigned_department }}</td>
-                      <td>{{ ticket.status }}</td>
-                      <td>{{ ticket.priority }}</td>
-                      <td>{{ ticket.assigned_user }}</td>
+                      <td>{{ ticket.get_department_name }}</td>
+                      <td>{{ ticket.get_status_name }}</td>
+                      <td>{{ ticket.get_priority_name }}</td>
+                      <td>{{ ticket.assigned_user.full_name |default:"None" }}</td>
                       <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
                       <td>
                         {% if ticket.status != 'closed' and not ticket.return_reason and ticket.assigned_user is None%}
@@ -102,3 +102,4 @@
   </div>
 </div>
 {% endblock %}
+
