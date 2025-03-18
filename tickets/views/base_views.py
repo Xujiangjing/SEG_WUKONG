@@ -175,6 +175,14 @@ def ticket_detail(request, ticket_id):
         and ticket.return_reason
     ):
         messages.warning(request, "This ticket is waiting for the student to update.")
+    
+    if (
+        request.user.is_student()
+        and ticket.status == "in_progress"
+        and ticket.can_be_managed
+    ):
+        messages.warning(request, "This ticket is waiting for a response.")
+    
 
     if (
         request.user != ticket.creator
