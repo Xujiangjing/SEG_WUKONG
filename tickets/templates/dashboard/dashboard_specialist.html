@@ -54,8 +54,8 @@
               <tr>
                 {% if ticket.status != 'closed' %}
                   <td>{{ ticket.title }}</td>
-                  <td>{{ ticket.status }}</td>
-                  <td>{{ ticket.priority }}</td>
+                  <td>{{ ticket.get_status_name }}</td>
+                  <td>{{ ticket.get_priority_name }}</td>
                   <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
                   <td>
                   <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
