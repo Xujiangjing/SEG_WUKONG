@@ -60,7 +60,16 @@
                 <div>{{ ticket.get_priority_name }}</div>
                 <div>{% if ticket.answers %}Answered{% else %}Not yet answered{% endif %}</div>
                 <div>
-                <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">Manage</a>
+                  {% if ticket.status != 'closed' and not ticket.return_reason and ticket.assigned_user is None %}
+                    <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
+                        Manage
+                    </a>
+                  {% endif %}
+                  {% if ticket.status != 'closed' and ticket.return_reason or ticket.assigned_user is not None %}
+                      <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
+                          View
+                      </a>
+                  {% endif %}
                 </div>
             {% endif %}
             </div>
