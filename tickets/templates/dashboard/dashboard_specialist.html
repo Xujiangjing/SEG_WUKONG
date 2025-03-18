@@ -1,73 +1,73 @@
 {% extends 'base_content.html' %}
+
 {% block content %}
 <div class="content-area">
   <div class="fog-box">
-    <div class="container my-4">
-        <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
-            Welcome to your dashboard, {{ user.username }}
-        </h1>
-      <!-- Tickets Tab -->
-      <div id="tickets">
-          <form method="GET" action="{% url 'dashboard_specialist' %}">
-            <div class="row mb-4">
-              <div class="col-md-3 mb-2 mb-md-0">
-                <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
-              </div>
-            
-              <div class="col-md-3 mb-2 mb-md-0">
-                <select name="sort" class="form-select">
-                  <option value="">-- Sort By --</option>
-                  <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
-                  <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
-                  <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
-                  <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <div class="input-group">
-                  <button type="submit" class="btn btn-primary">Apply</button>
-                  <button type="submit" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.status.value=''; this.form.sort.value='';">Clear</button>
-                </div>
-              </div>
+    
+    <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
+    Welcome to your dashboard, {{ user.username }}
+    </h1>
 
-              <div class="col-md-3 d-flex align-items-center justify-content-end">
-                <a href="{% url 'ticket_list' %}" class="create-btn">
-                    <span class="me-2">View all my tickets</span>
-                </a>
+    <!-- Tickets Tab -->
+    <div id="tickets">
+    <form method="GET" action="{% url 'dashboard_specialist' %}">
+        <div class="row mb-4">
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
+        </div>
+        <div class="col-md-3 mb-2 mb-md-0">
+            <select name="sort" class="form-select">
+            <option value="">-- Sort By --</option>
+            <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+            <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
+            <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
+            <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="input-group">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <button type="button" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.sort.value='';">Clear</button>
             </div>
-          </form>
-      <h2>Your Assigned Tickets</h2>
-      {% if not assigned_tickets or assigned_tickets.status == 'closed'%}
-        <div class="alert alert-info">No assigned tickets found.</div>
-      {% else %}
-      <table class="table table-striped table-light">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Answers</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ticket in assigned_tickets %}
-              <tr>
-                {% if ticket.status != 'closed' %}
-                  <td>{{ ticket.title }}</td>
-                  <td>{{ ticket.get_status_name }}</td>
-                  <td>{{ ticket.get_priority_name }}</td>
-                  <td>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</td>
-                  <td>
-                  <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
-                  </td>
-                {% endif %}
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
+        </div>
+        </div>
+    </form>
+
+    <!-- Tickets 和 create 同行 -->
+    <div class="tickets-header-container">
+        <h2 class="tickets-title">Your Assigned Tickets</h2>
+        <a href="{% url 'ticket_list' %}" class="create-btn">
+            <span class="me-2">View All My Tickets</span>
+        </a>
     </div>
-  </div>  
+
+    {% if not assigned_tickets or assigned_tickets.status == 'closed' %}
+        <div class="alert alert-info">No assigned tickets found.</div>
+    {% else %}
+        <div class="tickets-container">
+        <div class="tickets-header">
+            <div>Title</div>
+            <div>Status</div>
+            <div>Priority</div>
+            <div>Answers</div>
+            <div>Actions</div>
+        </div>
+        {% for ticket in assigned_tickets %}
+            <div class="ticket-row">
+            {% if ticket.status != 'closed' %}
+                <div>{{ ticket.title }}</div>
+                <div>{{ ticket.get_status_name }}</div>
+                <div>{{ ticket.get_priority_name }}</div>
+                <div>{% if ticket.answers %}Answered{% else %}Not yet answered{% endif %}</div>
+                <div>
+                <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">Manage</a>
+                </div>
+            {% endif %}
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

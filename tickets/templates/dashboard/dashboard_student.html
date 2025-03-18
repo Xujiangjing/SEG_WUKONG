@@ -3,84 +3,74 @@
 {% block content %}
 <div class="content-area">
   <div class="fog-box">
-    <div class="container my-4">
-      <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
-        Welcome to your dashboard, {{ user.username }}
-      </h1>
+    <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
+    Welcome to your dashboard, {{ user.username }}
+    </h1>
 
-      <!-- Tickets Tab -->
-      <div id="tickets">
-        <form method="GET" action="{% url 'dashboard_student' %}">
-          <div class="row mb-4">
-            
-            <div class="col-md-9">
-              <div class="row">
-                <div class="col-md-3 mb-2 mb-md-0">
-                  <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                  <select name="sort" class="form-select">
-                    <option value="">-- Sort By --</option>
-                    <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
-                    <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
-                    <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
-                    <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
-                  </select>
-                </div>
-                <div class="col-md-3 mb-2 mb-md-0 d-flex align-items-center">
-                  <button type="submit" class="btn btn-primary">Apply</button>
-                  <button type="button" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.status.value=''; this.form.sort.value='';">Clear</button>
-                </div>
-              </div>
+    <!-- Tickets Tab -->
+    <div id="tickets">
+    <form method="GET" action="{% url 'dashboard_student' %}">
+        <div class="row mb-4">
+        <div class="col-md-9">
+            <div class="row">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
             </div>
-            <!-- 右侧独立的 Create 按钮 -->
-            <div class="col-md-3 d-flex align-items-center justify-content-end">
-              <a href="{% url 'create_ticket' %}" class="create-btn">
-                <span class="me-2">Create</span>
-                <img src="{% static 'images/create_icon.png' %}" alt="Create Icon" class="create-icon">
-              </a>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <select name="sort" class="form-select">
+                <option value="">-- Sort By --</option>
+                <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+                <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
+                <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
+                <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
+                </select>
             </div>
-          </div>
-        </form>
-      </div>
+            <div class="col-md-3 mb-2 mb-md-0 d-flex align-items-center">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <button type="button" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.sort.value='';">Clear</button>
+            </div>
+            </div>
+        </div>
+        </div>
+    </form>
 
-      {% if not student_tickets %}
+    <!-- Tickets 和 create 同行 -->
+    <div class="tickets-header-container">
+        <h2 class="tickets-title">Tickets</h2>
+        <a href="{% url 'create_ticket' %}" class="create-btn">
+            <span class="me-2">Create</span>
+            <img src="{% static 'images/create_icon.png' %}" alt="Create Icon" class="create-icon">
+        </a>
+    </div>
+
+    {% if not student_tickets %}
         <div class="alert alert-info">No tickets found.</div>
-      {% else %}
-        <table class="table table-striped table-light">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Priority</th>
-              <th>Answers</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ticket in student_tickets %}
-              <tr>
-                <td>{{ ticket.title }}</td>
-                <td>{{ ticket.get_status_name}}</td>
-                <td>{{ ticket.get_priority_name }}</td>
-                <td>
-                  {% if ticket.answers %}
-                    Answered
-                  {% else %}
-                    Not yet answered
-                  {% endif %}
-                </td>
-                <td>
-                  <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
-                  {% if ticket.status == 'in_progress' %}
+    {% else %}
+        <div class="tickets-container">
+        <div class="tickets-header">
+            <div>Title</div>
+            <div>Status</div>
+            <div>Priority</div>
+            <div>Answers</div>
+            <div>Actions</div>
+        </div>
+        
+        {% for ticket in student_tickets %}
+            <div class="ticket-row">
+            <div>{{ ticket.title }}</div>
+            <div>{{ ticket.get_status_name }}</div>
+            <div>{{ ticket.get_priority_name }}</div>
+            <div>{% if ticket.answers %}Answered{% else %}Not yet answered{% endif %}</div>
+            <div>
+                <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
+                {% if ticket.status == 'in_progress' %}
                     <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
+                {% endif %}
+            </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
     </div>
   </div>
 </div>
