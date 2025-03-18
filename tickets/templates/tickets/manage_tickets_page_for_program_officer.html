@@ -20,8 +20,15 @@
             <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
         </div>
 
-        <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
-            {% csrf_token %}
+        <!-- Redirect Section -->
+        <div id="redirect-section" style="display: none;">
+            <label for="new_assignee_id">Assign to:</label>
+            <select id="new_assignee_id" name="new_assignee_id" class="form-select">
+                {% for specialist in specialists %}
+                <option value="{{ specialist.id }}">
+                    {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                {% endfor %}
+            </select>
 
             <input type="hidden" id="action_type" name="action_type">
 
