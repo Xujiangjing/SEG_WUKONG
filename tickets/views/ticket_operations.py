@@ -369,7 +369,6 @@ def manage_ticket_page(request, ticket_id):
             elif action == "close_ticket":
                 return close_ticket(request, ticket_id=ticket.id)
 
-
         return render(
             request,
             "tickets/manage_tickets_page_for_student.html",

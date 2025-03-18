@@ -3,9 +3,10 @@
 {% block content %}
 <div class="content-area">
   <div class="fog-box">
-    <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
-    Welcome to your dashboard, {{ user.username }}
-    </h1>
+    <div class="container my-4">
+      <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
+        Welcome to your dashboard, {{ user.username }}
+      </h1>
 
       <!-- Tickets Tab -->
       <div id="tickets">
@@ -38,25 +39,11 @@
                 <img src="{% static 'images/create_icon.png' %}" alt="Create Icon" class="create-icon">
               </a>
             </div>
-            <div class="col-md-3 mb-2 mb-md-0 d-flex align-items-center">
-                <button type="submit" class="btn btn-primary">Apply</button>
-                <button type="button" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.sort.value='';">Clear</button>
-            </div>
-            </div>
-        </div>
-        </div>
-    </form>
+          </div>
+        </form>
+      </div>
 
-    <!-- Tickets 和 create 同行 -->
-    <div class="tickets-header-container">
-        <h2 class="tickets-title">Tickets</h2>
-        <a href="{% url 'create_ticket' %}" class="create-btn">
-            <span class="me-2">Create</span>
-            <img src="{% static 'images/create_icon.png' %}" alt="Create Icon" class="create-icon">
-        </a>
-    </div>
-
-    {% if not student_tickets %}
+      {% if not student_tickets %}
         <div class="alert alert-info">No tickets found.</div>
       {% else %}
         <table class="table table-bordered table-striped">
