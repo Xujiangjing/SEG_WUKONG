@@ -5,7 +5,7 @@
       <div class="container my-4">
         <h1>Manage Ticket - {{ ticket.title }}</h1>
         <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
-        <p><strong>Priority:</strong> {{ ticket.priority }}</p>
+        <p><strong>Priority:</strong> {{ ticket.get_priority_name }}</p>
         <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
         <p><strong>Description:</strong> {{ ticket.description }}</p>
 
