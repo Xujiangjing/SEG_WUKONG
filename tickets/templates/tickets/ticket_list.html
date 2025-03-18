@@ -26,7 +26,7 @@
               <th>Status</th>
               <th>Date</th>
               <th>Submitted By</th>
-              <th>Answered By</th>
+              <th>Handled By</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -46,8 +46,8 @@
                   {{ ticket.created_at|date:'Y-m-d H:i:s' }}
                 </td>                
 
-                <td data-creator="{{ ticket.creator.username }}">{{ ticket.creator.username }}</td>
-                <td data-assigned-user="{{ ticket.assigned_user.username }}">{{ ticket.assigned_user.username }}</td>
+                <td data-creator="{{ ticket.creator.full_name }}">{{ ticket.creator.full_name }}</td>
+                <td data-assigned-user="{{ ticket.assigned_user.full_name }}">{{ ticket.assigned_user.full_name }}</td>
                 <td>
                   <a href="{% url 'ticket_detail' ticket_id=ticket.id %}?from=list" class="btn btn-sm btn-primary">
                     View
