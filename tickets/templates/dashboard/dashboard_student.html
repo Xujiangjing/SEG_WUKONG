@@ -12,7 +12,6 @@
       <div id="tickets">
         <form method="GET" action="{% url 'dashboard_student' %}">
           <div class="row mb-4">
-            
             <div class="col-md-9">
               <div class="row">
                 <div class="col-md-3 mb-2 mb-md-0">
@@ -33,9 +32,9 @@
                 </div>
               </div>
             </div>
-            <!-- 右侧独立的 Create 按钮 -->
+            <!-- Create Ticket Button -->
             <div class="col-md-3 d-flex align-items-center justify-content-end">
-              <a href="{% url 'create_ticket' %}" class="create-btn">
+              <a href="{% url 'create_ticket' %}" class="create-btn" aria-label="Create a new ticket">
                 <span class="me-2">Create</span>
                 <img src="{% static 'images/create_icon.png' %}" alt="Create Icon" class="create-icon">
               </a>
@@ -71,9 +70,8 @@
                   {% endif %}
                 </td>
                 <td>
-                  <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">Ticket Detail</a>
-                  {% if ticket.status == 'open' %}
-                    <a href="{% url 'close_ticket' ticket.id %}" class="btn btn-sm btn-danger">Close Ticket</a>
+                  {% if ticket.status != 'closed' %}
+                    <a href="{% url 'manage_ticket_page' ticket.id %}" class="btn btn-sm btn-primary">Manage</a>
                   {% endif %}
                 </td>
               </tr>

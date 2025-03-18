@@ -4,37 +4,51 @@
     <div class="fog-box">
       <div class="container my-4">
         <h1>Manage Ticket - {{ ticket.title }}</h1>
+        <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
+        <p><strong>Description:</strong> {{ ticket.description }}</p>
 
-        <form method="POST">
+        <form method="POST" id="ticket_form" action="{{ ticket.latest_editor }}">
             {% csrf_token %}
             
             <div class="mb-3">
-                <label for="action_type">Choose an Action:</label>
-                <select id="action_type" name="action_type" class="form-select" required>
-                    <option value="update">Update Ticket</option>
-                    <option value="close">Close Ticket</option>
-                </select>
+                <button type="button" class="btn btn-info action-btn" id="update_ticket_btn">Add More Info to this Ticket</button>
+                <a href="#" class="btn btn-danger" id="close_ticket_btn">Close this ticket</a>
             </div>
 
             <!-- Update Section -->
-            <div id="update-section">
+            <div id="update-section" style="display: none;">
                 <label for="update_message">Update Message:</label>
                 <textarea id="update_message" name="update_message" class="form-control"></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary mt-3">Submit</button>
+            <input type="hidden" name="action_type" id="action_type">
+
+            <button type="submit" id="submit_btn" class="btn btn-primary mt-3" style="display: none;">Submit</button>
         </form>
     </div>
 </div>
 
 <script>
-document.getElementById("action_type").addEventListener("change", function () {
-    if (this.value === "update") {
-        document.getElementById("update-section").style.display = "block";
-    } else {
-        document.getElementById("update-section").style.display = "none";
-    }
-});
-</script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let updateBtn = document.getElementById("update_ticket_btn");
+        let updateSection = document.getElementById("update-section");
+        let submitBtn = document.getElementById("submit_btn");
+        let actionTypeInput = document.getElementById("action_type");
+        let closeBtn = document.getElementById("close_ticket_btn");
 
+        updateBtn.addEventListener("click", function () {
+            updateSection.style.display = "block";
+            actionTypeInput.value = "update_ticket";
+            submitBtn.style.display = "block";
+        });
+
+        closeBtn.addEventListener("click", function (event) {
+            event.preventDefault();
+            let confirmClose = confirm("Are you sure you want to close this ticket? This action cannot be reversed.");
+            if (confirmClose) {
+                window.location.href = "{% url 'close_ticket' ticket.id %}";
+            }
+        });
+    });
+</script>
 {% endblock %}
