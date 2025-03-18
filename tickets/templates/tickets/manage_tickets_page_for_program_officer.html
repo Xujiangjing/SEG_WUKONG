@@ -20,15 +20,8 @@
             <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
         </div>
 
-        <!-- Redirect Section -->
-        <div id="redirect-section" style="display: none;">
-            <label for="new_assignee_id">Assign to:</label>
-            <select id="new_assignee_id" name="new_assignee_id" class="form-select">
-                {% for specialist in specialists %}
-                <option value="{{ specialist.id }}">
-                    {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
-                {% endfor %}
-            </select>
+        <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
+            {% csrf_token %}
 
             <input type="hidden" id="action_type" name="action_type">
 
@@ -46,7 +39,7 @@
                 <select id="new_assignee_id" name="new_assignee_id" class="form-select">
                     {% for specialist in specialists %}
                     <option value="{{ specialist.id }}">
-                        {{ specialist.full_name }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
+                        {{ specialist.username }} - {{ specialist.department.name }} ({{ specialist.open_tickets }} open tickets)
                     {% endfor %}
                 </select>
 
@@ -123,6 +116,7 @@
             </tbody>
         </table>
     </div>
+</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -295,6 +289,4 @@
     });
 
 </script>
-
-     
 {% endblock %}
