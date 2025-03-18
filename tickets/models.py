@@ -192,6 +192,15 @@ class Ticket(models.Model):
             self.latest_action = "created"
         super().save(*args, **kwargs)
 
+    def get_department_name(self):
+        return dict(Ticket.DEPARTMENT_CHOICES)[self.assigned_department]
+
+    def get_status_name(self):
+        return dict(Ticket.STATUS_CHOICES)[self.status]
+
+    def get_priority_name(self):
+        return dict(Ticket.PRIORITY_CHOICES)[self.priority]
+
 
 def user_directory_path(instance, filename):
 
