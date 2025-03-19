@@ -13,7 +13,7 @@
           <div class="readonly-box subtitle-box">Title</div>
         </div>
         <div class="col-sm-9">
-          <input type="text" class="form-control" value="{{ ticket.title }}" readonly>
+          <input type="text" class="form-control" value="{{ ticket.title }|linebreaksbr}" readonly>
         </div>
       </div>
 
@@ -67,16 +67,6 @@
         </div>
       </div>
 
-      <!-- Description -->
-      <div class="mb-3 row align-items-center">
-        <div class="col-sm-3">
-          <div class="readonly-box subtitle-box">Description</div>
-        </div>
-        <div class="col-sm-9">
-          <textarea class="form-control" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
-        </div>
-      </div>
-
       <!-- Latest Return Reason -->
       {% if ticket.return_reason %}
       <div class="mb-3 row align-items-center">
@@ -84,7 +74,7 @@
           <div class="readonly-box subtitle-box">Latest Return Reason</div>
         </div>
         <div class="col-sm-9">
-          <textarea class="form-control" readonly style="resize: none;">{{ ticket.return_reason }}</textarea>
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.return_reason }|linebreaksbr}</textarea>
         </div>
       </div>
       {% endif %}
@@ -114,14 +104,24 @@
         </div>
       </div>
 
+      <!-- Description -->
+        <div class="mb-3 row align-items-center description-row">
+            <div class="col-sm-3">
+                <div class="readonly-box subtitle-box description-subtitle">Description</div>
+            </div>
+            <div class="col-sm-9">
+                <textarea class="form-control description-textarea" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
+            </div>
+        </div>
+  
+
       <!-- Previous Responses - 使用卡片模式 -->
       <div class="card mb-4 shadow-lg rounded">
         <div class="card-header bg-secondary text-white">
           <strong>Previous Responses</strong>
         </div>
         <div class="card-body">
-          <pre id="previous-responses" class="text-muted" style="white-space: pre-wrap;">
-{{ ticket.answers|default:"No responses yet." }}
+          <pre id="previous-responses" class="text-muted" style="white-space: pre-wrap;">{{ ticket.answers|default:"No responses yet." }}
           </pre>
         </div>
       </div>

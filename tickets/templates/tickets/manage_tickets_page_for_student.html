@@ -16,14 +16,14 @@
       </div>
       
       <!-- Description -->
-      <div class="mb-3 row align-items-center">
+      <div class="mb-3 row align-items-center description-row">
         <div class="col-sm-3">
-          <div class="readonly-box subtitle-box">Description</div>
+            <div class="readonly-box subtitle-box description-subtitle">Description</div>
         </div>
         <div class="col-sm-9">
-          <textarea class="form-control" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
+            <textarea class="form-control description-textarea" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
         </div>
-      </div>
+    </div>
       
       <!-- Latest Return Reason (if exists) -->
       {% if ticket.return_reason %}

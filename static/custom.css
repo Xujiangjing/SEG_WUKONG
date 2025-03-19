@@ -935,3 +935,19 @@ border-color: #1E2F78;
 background-color: #e6a100; /* 悬停时更深的绿色 */
 border-color: #e6a100;
 } 
+
+textarea.description-textarea {
+    height: 100px !important;
+    overflow-y: auto;
+  }
+
+.description-row {
+align-items: stretch;  /* 让所有列高度一致 */
+}
+
+.description-row .description-subtitle {
+height: 100px !important;  /* 覆盖 .readonly-box 中的 height: 58px */
+display: flex;
+align-items: center;       /* 根据需要，可选择居中或者左对齐 */
+padding: 0 15px;
+}
