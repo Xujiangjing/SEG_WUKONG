@@ -3,64 +3,69 @@
 {% block content %}
 <div class="content-area">
   <div class="fog-box">
-    <div class="container my-4">
-      <h1>All Tickets</h1>
-      {% if tickets %}
-        <!-- 排序部分 -->
-        <div class="mb-3">
-          <label for="sort" class="form-label">Sort by:</label>
-          <select id="sort" class="form-select" onchange="sortTickets()">
-            <option value="title" selected>Title</option>
-            <option value="priority">Priority(Urgent -> Low)</option>
-            <option value="status">Status(In Progress -> Closed)</option>
-            <option value="date">Date(New -> Old)</option>
-            <option value="creator">Submitted By</option>
-          </select>
-        </div>
-        <!-- 表格列表 -->
-        <table class="table" id="ticketTable">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Priority</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Submitted By</th>
-              <th>Handled By</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for ticket in tickets %}
-              <tr>
-                <td data-title="{{ ticket.title }}">{{ ticket.title }}</td>
-                <td data-priority="{{ ticket.get_priority_display }}"
-                    data-priority-value="{% if ticket.get_priority_display == 'Urgent' %}1{% elif ticket.get_priority_display == 'High' %}2{% elif ticket.get_priority_display == 'Medium' %}3{% elif ticket.get_priority_display == 'Low' %}4{% else %}5{% endif %}">
-                  {{ ticket.get_priority_display }}
-                </td>
-                <td data-status="{{ ticket.get_status_display }}"
-                    data-status-value="{% if ticket.get_status_display == 'In Progress' %}1{% elif ticket.get_status_display == 'Closed' %}2{% else %}3{% endif %}">
-                  {{ ticket.get_status_display }}
-                </td>
-                <td data-date-value="{{ ticket.created_at|date:'Y-m-d H:i:s' }}">
-                  {{ ticket.created_at|date:'Y-m-d H:i:s' }}
-                </td>                
-
-                <td data-creator="{{ ticket.creator.full_name }}">{{ ticket.creator.full_name }}</td>
-                <td data-assigned-user="{{ ticket.assigned_user.full_name }}">{{ ticket.assigned_user.full_name }}</td>
-                <td>
-                  <a href="{% url 'ticket_detail' ticket_id=ticket.id %}?from=list" class="btn btn-sm btn-primary">
-                    View
-                  </a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p>No tickets found.</p>
-      {% endif %}
+    <h1 class="text-center mb-4" style="color: #000C40; font-weight: bold; margin-top: 20px;">
+        All Tickets
+    </h1>
+    {% if tickets %}
+    <!-- 排序部分 -->
+    <div class="mb-3">
+      <label for="sort" class="form-label">Sort by:</label>
+      <select id="sort" class="form-select" onchange="sortTickets()">
+        <option value="title" selected>Title</option>
+        <option value="priority">Priority(Urgent -> Low)</option>
+        <option value="status">Status(In Progress -> Closed)</option>
+        <option value="date">Date(New -> Old)</option>
+        <option value="creator">Submitted By</option>
+      </select>
     </div>
+
+    <div class="tickets-container">
+      <!-- 列标题 -->
+      <div class="tickets-header">
+        <div data-sort="title">Title</div>
+        <div data-sort="priority">Priority</div>
+        <div data-sort="status">Status</div>
+        <div data-sort="date">Date</div>
+        <div data-sort="creator">Submitted By</div>
+        <div data-sort="assigned-user">Handled By</div>
+        <div>Action</div>
+      </div>
+
+      {% for ticket in tickets %}
+      <div class="ticket-row">
+        <div class="ticket-cell" data-title="{{ ticket.title }}">
+          {{ ticket.title }}
+        </div>
+        <div class="ticket-cell" 
+             data-priority="{{ ticket.get_priority_display }}"
+             data-priority-value="{% if ticket.get_priority_display == 'Urgent' %}1{% elif ticket.get_priority_display == 'High' %}2{% elif ticket.get_priority_display == 'Medium' %}3{% elif ticket.get_priority_display == 'Low' %}4{% else %}5{% endif %}">
+          {{ ticket.get_priority_display }}
+        </div>
+        <div class="ticket-cell" 
+             data-status="{{ ticket.get_status_display }}"
+             data-status-value="{% if ticket.get_status_display == 'In Progress' %}1{% elif ticket.get_status_display == 'Closed' %}2{% else %}3{% endif %}">
+          {{ ticket.get_status_display }}
+        </div>
+        <div class="ticket-cell" data-date-value="{{ ticket.created_at|date:'Y-m-d H:i:s' }}">
+          {{ ticket.created_at|date:'Y-m-d H:i:s' }}
+        </div>
+        <div class="ticket-cell" data-creator="{{ ticket.creator.full_name }}">
+          {{ ticket.creator.full_name }}
+        </div>
+        <div class="ticket-cell" data-assigned-user="{{ ticket.assigned_user.full_name }}">
+          {{ ticket.assigned_user.full_name }}
+        </div>
+        <div class="ticket-cell">
+          <a href="{% url 'ticket_detail' ticket_id=ticket.id %}?from=list" class="view-btn">
+            View
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p>No tickets found.</p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -68,35 +73,37 @@
 {% block extra_js %}
 <script>
   function sortTickets() {
-    let table = document.getElementById("ticketTable");
-    let tbody = table.getElementsByTagName("tbody")[0];
-    let rows = Array.from(tbody.getElementsByTagName("tr"));
-    let sortBy = document.getElementById("sort").value;
-
+    const container = document.querySelector('.tickets-container');
+    const rows = Array.from(container.querySelectorAll('.ticket-row'));
+    const sortBy = document.getElementById("sort").value;
+    
     rows.sort((a, b) => {
       let aData, bData;
       if (sortBy === "priority") {
-        aData = parseInt(a.querySelector("[data-priority-value]").dataset.priorityValue);
-        bData = parseInt(b.querySelector("[data-priority-value]").dataset.priorityValue);
+        aData = parseInt(a.querySelector('[data-priority-value]').getAttribute('data-priority-value'));
+        bData = parseInt(b.querySelector('[data-priority-value]').getAttribute('data-priority-value'));
         return aData - bData;
       } else if (sortBy === "status") {
-        aData = parseInt(a.querySelector("[data-status-value]").dataset.statusValue);
-        bData = parseInt(b.querySelector("[data-status-value]").dataset.statusValue);
+        aData = parseInt(a.querySelector('[data-status-value]').getAttribute('data-status-value'));
+        bData = parseInt(b.querySelector('[data-status-value]').getAttribute('data-status-value'));
         return aData - bData;
-      }else if (sortBy === "date") {
-        aData = new Date(a.querySelector("[data-date-value]").dataset.dateValue);
-        bData = new Date(b.querySelector("[data-date-value]").dataset.dateValue);
-        return bData - aData; 
-      } else  {
-        aData = a.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
-        bData = b.querySelector(`[data-${sortBy}]`).dataset[sortBy].toLowerCase();
+      } else if (sortBy === "date") {
+        aData = new Date(a.querySelector('[data-date-value]').getAttribute('data-date-value'));
+        bData = new Date(b.querySelector('[data-date-value]').getAttribute('data-date-value'));
+        return bData - aData;
+      } else if (sortBy === "creator") {
+        aData = a.querySelector('[data-creator]').getAttribute('data-creator').toLowerCase();
+        bData = b.querySelector('[data-creator]').getAttribute('data-creator').toLowerCase();
+        return aData.localeCompare(bData);
+      } else { // title
+        aData = a.querySelector('[data-title]').getAttribute('data-title').toLowerCase();
+        bData = b.querySelector('[data-title]').getAttribute('data-title').toLowerCase();
         return aData.localeCompare(bData);
       }
     });
-
-    // 清空tbody后重新插入排序后的行
-    tbody.innerHTML = "";
-    rows.forEach(row => tbody.appendChild(row));
+    
+    // 将排序后的每一行重新附加到 container 内（顺序会更新）
+    rows.forEach(row => container.appendChild(row));
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -106,4 +113,5 @@
   });
 </script>
 {% endblock %}
+
 
