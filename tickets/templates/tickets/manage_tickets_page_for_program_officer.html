@@ -164,25 +164,6 @@
 
                 
             </form>
-
-            <h2 class="tickets-title">Activity Log</h2>
-            <div class="tickets-container">
-                <div class="tickets-header">
-                    <div>User</div>
-                    <div>Action</div>
-                    <div>Time</div>
-                    <div>Comment</div>
-                </div>
-            
-                {% for activity in activities %}
-                    <div class="ticket-row">
-                        <div>{{ activity.username }}</div>
-                        <div>{{ activity.action }}</div>
-                        <div>{{ activity.action_time }}</div>
-                        <div>{{ activity.comment }}</div>
-                    </div>
-                {% endfor %}
-            </div>  
         </div>
     </div>
 </div>
