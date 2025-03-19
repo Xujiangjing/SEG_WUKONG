@@ -866,7 +866,7 @@ text-align: center; /* 或者根据需要改为 left */
     font-size: 2rem;
     font-weight: bold;
     color: #000C40;
-    margin: 0; /* 清除默认 margin，确保对齐 */
+    margin: 20px 0; /* 清除默认 margin，确保对齐 */
 } 
 
 .create-btn {
@@ -931,9 +931,7 @@ border-color: #1E2F78;
     transition: background-color 0.3s, border-color 0.3s;
   }
   
-  .manage-btn:hover {
-    background-color: #e6a100; /* 悬停时更深的绿色 */
-    border-color: #e6a100;
-  }
-
-  
+.manage-btn:hover {
+background-color: #e6a100; /* 悬停时更深的绿色 */
+border-color: #e6a100;
+} 
