@@ -2,166 +2,188 @@
 
 {% block content %}
 <div class="content-area">
-    <div class="fog-box">
-        <div class="container my-4">
-            <div class="row justify-content-center">
-                <div class="col-12 col-md-10 col-lg-8">
-
-                    <h1 class="text-center text-primary mb-4">Ticket Detail: {{ ticket.title }}</h1>
-
-                    
-
-                    
-            <div class="card mb-4 shadow-lg rounded">
-                <div class="card-header bg-primary text-white">
-                    <strong>Ticket Information</strong>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered table-striped">
-                        <tr>
-                            <td><strong>Title:</strong></td>
-                            <td>{{ ticket.title }}</td>
-                        </tr>
-                        <tr class="table-info">
-                            <td><strong>Status:</strong></td>
-                            <td>{{ ticket.get_status_display }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Priority:</strong></td>
-                            <td>{{ ticket.get_priority_display }}</td>
-                        </tr>
-                        <tr class="table-info">
-                            <td><strong>Assigned Department:</strong></td>
-                            <td>{{ ticket.get_assigned_department_display }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Created by:</strong></td>
-                            <td>
-                                {{ ticket.creator.full_name }} 
-                                <span class="text-muted"> on {{ ticket.created_at }}</span>
-                            </td>
-                        </tr>
-                        <tr class="table-info">
-                            <td><strong>Assigned to:</strong></td>
-                            <td>
-                                {% if ticket.assigned_user %}
-                                    {{ ticket.assigned_user.full_name }}
-                                {% else %}
-                                    Unassigned
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Description:</strong></td>
-                            <td>{{ ticket.description|linebreaksbr }}</td>
-                        </tr>
-                        
-                        {% if ticket.return_reason %}
-                        <tr class="table-warning">
-                            <td><strong>Latest Return Reason:</strong></td>
-                            <td>{{ ticket.return_reason }}</td>
-                        </tr>
-                        {% endif %}
-
-                        <tr class="table-info">
-                            <td><strong>Attachments:</strong></td>
-                            <td>
-                                {% if attachments %}
-                                    <ul class="list-unstyled">
-                                        {% for attachment in attachments %}
-                                            <li>
-                                                <a href="{{ attachment.file.url }}" download class="text-decoration-none">
-                                                    📎 {{ attachment.filename}}
-                                                </a>
-                                                <span class="text-muted">
-                                                    ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})
-                                                </span>
-                                            </li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <span class="text-muted">No attachments</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card mb-4 shadow-lg rounded">
-                <div class="card-header bg-secondary text-white">
-                    <strong>Previous Responses</strong>
-                </div>
-                <div class="card-body">
-                    <pre id="previous-responses" class="text-muted">
-                        {{ ticket.answers|default:"No responses yet." }}
-                    </pre>
-                </div>
-            </div>
-
-            <!-- Activity Log (Only visible for non-student users) -->
-            {% if request.user.role != "students" %}
-                <div class="card mb-4 shadow-lg rounded">
-                    <div class="card-header bg-success text-white">
-                        <strong>Activity Log</strong>
-                    </div>
-                    <div class="card-body">
-                        <ul class="timeline">
-                            {% for activity in activities %}
-                                <li class="timeline-item">
-                                    <div class="timeline-point bg-info"></div>
-                                    <div class="timeline-content">
-                                        <h5>
-                                            <strong>{{ activity.username }}</strong>
-                                            - {{ activity.action }}
-                                        </h5>
-                                        <p>
-                                            <small class="text-muted">
-                                                {{ activity.action_time }}
-                                            </small>
-                                        </p>
-                                        <p>{{ activity.comment }}</p>
-                                    </div>
-                                </li>
-                            {% empty %}
-                                <p>No activities yet.</p>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            {% else %}
-                <div class="d-flex justify-content-center my-4">
-                    <a href="#" class="btn btn-danger btn-lg" id="close_ticket_btn">Close this ticket</a>
-                </div>
-            {% endif %}
-            
-            <div class="my-3">
-                {% if request.GET.from == "list" %}
-                    <a href="{% url 'ticket_list' %}" class="btn btn-lg btn-secondary w-100">
-                        Back to Ticket List
-                    </a>
-                {% else %}
-                    <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">
-                        Back to Dashboard
-                    </a>
-                {% endif %}
-            </div>            
+  <div class="fog-box">
+    <h1 class="text-center mb-4" style="color: #000C40; font-weight: bold; margin-top: 20px;">
+      Ticket Detail: {{ ticket.title }}
+    </h1>
+    <div class="form-container">
+      <!-- Title -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Title</div>
         </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.title }}" readonly>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Status</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.get_status_display }}" readonly>
+        </div>
+      </div>
+
+      <!-- Priority -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Priority</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.get_priority_display }}" readonly>
+        </div>
+      </div>
+
+      <!-- Assigned Department -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Assigned Department</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.get_assigned_department_display }}" readonly>
+        </div>
+      </div>
+
+      <!-- Created by -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Created by</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.creator.full_name }} on {{ ticket.created_at }}" readonly>
+        </div>
+      </div>
+
+      <!-- Assigned to -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Assigned to</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{% if ticket.assigned_user %}{{ ticket.assigned_user.full_name }}{% else %}Unassigned{% endif %}" readonly>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Description</div>
+        </div>
+        <div class="col-sm-9">
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
+        </div>
+      </div>
+
+      <!-- Latest Return Reason -->
+      {% if ticket.return_reason %}
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Latest Return Reason</div>
+        </div>
+        <div class="col-sm-9">
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.return_reason }}</textarea>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Attachments -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Attachments</div>
+        </div>
+        <div class="col-sm-9">
+          {% if attachments %}
+          <div class="form-control" style="height:auto; background-color: white; padding:10px;">
+            <ul class="list-unstyled mb-0">
+              {% for attachment in attachments %}
+              <li>
+                <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                  📎 {{ attachment.filename }}
+                </a>
+                <span class="text-muted"> ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% else %}
+          <input type="text" class="form-control" value="No attachments" readonly>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Previous Responses - 使用卡片模式 -->
+      <div class="card mb-4 shadow-lg rounded">
+        <div class="card-header bg-secondary text-white">
+          <strong>Previous Responses</strong>
+        </div>
+        <div class="card-body">
+          <pre id="previous-responses" class="text-muted" style="white-space: pre-wrap;">
+{{ ticket.answers|default:"No responses yet." }}
+          </pre>
+        </div>
+      </div>
+
+      <!-- Activity Log - 使用卡片模式（仅非学生显示） -->
+      {% if request.user.role != "students" %}
+      <div class="card mb-4 shadow-lg rounded">
+        <div class="card-header bg-success text-white">
+          <strong>Activity Log</strong>
+        </div>
+        <div class="card-body">
+          <ul class="timeline">
+            {% for activity in activities %}
+            <li class="timeline-item">
+              <div class="timeline-point bg-info"></div>
+              <div class="timeline-content">
+                <h5>
+                  <strong>{{ activity.username }}</strong> - {{ activity.action }}
+                </h5>
+                <p>
+                  <small class="text-muted">{{ activity.action_time }}</small>
+                </p>
+                <p>{{ activity.comment }}</p>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% else %}
+      <div class="d-flex justify-content-center my-4">
+        <a href="#" class="btn btn-danger btn-lg" id="close_ticket_btn">Close this ticket</a>
+      </div>
+      {% endif %}
+
+      <div class="my-3">
+        {% if request.GET.from == "list" %}
+        <a href="{% url 'ticket_list' %}" class="btn btn-lg btn-secondary w-100">
+          Back to Ticket List
+        </a>
+        {% else %}
+        <a href="{% url 'dashboard' %}" class="btn btn-lg btn-secondary w-100">
+          Back to Dashboard
+        </a>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let actionTypeInput = document.getElementById("action_type");
-        let closeBtn = document.getElementById("close_ticket_btn");
-
-        closeBtn.addEventListener("click", function (event) {
-            event.preventDefault();
-            let confirmClose = confirm("Are you sure you want to close this ticket? This action cannot be reversed.");
-            if (confirmClose) {
-                window.location.href = "{% url 'close_ticket' ticket.id %}";
-            }
-        });
+document.addEventListener("DOMContentLoaded", function () {
+  let closeBtn = document.getElementById("close_ticket_btn");
+  if(closeBtn){
+    closeBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      let confirmClose = confirm("Are you sure you want to close this ticket? This action cannot be reversed.");
+      if (confirmClose) {
+        window.location.href = "{% url 'close_ticket' ticket.id %}";
+      }
     });
+  }
+});
 </script>
 {% endblock %}

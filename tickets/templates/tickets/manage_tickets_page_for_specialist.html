@@ -1,157 +1,120 @@
 {% extends 'base_content.html' %}
 {% block content %}
 <div class="content-area">
-    <div class="fog-box">
-      <div class="container my-4">
-        <h1>Manage Ticket - {{ ticket.title }}</h1>
-        <p><strong>Student:</strong> {{ ticket.creator.full_name }}</p>
-        <p><strong>Priority:</strong> {{ ticket.get_priority_name }}</p>
-        <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
-        <p><strong>Description:</strong> {{ ticket.description }}</p>
-
-        <div class="mb-3">
-            <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
-            <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
+  <div class="fog-box">
+    <div class="container my-4">
+      <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket - {{ ticket.title }}</h1>
+      
+      <!-- Student -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Student</div>
         </div>
-
-        <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
-            {% csrf_token %}
-
-            <input type="hidden" id="action_type" name="action_type">
-
-            <!-- Respond Section -->
-            <div id="respond-section" style="display: none;">
-                <label for="response_message">Response:</label>
-                <textarea id="response_message" name="response_message" class="form-control"></textarea>
-
-
-            </div>
-
-            <!--Return to student-->
-            <div id="return-section" style="display: none;">
-                <label for="return_reason">Return Reason:</label>
-                <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
-            </div>
-
-            <button type="submit" id="submit_btn" class="btn btn-success mt-3">Submit</button>
-        </form>
-
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.creator.full_name }}" readonly>
+        </div>
+      </div>
+      
+      <!-- Priority -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Priority</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.get_priority_name }}" readonly>
+        </div>
+      </div>
+      
+      <!-- Created at -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Created at</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.created_at }}" readonly>
+        </div>
+      </div>
+      
+      <!-- Description -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Description</div>
+        </div>
+        <div class="col-sm-9">
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
+        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
+      </div>
+      
+      <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" id="action_type" name="action_type">
+        
+        <!-- Respond Section -->
+        <div id="respond-section" style="display: none;">
+          <label for="response_message">Response:</label>
+          <textarea id="response_message" name="response_message" class="form-control"></textarea>
+        </div>
+        
+        <!-- Return Section -->
+        <div id="return-section" style="display: none;">
+          <label for="return_reason">Return Reason:</label>
+          <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+        </div>
+        
+        <button type="submit" id="submit_btn" class="btn btn-success mt-3" style="display: none;">Submit</button>
+      </form>
     </div>
+  </div>
 </div>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    let actionTypeInput = document.getElementById("action_type");
-    let actionForm = document.getElementById("action_form");
-    let submitBtn = document.getElementById("submit_btn");
-    let respondSection = document.getElementById("respond-section");
-    let returnSection = document.getElementById("return-section");
+  let actionTypeInput = document.getElementById("action_type");
+  let actionForm = document.getElementById("action_form");
+  let submitBtn = document.getElementById("submit_btn");
+  let respondSection = document.getElementById("respond-section");
+  let returnSection = document.getElementById("return-section");
+  function hideAllSections() {
+    respondSection.style.display = "none";
+    returnSection.style.display = "none";
+  }
 
-    function hideAllSections() {
-        respondSection.style.display = "none";
-        returnSection.style.display = "none";
-    }
-
-    document.querySelectorAll(".action-btn").forEach(button => {
-        button.addEventListener("click", function () {
-            let selectedAction = this.getAttribute("data-action");
-            actionTypeInput.value = selectedAction;
-            actionForm.style.display = "block";
-
-            hideAllSections();
-
-            if (selectedAction === "respond_ticket") {
-                respondSection.style.display = "block";
-            } else if (selectedAction === "return_to_student") {
-                returnSection.style.display = "block";
-            }
-
-            submitBtn.style.display = "block"; 
-        });
+  document.querySelectorAll(".action-btn").forEach(button => {
+    button.addEventListener("click", function () {
+      let selectedAction = this.getAttribute("data-action");
+      actionTypeInput.value = selectedAction;
+      actionForm.style.display = "block";
+      hideAllSections();
+      if (selectedAction === "respond_ticket") {
+        respondSection.style.display = "block";
+      } else if (selectedAction === "return_to_student") {
+        returnSection.style.display = "block";
+      }
+      submitBtn.style.display = "block";
     });
+  });
 
-    actionForm.addEventListener("submit", function (event) {
-        let actionType = actionTypeInput.value;
-        if (!actionType) {
-            event.preventDefault();  
-            alert("Please select an action before submitting.");
-            return;
-        }
-
-        if (actionType === "respond_ticket") {
-            let responseText = document.getElementById("response_message").value.trim();
-            if (!responseText) {
-                event.preventDefault();
-                alert("Response message cannot be empty.");
-                return;
-            }
-        }
-
-        if (actionType === "return_to_student") {
-            let returnReason = document.getElementById("return_reason").value.trim();
-            if (!returnReason) {
-                event.preventDefault();
-                alert("Please provide a reason for returning the ticket.");
-                return;
-            }
-        }
-    });
-
-
-    // AI Response Handling
-    const responseBox = document.getElementById("response_message");
-    if (responseBox) {  // 
-        const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}";
-        let aiPlaceholderActive = false;
-
-        responseBox.addEventListener("focus", function () {
-            if (!aiPlaceholderActive && responseBox.value.trim() === "") {
-                responseBox.value = aiResponse;
-                responseBox.style.fontStyle = "italic";
-                responseBox.style.color = "grey"; 
-                aiPlaceholderActive = true;
-                setTimeout(() => {
-                    responseBox.setSelectionRange(0, 0);
-                }, 0);
-            }
-        });
-
-        responseBox.addEventListener("keydown", function (event) {
-            if (aiPlaceholderActive) {
-                if (event.key !== "Enter") {
-                    responseBox.value = ""; 
-                    responseBox.style.fontStyle = "normal"; 
-                    responseBox.style.color = "black"; 
-                    aiPlaceholderActive = false; 
-                }
-            }
-        });
-
-        responseBox.addEventListener("keydown", function (event) {
-            if (aiPlaceholderActive && event.key === "Enter") {
-                event.preventDefault();
-                responseBox.style.fontStyle = "normal"; 
-                responseBox.style.color = "black"; 
-                aiPlaceholderActive = false; 
-            }
-        });
-
-        responseBox.addEventListener("mousedown", function (event) {
-            if (aiPlaceholderActive) {
-                responseBox.setSelectionRange(0, 0);
-                event.preventDefault();
-            }
-        });
-
-        responseBox.addEventListener("blur", function () {
-            if (aiPlaceholderActive && responseBox.value.trim() === aiResponse) {
-                responseBox.value = "";
-                responseBox.style.fontStyle = "normal";
-                responseBox.style.color = "black";
-                aiPlaceholderActive = false;
-            }
-        });
+  document.getElementById("action_form").addEventListener("submit", function (event) {
+    if (actionTypeInput.value === "respond_ticket") {
+      let responseText = document.getElementById("response_message").value.trim();
+      if (!responseText) {
+        event.preventDefault();
+        alert("Response message cannot be empty.");
+      }
     }
+    if (actionTypeInput.value === "return_to_student") {
+      let returnReason = document.getElementById("return_reason").value.trim();
+      if (!returnReason) {
+        event.preventDefault();
+        alert("Please provide a return reason.");
+      }
+    }
+  });
 });
-
 </script>
 {% endblock %}

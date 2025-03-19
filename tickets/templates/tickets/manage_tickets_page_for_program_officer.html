@@ -72,7 +72,7 @@
                             <div class="readonly-box subtitle-box">Description</div>
                             </div>
                             <div class="col-sm-9">
-                            <input type="text" id="username" class="form-control" value="{{ ticket.description }}" readonly>
+                            <textarea class="form-control" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
                             </div>
                         </div>
     

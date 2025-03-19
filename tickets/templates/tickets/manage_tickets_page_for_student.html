@@ -1,58 +1,85 @@
 {% extends 'base_content.html' %}
 {% block content %}
 <div class="content-area">
-    <div class="fog-box">
-      <div class="container my-4">
-        <h1>Manage Ticket - {{ ticket.title }}</h1>
-        <p><strong>Created at:</strong> {{ ticket.created_at }}</p>
-        <p><strong>Description:</strong> {{ ticket.description|linebreaksbr }}</p>
-        {% if ticket.return_reason %}
-            <p><strong>Latest Return Reason: </strong>{{ ticket.return_reason }}</p>
-        {% endif %}
-
-        <form method="POST" id="ticket_form" action="{% url 'update_ticket' ticket_id=ticket.id %}">
-
-            {% csrf_token %}
-            
-            <div class="mb-3">
-                <button type="button" class="btn btn-info action-btn" id="update_ticket_btn">Add More Info to this Ticket</button>
-                <a href="#" class="btn btn-danger" id="close_ticket_btn">Close this ticket</a>
-            </div>
-
-            <!-- Update Section -->
-            <div id="update-section" style="display: none;">
-                <label for="update_message">Update Message:</label>
-                <textarea id="update_message" name="update_message" class="form-control"></textarea>
-            </div>
-
-            <input type="hidden" name="action_type" id="action_type">
-
-            <button type="submit" id="submit_btn" class="btn btn-primary mt-3" style="display: none;">Submit</button>
-        </form>
+  <div class="fog-box">
+    <div class="container my-4">
+      <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket - {{ ticket.title }}</h1>
+      
+      <!-- Created at -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Created at</div>
+        </div>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" value="{{ ticket.created_at }}" readonly>
+        </div>
+      </div>
+      
+      <!-- Description -->
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Description</div>
+        </div>
+        <div class="col-sm-9">
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
+        </div>
+      </div>
+      
+      <!-- Latest Return Reason (if exists) -->
+      {% if ticket.return_reason %}
+      <div class="mb-3 row align-items-center">
+        <div class="col-sm-3">
+          <div class="readonly-box subtitle-box">Latest Return Reason</div>
+        </div>
+        <div class="col-sm-9">
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.return_reason }}</textarea>
+        </div>
+      </div>
+      {% endif %}
+      
+      <form method="POST" id="ticket_form" action="{% url 'update_ticket' ticket_id=ticket.id %}">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+          <button type="button" class="btn btn-info action-btn" id="update_ticket_btn">Add More Info to this Ticket</button>
+          <a href="#" class="btn btn-danger" id="close_ticket_btn">Close this ticket</a>
+        </div>
+        
+        <!-- Update Section -->
+        <div id="update-section" style="display: none;">
+          <label for="update_message">Update Message:</label>
+          <textarea id="update_message" name="update_message" class="form-control"></textarea>
+        </div>
+        
+        <input type="hidden" name="action_type" id="action_type">
+        
+        <button type="submit" id="submit_btn" class="btn btn-primary mt-3" style="display: none;">Submit</button>
+      </form>
     </div>
+  </div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let updateBtn = document.getElementById("update_ticket_btn");
-        let updateSection = document.getElementById("update-section");
-        let submitBtn = document.getElementById("submit_btn");
-        let actionTypeInput = document.getElementById("action_type");
-        let closeBtn = document.getElementById("close_ticket_btn");
+document.addEventListener("DOMContentLoaded", function () {
+  let updateBtn = document.getElementById("update_ticket_btn");
+  let updateSection = document.getElementById("update-section");
+  let submitBtn = document.getElementById("submit_btn");
+  let actionTypeInput = document.getElementById("action_type");
+  let closeBtn = document.getElementById("close_ticket_btn");
 
-        updateBtn.addEventListener("click", function () {
-            updateSection.style.display = "block";
-            actionTypeInput.value = "update_ticket";
-            submitBtn.style.display = "block";
-        });
+  updateBtn.addEventListener("click", function () {
+    updateSection.style.display = "block";
+    actionTypeInput.value = "update_ticket";
+    submitBtn.style.display = "block";
+  });
 
-        closeBtn.addEventListener("click", function (event) {
-            event.preventDefault();
-            let confirmClose = confirm("Are you sure you want to close this ticket? This action cannot be reversed.");
-            if (confirmClose) {
-                window.location.href = "{% url 'close_ticket' ticket.id %}";
-            }
-        });
-    });
+  closeBtn.addEventListener("click", function (event) {
+    event.preventDefault();
+    let confirmClose = confirm("Are you sure you want to close this ticket? This action cannot be reversed.");
+    if (confirmClose) {
+      window.location.href = "{% url 'close_ticket' ticket.id %}";
+    }
+  });
+});
 </script>
 {% endblock %}
