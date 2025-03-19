@@ -75,28 +75,28 @@
                                 <div>Actions</div>
                             </div>
 
-                            <!-- 工单内容：每条工单作为一行白色框 -->
                             {% for ticket in all_tickets %}
-                                <div class="ticket-row">
-                                    <div>{{ ticket.title }}</div>
-                                    <div>{{ ticket.get_department_name }}</div>
-                                    <div>{{ ticket.get_status_name}}</div>
-                                    <div>{{ ticket.get_priority_name}}</div>
-                                    <div>{{ ticket.assigned_user.full_name |default:"None"}}</div>
-                                    <div>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}
+                                {% if ticket.assigned_user.role != "program_officers" %}
+                                    <div class="ticket-row">
+                                        <div>{{ ticket.title }}</div>
+                                        <div>{{ ticket.get_department_name }}</div>
+                                        <div>{{ ticket.get_status_name }}</div>
+                                        <div>{{ ticket.get_priority_name }}</div>
+                                        <div>None</div>
+                                        <div>{% if ticket.answers %} Answered {% else %} Not yet answered {% endif %}</div>
+                                        <div>
+                                            {% if ticket.can_be_managed %}
+                                                <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
+                                                    Manage
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
+                                                    View
+                                                </a>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div>
-                                        {% if ticket.can_be_managed %}
-                                            <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
-                                            Manage
-                                            </a>
-                                        {% else %}
-                                            <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
-                                            View
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     {% endif %}
