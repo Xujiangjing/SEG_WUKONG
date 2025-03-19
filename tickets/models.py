@@ -145,7 +145,7 @@ class Ticket(models.Model):
     creator = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="submitted_tickets"
     )
-    title = models.CharField(max_length=255)
+    title = models.CharField(max_length=100)
     description = models.TextField()
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="in_progress"
