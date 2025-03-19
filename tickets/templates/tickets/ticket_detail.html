@@ -4,7 +4,7 @@
 <div class="content-area">
   <div class="fog-box">
     <h1 class="text-center mb-4" style="color: #000C40; font-weight: bold; margin-top: 20px;">
-      Ticket Detail: {{ ticket.title }}
+      Ticket Detail
     </h1>
     <div class="form-container">
       <!-- Title -->
@@ -74,7 +74,7 @@
           <div class="readonly-box subtitle-box">Latest Return Reason</div>
         </div>
         <div class="col-sm-9">
-          <textarea class="form-control" readonly style="resize: none;">{{ ticket.return_reason }|linebreaksbr}</textarea>
+          <textarea class="form-control" readonly style="resize: none;">{{ ticket.return_reason }}</textarea>
         </div>
       </div>
       {% endif %}
