@@ -3,7 +3,7 @@
 <div class="content-area">
   <div class="fog-box">
     <div class="container my-4">
-      <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket - {{ ticket.title }}</h1>
+      <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket</h1>
       
       <!-- Created at -->
       <div class="mb-3 row align-items-center">
@@ -14,6 +14,16 @@
           <input type="text" class="form-control" value="{{ ticket.created_at }}" readonly>
         </div>
       </div>
+        
+      <!-- Title -->
+        <div class="mb-3 row align-items-center">
+            <div class="col-sm-3">
+                <div class="readonly-box subtitle-box">Title</div>
+            </div>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" value="{{ ticket.title }}" readonly>
+            </div>
+        </div>
       
       <!-- Description -->
       <div class="mb-3 row align-items-center description-row">

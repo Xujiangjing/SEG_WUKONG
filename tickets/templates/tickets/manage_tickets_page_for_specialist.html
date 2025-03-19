@@ -3,72 +3,82 @@
 <div class="content-area">
   <div class="fog-box">
     <div class="container my-4">
-      <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket - {{ ticket.title }}</h1>
+        <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket</h1>
+        
+        <!-- Student -->
+        <div class="mb-3 row align-items-center">
+            <div class="col-sm-3">
+            <div class="readonly-box subtitle-box">Student</div>
+            </div>
+            <div class="col-sm-9">
+            <input type="text" class="form-control" value="{{ ticket.creator.full_name }}" readonly>
+            </div>
+        </div>
       
-      <!-- Student -->
-      <div class="mb-3 row align-items-center">
-        <div class="col-sm-3">
-          <div class="readonly-box subtitle-box">Student</div>
+        <!-- Priority -->
+        <div class="mb-3 row align-items-center">
+            <div class="col-sm-3">
+            <div class="readonly-box subtitle-box">Priority</div>
+            </div>
+            <div class="col-sm-9">
+            <input type="text" class="form-control" value="{{ ticket.get_priority_name }}" readonly>
+            </div>
         </div>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" value="{{ ticket.creator.full_name }}" readonly>
-        </div>
-      </div>
       
-      <!-- Priority -->
-      <div class="mb-3 row align-items-center">
-        <div class="col-sm-3">
-          <div class="readonly-box subtitle-box">Priority</div>
-        </div>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" value="{{ ticket.get_priority_name }}" readonly>
-        </div>
-      </div>
-      
-      <!-- Created at -->
-      <div class="mb-3 row align-items-center">
-        <div class="col-sm-3">
-          <div class="readonly-box subtitle-box">Created at</div>
-        </div>
-        <div class="col-sm-9">
-          <input type="text" class="form-control" value="{{ ticket.created_at }}" readonly>
-        </div>
-      </div>
-      
-      <!-- Description -->
-      <div class="mb-3 row align-items-center description-row">
-        <div class="col-sm-3">
-            <div class="readonly-box subtitle-box description-subtitle">Description</div>
-        </div>
-        <div class="col-sm-9">
-            <textarea class="form-control description-textarea" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
-        </div>
+        <!-- Created at -->
+        <div class="mb-3 row align-items-center">
+            <div class="col-sm-3">
+            <div class="readonly-box subtitle-box">Created at</div>
+            </div>
+            <div class="col-sm-9">
+            <input type="text" class="form-control" value="{{ ticket.created_at }}" readonly>
+            </div>
         </div>
 
+        <!-- Title -->
+        <div class="mb-3 row align-items-center">
+            <div class="col-sm-3">
+                <div class="readonly-box subtitle-box">Title</div>
+            </div>
+            <div class="col-sm-9">
+                <input type="text" class="form-control" value="{{ ticket.title }}" readonly>
+            </div>
+        </div>
       
-      <div class="mb-3">
-        <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
-        <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
-      </div>
+        <!-- Description -->
+        <div class="mb-3 row align-items-center description-row">
+            <div class="col-sm-3">
+                <div class="readonly-box subtitle-box description-subtitle">Description</div>
+            </div>
+            <div class="col-sm-9">
+                <textarea class="form-control description-textarea" readonly style="resize: none;">{{ ticket.description|linebreaksbr }}</textarea>
+            </div>
+            </div>
+
       
-      <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
-        {% csrf_token %}
-        <input type="hidden" id="action_type" name="action_type">
-        
-        <!-- Respond Section -->
-        <div id="respond-section" style="display: none;">
-          <label for="response_message">Response:</label>
-          <textarea id="response_message" name="response_message" class="form-control"></textarea>
+        <div class="mb-3">
+            <button type="button" class="btn btn-info action-btn" data-action="respond_ticket">Respond</button>
+            <button type="button" class="btn btn-danger action-btn" data-action="return_to_student">More Info Required from Student</button>
         </div>
         
-        <!-- Return Section -->
-        <div id="return-section" style="display: none;">
-          <label for="return_reason">Return Reason:</label>
-          <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
-        </div>
+        <form method="POST" id="action_form" action="{% url 'manage_ticket_page' ticket.id %}" style="display: none;">
+            {% csrf_token %}
+            <input type="hidden" id="action_type" name="action_type">
+            
+            <!-- Respond Section -->
+            <div id="respond-section" style="display: none;">
+            <label for="response_message">Response:</label>
+            <textarea id="response_message" name="response_message" class="form-control"></textarea>
+            </div>
+            
+            <!-- Return Section -->
+            <div id="return-section" style="display: none;">
+            <label for="return_reason">Return Reason:</label>
+            <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+            </div>
         
-        <button type="submit" id="submit_btn" class="btn btn-success mt-3" style="display: none;">Submit</button>
-      </form>
+            <button type="submit" id="submit_btn" class="btn btn-success mt-3" style="display: none;">Submit</button>
+        </form>
     </div>
   </div>
 </div>

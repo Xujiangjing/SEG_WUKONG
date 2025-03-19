@@ -4,7 +4,7 @@
     <div class="fog-box">
         <div class="row">
             <div class="col-12">
-                <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket - {{ ticket.title }}</h1>
+                <h1 class="text-center" style="color: #000C40; font-weight: bold;">Manage Ticket</h1>
                     <div class="form-container">
                         <!-- Student Full Name -->
                         <div class="mb-3 row align-items-center">
@@ -63,6 +63,16 @@
                             </div>
                             <div class="col-sm-9">
                             <input type="text" id="username" class="form-control" value="{{ ticket.created_at }}" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="mb-3 row align-items-center">
+                            <div class="col-sm-3">
+                                <div class="readonly-box subtitle-box">Title</div>
+                            </div>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" value="{{ ticket.title }}" readonly>
                             </div>
                         </div>
 
