@@ -126,35 +126,36 @@
         </div>
       </div>
 
-      <!-- Activity Log - 使用卡片模式（仅非学生显示） -->
-      {% if request.user.role != "students" %}
-      <div class="card mb-4 shadow-lg rounded">
-        <div class="card-header bg-success text-white">
-          <strong>Activity Log</strong>
+      <!-- Activity Log - only for program officers to view -->
+      {% if request.user.role == "program_officers" %}
+        <div class="card mb-4 shadow-lg rounded">
+            <div class="card-header bg-success text-white">
+            <strong>Activity Log</strong>
+            </div>
+            <div class="card-body">
+            <ul class="timeline">
+                {% for activity in activities %}
+                <li class="timeline-item">
+                <div class="timeline-point bg-info"></div>
+                <div class="timeline-content">
+                    <h5>
+                    <strong>{{ activity.username }}</strong> - {{ activity.action }}
+                    </h5>
+                    <p>
+                    <small class="text-muted">{{ activity.action_time }}</small>
+                    </p>
+                    <p>{{ activity.comment }}</p>
+                </div>
+                </li>
+                {% endfor %}
+            </ul>
+            </div>
         </div>
-        <div class="card-body">
-          <ul class="timeline">
-            {% for activity in activities %}
-            <li class="timeline-item">
-              <div class="timeline-point bg-info"></div>
-              <div class="timeline-content">
-                <h5>
-                  <strong>{{ activity.username }}</strong> - {{ activity.action }}
-                </h5>
-                <p>
-                  <small class="text-muted">{{ activity.action_time }}</small>
-                </p>
-                <p>{{ activity.comment }}</p>
-              </div>
-            </li>
-            {% endfor %}
-          </ul>
+      {% endif %}
+      {% if request.user.role == "students" %}
+        <div class="d-flex justify-content-center my-4">
+            <a href="#" class="btn btn-danger btn-lg" id="close_ticket_btn">Close this ticket</a>
         </div>
-      </div>
-      {% else %}
-      <div class="d-flex justify-content-center my-4">
-        <a href="#" class="btn btn-danger btn-lg" id="close_ticket_btn">Close this ticket</a>
-      </div>
       {% endif %}
 
       <div class="my-3">
