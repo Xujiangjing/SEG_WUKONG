@@ -80,6 +80,7 @@ def return_ticket(request, ticket_id):
             return_reason = form.cleaned_data["return_reason"]
             ticket.return_reason = return_reason
             ticket.latest_action = "status_updated"
+            ticket.assigned_user = ticket.creator
             ticket.latest_editor = request.user
             ticket.can_be_managed = False
             ticket.need_student_update = True
@@ -318,6 +319,7 @@ def update_ticket(request, ticket_id):
         )
         ticket.status = "in_progress"
         ticket.latest_action = "status_updated"
+        ticket.assigned_user = ticket.latest_editor
         ticket.latest_editor = request.user
         ticket.can_be_managed = True
         ticket.need_student_update = False
