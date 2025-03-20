@@ -1,0 +1,30 @@
+{% extends 'base_content.html' %}
+
+{% block content %}
+<div class="content-area">
+    <div class="fog-box">
+        <h1 class="text-center mb-4" style="color: #000C40; font-weight: bold; margin-top: 20px;">
+            Ticket Closure Report
+        </h1>
+
+        
+        <div class="tickets-container">
+            <div class="tickets-header">
+                <div>Date</div>
+                <div>Department</div>
+                <div>Closed by Inactivity</div>
+                <div>Closed Manually</div>
+            </div>
+
+            {% for report in reports %}
+                <div class="ticket-row">
+                    <div>{{ report.date }}</div>
+                    <div>{{ report.department }}</div>
+                    <div>{{ report.closed_by_inactivity }}</div>
+                    <div>{{ report.closed_manually }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

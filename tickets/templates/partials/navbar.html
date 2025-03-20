@@ -1,101 +1,114 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-  <div class="container">
+{% load static %}
+<nav class="sidebar d-flex flex-column" style="height: 100vh;">
+  <!-- 头部 Logo/标题 -->
+  <div class="sidebar-header">
     <a class="navbar-brand" href="{% url 'home' %}">
-      <i class="bi bi-ticket-detailed"></i> TicketSystem
+      <img src="{% static 'images/logo.png' %}" alt="Logo" class="sidebar-logo">
     </a>
-
-    <button class="navbar-toggler" type="button"
-            data-bs-toggle="collapse" data-bs-target="#mainNav"
-            aria-controls="mainNav" aria-expanded="false">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav me-auto">
-
-
-        <li class="nav-item">
-          <a class="nav-link active" href="{% url 'dashboard' %}">
-            <i class="bi bi-speedometer2 d-none d-md-inline"></i>
-            Dashboard
-          </a>
-        </li>
-
-
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#"
-             role="button" data-bs-toggle="dropdown">
-            <i class="bi bi-folder2-open d-none d-md-inline"></i>
-            Tickets
-          </a>
-          <ul class="dropdown-menu">
-
-
-            {% if user.is_authenticated and not user.is_student %}
-              <li>
-                <a class="dropdown-item" href="{% url 'ticket_list' %}">
-                  <i class="bi bi-list-ul"></i> List View
-                </a>
-              </li>
-            {% endif %}
-
-
-            {% if user.is_authenticated and user.is_student %}
-              <li>
-                <a class="dropdown-item" href="{% url 'create_ticket' %}">
-                  <i class="bi bi-plus-square"></i> New Ticket
-                </a>
-              </li>
-            {% endif %}
-
-
-            {% if not user.is_authenticated %}
-              <li>
-                <span class="dropdown-item disabled" style="opacity: 0.7;">
-                  Please log in to access tickets
-                </span>
-              </li>
-            {% endif %}
-          </ul>
-        </li>
-      </ul>
-
-      <ul class="navbar-nav ms-auto">
-        {% if user.is_authenticated %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle d-flex align-items-center"
-               href="#" role="button" data-bs-toggle="dropdown">
-              <i class="bi bi-person-circle fs-5"></i>
-              <span class="d-none d-lg-inline ms-2">{{ user.username }}</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
-              <li>
-                <a class="dropdown-item" href="{% url 'profile' %}">
-                  <i class="bi bi-person-gear"></i> Profile Settings
-                </a>
-              </li>
-              <li>
-                <a class="dropdown-item" href="{% url 'password' %}">
-                  <i class="bi bi-key"></i> Change Password
-                </a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <a class="dropdown-item text-danger" href="{% url 'log_out' %}">
-                  <i class="bi bi-box-arrow-right"></i> Logout
-                </a>
-              </li>
-            </ul>
-          </li>
-        {% else %}
-          <li class="nav-item">
-            <a class="nav-link btn btn-outline-light" href="{% url 'log_in' %}">
-              <i class="bi bi-box-arrow-in-right"></i>
-              <span class="d-none d-sm-inline">Login</span>
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
   </div>
+
+  <!-- 导航菜单 -->
+  <ul class="navbar-nav flex-column flex-grow-1" id="sidebarMenu">
+    <!-- Dashboard -->
+    <li class="nav-item mb-3">
+      <a id="dashboard-link" class="nav-link text-black" href="{% url 'dashboard' %}" onclick="setActive('dashboard')">
+        <img id="dashboard-icon" 
+             src="{% static 'images/dashboard_icon_dark.png' %}" 
+             alt="Dashboard Icon" class="nav-icon">
+        Dashboard
+      </a>
+    </li>
+
+    <!-- 仅 Program Officers 可见的 Statistics 链接 -->
+    {% if user.is_program_officer %}
+    <li class="nav-item mb-3">
+        <a id="statistics-link" class="nav-link text-black" href="{% url 'visualize_ticket_data' %}" onclick="setActive('statistics')">
+            <img id="statistics-icon" src="{% static 'images/statistics_icon_dark.png' %}" alt="Statistics Icon" class="nav-icon">
+            Statistics
+        </a>
+    </li>
+    {% endif %}
+
+    <!-- Profile -->
+    <li class="nav-item mb-3">
+      <a id="profile-link" class="nav-link text-black" href="{% url 'profile' %}" onclick="setActive('profile')">
+        <img id="profile-icon" 
+             src="{% static 'images/profile_icon.png' %}" 
+             alt="Profile Icon" class="nav-icon">
+        Profile
+      </a>
+    </li>
+
+    <!-- Logout -->
+    <li class="nav-item mt-auto mb-3">
+      <a class="nav-link text-black" href="{% url 'log_out' %}">
+        <img src="{% static 'images/logout_icon.png' %}" alt="Logout Icon" class="nav-icon">
+        Log out
+      </a>
+    </li>
+  </ul>
 </nav>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let dashboardIcon = document.getElementById("dashboard-icon");
+    let profileIcon = document.getElementById("profile-icon");
+    let statisticsIcon = document.getElementById("statistics-icon");
+    // 预定义静态图片路径
+    let dashboardDefault = "{% static 'images/dashboard_icon.png' %}";
+    let dashboardDark = "{% static 'images/dashboard_icon_dark.png' %}";
+    let profileDefault = "{% static 'images/profile_icon.png' %}";
+    let profileWhite = "{% static 'images/profile_icon_white.png' %}";
+    let statisticsDefault = "{% static 'images/statistics_icon.png' %}";
+    let statisticsDark = "{% static 'images/statistics_icon_dark.png' %}";
+
+    let currentPath = window.location.pathname;
+    if (currentPath.includes("dashboard")) {
+        setActive("dashboard");
+    } else if (currentPath.includes("profile")) {
+        setActive("profile");
+    } else if (currentPath.includes("visualize_ticket_data")) {
+        setActive("statistics");
+    }
+
+    function setActive(page) {
+        let dashboard = document.getElementById("dashboard-link");
+        let profile = document.getElementById("profile-link");
+        let statistics = document.getElementById("statistics-link");
+
+        if (page === "dashboard") {
+            dashboard.classList.add("active");
+            profile.classList.remove("active");
+            if (statistics) {
+            statistics.classList.remove("active");
+            statisticsIcon.src = statisticsDark;
+            }
+            dashboardIcon.src = dashboardDefault; // Dashboard 默认图标
+            profileIcon.src = profileDefault; // Profile 默认图标
+        } else if (page === "profile") {
+            profile.classList.add("active");
+            dashboard.classList.remove("active");
+            if (statistics) {
+            statistics.classList.remove("active");
+            statisticsIcon.src = statisticsDark;
+            }
+            dashboardIcon.src = dashboardDark; // Dashboard 变暗
+            profileIcon.src = profileWhite; // Profile 变白
+        } else if (page === "statistics" && statistics) {
+            statistics.classList.add("active");
+            dashboard.classList.remove("active");
+            profile.classList.remove("active");
+            dashboardIcon.src = dashboardDark; // Dashboard 变暗
+            profileIcon.src = profileDefault; // Profile 默认图标
+            statisticsIcon.src = statisticsDefault; // Statistics 变白
+        }
+    }
+});
+</script>
+
+
+
+
+
+

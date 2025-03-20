@@ -14,48 +14,135 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 
-# Predefined users 
+# Predefined users
 USER_FIXTURES = [
-    {'username': '@johndoe', 'email': 'john.doe@wukong.ac.uk', 'first_name': 'John', 'last_name': 'Doe', 'role': 'students'},
-    {'username': '@janedoe', 'email': 'jane.doe@wukong.ac.uk', 'first_name': 'Jane', 'last_name': 'Doe', 'role': 'specialists'},
-    {'username': '@charlie', 'email': 'charlie.johnson@wukong.ac.uk', 'first_name': 'Charlie', 'last_name': 'Johnson', 'role': 'program_officers'},
+    {
+        "username": "@johndoe",
+        "email": "john.doe@wukong.ac.uk",
+        "first_name": "John",
+        "last_name": "Doe",
+        "role": "students",
+    },
+    {
+        "username": "@janedoe",
+        "email": "jane.doe@wukong.ac.uk",
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "role": "specialists",
+    },
+    {
+        "username": "@charlie",
+        "email": "charlie.johnson@wukong.ac.uk",
+        "first_name": "Charlie",
+        "last_name": "Johnson",
+        "role": "program_officers",
+    },
 ]
 
 # Departments for seeding
 DEPARTMENTS = [
-            {'name': 'general_enquiry', 'description': 'General queries managed by program officers.', 'responsible_roles': 'program_officers'},
-            {'name': 'academic_support', 'description': 'Academic support provided by personal tutors.', 'responsible_roles': 'specialists'},
-            {'name': 'health_services', 'description': 'Health-related issues handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'financial_aid', 'description': 'Financial aid inquiries managed by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'career_services', 'description': 'Career guidance provided by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'welfare', 'description': 'Welfare support provided by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'misconduct', 'description': 'Misconduct cases managed by personal tutors.', 'responsible_roles': 'specialists'},
-            {'name': 'it_support', 'description': 'IT-related issues handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'housing', 'description': 'Housing queries handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'admissions', 'description': 'Admissions queries managed by program officers.', 'responsible_roles': 'specialists'},
-            {'name': 'library_services', 'description': 'Library-related support by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'research_support', 'description': 'Research-related assistance by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'study_abroad', 'description': 'Study abroad support managed by personal tutors.', 'responsible_roles': 'specialists'},
-            {'name': 'alumni_relations', 'description': 'Alumni relations managed by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'exam_office', 'description': 'Examination office queries handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'security', 'description': 'Campus security issues handled by specialists.', 'responsible_roles': 'specialists'},
-            {'name': 'language_centre', 'description': 'Language centre support provided by specialists.', 'responsible_roles': 'specialists'},
+    {
+        "name": "general_enquiry",
+        "description": "General queries managed by program officers.",
+        "responsible_roles": "program_officers",
+    },
+    {
+        "name": "academic_support",
+        "description": "Academic support provided by personal tutors.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "health_services",
+        "description": "Health-related issues handled by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "financial_aid",
+        "description": "Financial aid inquiries managed by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "career_services",
+        "description": "Career guidance provided by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "welfare",
+        "description": "Welfare support provided by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "misconduct",
+        "description": "Misconduct cases managed by personal tutors.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "it_support",
+        "description": "IT-related issues handled by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "housing",
+        "description": "Housing queries handled by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "admissions",
+        "description": "Admissions queries managed by program officers.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "library_services",
+        "description": "Library-related support by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "research_support",
+        "description": "Research-related assistance by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "study_abroad",
+        "description": "Study abroad support managed by personal tutors.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "alumni_relations",
+        "description": "Alumni relations managed by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "exam_office",
+        "description": "Examination office queries handled by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "security",
+        "description": "Campus security issues handled by specialists.",
+        "responsible_roles": "specialists",
+    },
+    {
+        "name": "language_centre",
+        "description": "Language centre support provided by specialists.",
+        "responsible_roles": "specialists",
+    },
 ]
 
 
 class Command(BaseCommand):
     """Build automation command to seed the database."""
+
     TICKET_COUNT = 5
     USER_COUNT = 30
-    DEFAULT_PASSWORD = 'pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc='
-    help = 'Seeds the database with sample data'
+    DEFAULT_PASSWORD = "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc="
+    help = "Seeds the database with sample data"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.faker = Faker('en_GB')
+        self.faker = Faker("en_GB")
 
     def handle(self, *args, **options):
         # Seed Departments
@@ -63,45 +150,67 @@ class Command(BaseCommand):
 
         # Seed Users
         self.create_users()
-    
+
         # Seed Tickets
         self.create_tickets()
-    
+
     def seed_departments(self):
         """Create departments from the predefined list if they do not exist."""
         for department_data in DEPARTMENTS:
-            department, created = Department.objects.get_or_create(name=department_data['name'], defaults=department_data)
+            department, created = Department.objects.get_or_create(
+                name=department_data["name"], defaults=department_data
+            )
             if created:
-                self.stdout.write(self.style.SUCCESS(f"Department '{department.name}' created."))
+                self.stdout.write(
+                    self.style.SUCCESS(f"Department '{department.name}' created.")
+                )
             else:
-                self.stdout.write(self.style.WARNING(f"Department '{department.name}' already exists."))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Department '{department.name}' already exists."
+                    )
+                )
 
     def create_users(self):
         """Creates both predefined and randomly generated users, ensuring balanced role distribution."""
-        
+
         total_users_needed = self.USER_COUNT
-        specialist_departments = list(Department.objects.filter(responsible_roles="specialists"))
+        specialist_departments = list(
+            Department.objects.filter(responsible_roles="specialists")
+        )
 
         # Define target role distribution
         target_specialists = max(1, total_users_needed // 5)  # 20% specialists
-        target_program_officers = max(1, total_users_needed // 10)  # 10% program officers
-        target_students = total_users_needed - (target_specialists + target_program_officers)  # Remaining are students
+        target_program_officers = max(
+            1, total_users_needed // 10
+        )  # 10% program officers
+        target_students = total_users_needed - (
+            target_specialists + target_program_officers
+        )  # Remaining are students
 
         users = []
 
         # Add predefined users
         for data in USER_FIXTURES:
-            users.append(self.prepare_user_data(data, data["role"], specialist_departments))
+            users.append(
+                self.prepare_user_data(data, data["role"], specialist_departments)
+            )
 
         # Assign at least one specialist to every department
         for dept in specialist_departments:
             if len(users) >= total_users_needed:
                 break  # Stop if have enough users
-            users.append(self.prepare_user_data(self.generate_random_user_data(), "specialists", [dept]))
+            users.append(
+                self.prepare_user_data(
+                    self.generate_random_user_data(), "specialists", [dept]
+                )
+            )
 
         # Generate remaining users while ensuring balanced role distribution
         assigned_specialists = len([u for u in users if u.role == "specialists"])
-        assigned_program_officers = len([u for u in users if u.role == "program_officers"])
+        assigned_program_officers = len(
+            [u for u in users if u.role == "program_officers"]
+        )
         assigned_students = len([u for u in users if u.role == "students"])
 
         while len(users) + User.objects.count() < total_users_needed:
@@ -117,29 +226,36 @@ class Command(BaseCommand):
                 role = "students"
                 assigned_students += 1
 
-            users.append(self.prepare_user_data(user_data, role, specialist_departments))
+            users.append(
+                self.prepare_user_data(user_data, role, specialist_departments)
+            )
 
         # Bulk create users
         User.objects.bulk_create(users, ignore_conflicts=True)
-        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(users)} users."))
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully created {len(users)} users.")
+        )
 
     def prepare_user_data(self, data, role=None, specialist_departments=None):
         """Assigns users to roles and departments proportionally."""
         department = None
 
-        if role == 'specialists' and specialist_departments:
-            department = min(specialist_departments, key=lambda d: User.objects.filter(department=d).count())
-        elif role == 'program_officers':
+        if role == "specialists" and specialist_departments:
+            department = min(
+                specialist_departments,
+                key=lambda d: User.objects.filter(department=d).count(),
+            )
+        elif role == "program_officers":
             department = Department.objects.get(name="general_enquiry")
 
         return User(
-            username=data['username'],
-            email=data['email'],
+            username=data["username"],
+            email=data["email"],
             password=self.DEFAULT_PASSWORD,
-            first_name=data['first_name'],
-            last_name=data['last_name'],
+            first_name=data["first_name"],
+            last_name=data["last_name"],
             role=role,
-            department=department
+            department=department,
         )
 
     def generate_random_user_data(self):
@@ -149,14 +265,16 @@ class Command(BaseCommand):
             "username": f"@{first_name.lower()}{last_name.lower()}",
             "email": f"{first_name.lower()}.{last_name.lower()}@wukong.ac.uk",
             "first_name": first_name,
-            "last_name": last_name
+            "last_name": last_name,
         }
-        
+
     def create_tickets(self):
         """Generate meaningful tickets for students using AWS Bedrock."""
-        students = list(User.objects.filter(role='students'))
+        students = list(User.objects.filter(role="students"))
         if not students:
-            self.stdout.write(self.style.WARNING("No students found, skipping ticket creation."))
+            self.stdout.write(
+                self.style.WARNING("No students found, skipping ticket creation.")
+            )
             return
 
         departments = list(Ticket.DEPARTMENT_CHOICES)
@@ -180,38 +298,48 @@ class Command(BaseCommand):
             else:
                 title = ai_generated_query.strip()
                 description = "Further details required."
-            
+
             ticket = Ticket(
                 creator=student,
                 title=title,
                 description=description,
-                status='open',
-                priority=random.choice(['low', 'medium', 'high', 'urgent']),
+                status="in_progress",
+                priority=random.choice(["low", "medium", "high", "urgent"]),
             )
             new_tickets.append(ticket)
-        
+
         created_tickets = Ticket.objects.bulk_create(new_tickets)
-        self.stdout.write(self.style.SUCCESS(f"Successfully created {len(created_tickets)} tickets."))
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully created {len(created_tickets)} tickets.")
+        )
 
         new_ai_tickets_count = 0
         for ticket in created_tickets:
             ai_process_ticket(ticket)
             new_ai_tickets_count += 1
             print_ticket(ticket)
-        self.stdout.write(self.style.SUCCESS(f"Successfully answered {new_ai_tickets_count} tickets."))
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully answered {new_ai_tickets_count} tickets.")
+        )
+
 
 def print_ticket(ticket):
     print(f"Ticket Title: {ticket.title}")
     print(f"Description: {ticket.description}")
-    print(f"===============================================================================")
+    print(
+        f"==============================================================================="
+    )
     print(f"AI Response: {ticket.ai_processing.ai_generated_response}")
     print(f"AI Department: {ticket.ai_processing.ai_assigned_department}")
     print(f"AI Priority: {ticket.ai_processing.ai_assigned_priority}")
-    print(f"===============================================================================")
+    print(
+        f"==============================================================================="
+    )
+
 
 def create_username(first_name, last_name):
-    return '@' + first_name.lower() + last_name.lower()
+    return "@" + first_name.lower() + last_name.lower()
+
 
 def create_email(first_name, last_name):
-    return first_name + '.' + last_name + '@wukong.ac.uk'
-
+    return first_name + "." + last_name + "@wukong.ac.uk"

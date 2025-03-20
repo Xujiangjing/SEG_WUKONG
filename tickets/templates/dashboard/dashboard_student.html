@@ -1,0 +1,90 @@
+{% extends 'base_content.html' %}
+{% load static %}
+{% block content %}
+<div class="content-area">
+  <div class="fog-box">
+    <h1 class="text-center mb-5" style="color: #000C40; font-weight: bold;">
+      Welcome to your dashboard
+    </h1>
+
+    <!-- Tickets Tab -->
+    <div id="tickets">
+      <form method="GET" action="{% url 'dashboard_student' %}">
+        <div class="row mb-4">
+          <div class="col-md-9">
+            <div class="row">
+              <div class="col-md-3 mb-2 mb-md-0">
+                <input type="text" class="form-control" name="search" value="{{ request.GET.search }}" placeholder="Search for tickets..." />
+              </div>
+              <div class="col-md-3 mb-2 mb-md-0">
+                <select name="sort" class="form-select">
+                  <option value="">-- Sort By --</option>
+                  <option value="date_asc" {% if request.GET.sort == 'date_asc' %}selected{% endif %}>Date (Oldest First)</option>
+                  <option value="date_desc" {% if request.GET.sort == 'date_desc' %}selected{% endif %}>Date (Newest First)</option>
+                  <option value="priority_asc" {% if request.GET.sort == 'priority_asc' %}selected{% endif %}>Priority (Low→Urgent)</option>
+                  <option value="priority_desc" {% if request.GET.sort == 'priority_desc' %}selected{% endif %}>Priority (Urgent→Low)</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-2 mb-md-0 d-flex align-items-center">
+                <button type="submit" class="btn btn-primary">Apply</button>
+                <button type="button" class="btn btn-secondary ms-2" onclick="this.form.search.value=''; this.form.status.value=''; this.form.sort.value='';">
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Create Ticket Button -->
+          <div class="col-md-3 d-flex align-items-center justify-content-end">
+            <a href="{% url 'create_ticket' %}" class="create-btn" aria-label="Create a new ticket">
+              <span class="me-2">Create</span>
+              <img src="{% static 'images/create_icon.png' %}" alt="Create Icon" class="create-icon">
+            </a>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    {% if not student_tickets %}
+      <div class="alert alert-info">No tickets found.</div>
+    {% else %}
+      <div class="tickets-container">
+        <div class="tickets-header">
+          <div>Title</div>
+          <div>Status</div>
+          <div>Priority</div>
+          <div>Answers</div>
+          <div>Actions</div>
+        </div>
+
+        {% for ticket in student_tickets %}
+          <div class="ticket-row">
+            <div class="ticket-title">{{ ticket.title }}</div>
+            <div>{{ ticket.status }}</div>
+            <div>{{ ticket.priority }}</div>
+            <div>
+              {% if ticket.answers %}
+                Answered
+              {% else %}
+                Not yet answered
+              {% endif %}
+            </div>
+            <div>
+              {% if ticket.status != 'closed' %}
+                {% if ticket.need_student_update %}
+                  <a href="{% url 'manage_ticket_page' ticket.id %}" class="manage-btn">
+                    Manage
+                  </a>
+                {% else %}
+                  <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
+                    View
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

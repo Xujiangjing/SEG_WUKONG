@@ -1,4 +1,4 @@
-{% extends 'base_login.html' %}
+{% extends 'base_content.html' %}
 {% block page_title %}Login - WUKONG{% endblock %}
 {% block content %}
 <div class="login-container">
@@ -25,4 +25,26 @@
         </form>
     </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const loginForm = document.getElementById("login-form");
+    loginForm.addEventListener("submit", function () {
+      fetch("{% url 'get_user_role' %}")  // AJAX request to get user role
+        .then(response => response.json())
+        .then(data => {
+          let dashboardUrl = "/";
+          if (data.role === "program_officer") {
+            dashboardUrl = "{% url 'dashboard_program_officer' %}";
+          } else if (data.role === "student") {
+            dashboardUrl = "{% url 'dashboard_student' %}";
+          } else if (data.role === "specialist") {
+            dashboardUrl = "{% url 'dashboard_specialist' %}";
+          }
+          document.getElementById("next-input").value = dashboardUrl; // Update the redirect URL
+          loginForm.submit();
+        });
+    });
+  });
+</script>
 {% endblock %}

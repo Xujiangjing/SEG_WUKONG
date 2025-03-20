@@ -1,30 +1,69 @@
 {% extends 'base_content.html' %}
 
 {% block content %}
-<div class="container my-4">
-  <div class="row">
-    <div class="col-12">
-      <h1 class="text-center text-primary">Your Profile</h1>
-      <section class="my-5">
-        <h2 class="text-secondary">User Information</h2>
-        <ul class="list-group">
-          <li class="list-group-item"><strong>Username:</strong> {{ user.username }}</li>
-          <li class="list-group-item"><strong>Email:</strong> {{ user.email }}</li>
-          <li class="list-group-item"><strong>First Name:</strong> {{ user.first_name }}</li>
-          <li class="list-group-item"><strong>Last Name:</strong> {{ user.last_name }}</li>
-          <li class="list-group-item"><strong>Role:</strong> 
-            {% if user.is_program_officer %}
-              Program Officer
-            {% elif user.is_specialist %}
-              Specialist
-            {% elif user.is_student %}
-              Student
-            {% else %}
-              Unknown
-            {% endif %}
-          </li>
-        </ul>
-      </section>
+<div class="content-area">
+  <div class="fog-box">
+    <div class="container my-4">
+      <div class="row">
+        <div class="col-12">
+          <h1 class="text-center" style="color: #000C40; font-weight: bold;">Your Profile</h1>
+            <div class="form-container">
+              <!-- Username -->
+              <div class="mb-3 row align-items-center">
+                <div class="col-sm-3">
+                  <div class="readonly-box subtitle-box">Username</div>
+                </div>
+                <div class="col-sm-9">
+                  <input type="text" id="username" class="form-control" value="{{ user.username }}" readonly>
+                </div>
+              </div>
+              <!-- First Name -->
+              <div class="mb-3 row align-items-center">
+                <div class="col-sm-3">
+                  <div class="readonly-box subtitle-box">First Name</div>
+                </div>
+                <div class="col-sm-9">
+                  <input type="text" id="firstName" class="form-control" value="{{ user.first_name }}" readonly>
+                </div>
+              </div>
+              <!-- Last Name -->
+              <div class="mb-3 row align-items-center">
+                <div class="col-sm-3">
+                  <div class="readonly-box subtitle-box">Last Name</div>
+                </div>
+                <div class="col-sm-9">
+                  <input type="text" id="lastName" class="form-control" value="{{ user.last_name }}" readonly>
+                </div>
+              </div>
+              <!-- Email -->
+              <div class="mb-3 row align-items-center">
+                <div class="col-sm-3">
+                  <div class="readonly-box subtitle-box">Email</div>
+                </div>
+                <div class="col-sm-9">
+                  <input type="email" id="email" class="form-control" value="{{ user.email }}" readonly>
+                </div>
+              </div>
+              <!-- Role -->
+              <div class="mb-3 row align-items-center">
+                <div class="col-sm-3">
+                  <div class="readonly-box subtitle-box">Role</div>
+                </div>
+                <div class="col-sm-9">
+                  <input type="text" id="role" class="form-control"
+                        value="{% if user.is_program_officer %}Program Officer{% elif user.is_specialist %}Specialist{% elif user.is_student %}Student{% else %}Unknown{% endif %}"
+                        readonly>
+                </div>
+              </div>
+              
+              <div class="profile-actions d-flex justify-content-between align-items-center">
+                <a href="{% url 'password' %}" class="change-password-btn">Change password</a>
+                <a href="{% url 'dashboard' %}" class="back-btn">← Back</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
