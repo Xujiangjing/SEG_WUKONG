@@ -53,7 +53,7 @@
             </div>
         
             {% for ticket in assigned_tickets %}
-                {% if ticket.status != 'closed' %}
+                {% if ticket.specialist_resolved == False %}
                     <div class="ticket-row">
                         <div class="ticket-title">{{ ticket.title }}</div>
                         <div>{{ ticket.get_status_name }}</div>

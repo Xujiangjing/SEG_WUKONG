@@ -194,6 +194,14 @@ class Ticket(models.Model):
         default=False,
         help_text="Whether the ticket needs an update from the student.",
     )
+    program_officer_resolved = models.BooleanField(
+        default=False,
+        help_text="Whether the program officer has resolved the ticket.",
+    )
+    specialist_resolved = models.BooleanField(
+        default=False,
+        help_text="Whether the specialist has resolved the ticket.",
+    )
 
     def __str__(self):
         return f"Ticket {self.id}: {self.title} ({self.status})"

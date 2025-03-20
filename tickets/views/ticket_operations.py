@@ -39,6 +39,8 @@ def close_ticket(request, ticket_id):
         ticket.status = "closed"
         ticket.can_be_managed_by_program_officers = False
         ticket.can_be_managed_by_specialist = False
+        ticket.program_officer_resolved = True
+        ticket.specialist_resolved = True
         ticket.save()
 
         TicketActivity.objects.create(
@@ -93,6 +95,8 @@ def return_ticket(request, ticket_id):
             ticket.latest_editor = request.user
             ticket.can_be_managed_by_specialist = False
             ticket.can_be_managed_by_program_officers = False
+            ticket.program_officer_resolved = False
+            ticket.specialist_resolved = False
             ticket.need_student_update = True
             ticket.save()
 
@@ -109,9 +113,6 @@ def return_ticket(request, ticket_id):
                 action_time=timezone.now(),
                 comment=f"Return to student : {ticket.creator.full_name()}",
             )
-
-            if ticket.return_reason:
-                return redirect("ticket_detail", ticket_id=ticket_id)
 
             return redirect("ticket_detail", ticket_id=ticket_id)
     else:
@@ -154,6 +155,7 @@ def redirect_ticket(request, ticket_id):
         ticket.latest_action = "redirected"
         ticket.can_be_managed_by_program_officers = False
         ticket.can_be_managed_by_specialist = True
+        ticket.program_officer_resolved = False
         ticket.save()
 
         TicketActivity.objects.create(
@@ -180,6 +182,7 @@ def redirect_ticket(request, ticket_id):
         ticket.latest_action = "redirected"
         ticket.can_be_managed_by_specialist = True
         ticket.can_be_managed_by_program_officers = False
+        ticket.program_officer_resolved = True
         ticket.save()
 
         TicketActivity.objects.create(
@@ -307,6 +310,8 @@ def respond_ticket(request, ticket_id):
         )
     messages.success(request, "Response sent successfully.")
     ticket.status = "in_progress"
+    ticket.program_officer_resolved = request.user.is_program_officer()
+    ticket.specialist_resolved = request.user.is_specialist()
     ticket.save()
     send_ticket_confirmation_email(ticket)
 
@@ -335,6 +340,10 @@ def update_ticket(request, ticket_id):
         ticket.latest_editor = request.user
         ticket.can_be_managed_by_specialist = True
         ticket.can_be_managed_by_program_officers = True
+        if ticket.latest_editor.is_program_officer():
+            ticket.program_officer_resolved = True
+        if ticket.latest_editor.is_specialist():
+            ticket.specialist_resolved = True
         ticket.need_student_update = False
         ticket.save()
         TicketActivity.objects.create(
