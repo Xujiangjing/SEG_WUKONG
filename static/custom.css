@@ -868,7 +868,25 @@ text-align: center; /* 或者根据需要改为 left */
     font-weight: bold;
     color: #000C40;
     margin: 20px 0; /* 清除默认 margin，确保对齐 */
-} 
+}
+
+.ticket-title{
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /* 限制最多 3 行 */
+    line-clamp: 3; /* 标准属性 */
+    
+    overflow: hidden;
+    text-overflow: ellipsis; /* 超出部分显示 ... */
+    
+    word-wrap: break-word; /* 允许长单词换行 */
+    word-break: break-word;
+    
+    max-width: 250px; /* 限制最大宽度 */
+    white-space: normal; /* 允许换行 */
+    line-height: 1.5em; /* 控制行高 */
+    max-height: calc(1.5em * 3); /* 确保最多 3 行 */
+}
 
 .create-btn {
   background-color: #2D47B8; /* 深蓝色 */
