@@ -80,7 +80,7 @@ def log_out(request):
     """Log out the current user"""
 
     logout(request)
-    return redirect("home")
+    return redirect("log_in")
 
 
 class PasswordView(LoginRequiredMixin, FormView):
