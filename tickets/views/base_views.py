@@ -104,7 +104,6 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
         ticket.save()
 
-        
         files = self.request.FILES.getlist("file")
         for f in files:
             handle_uploaded_file_in_chunks(ticket, f)
@@ -142,14 +141,13 @@ def ticket_detail(request, ticket_id):
         and ticket.return_reason
     ):
         messages.warning(request, "This ticket is waiting for the student to update.")
-    
+
     if (
         request.user.is_student()
         and ticket.status == "in_progress"
         and (ticket.can_be_managed_by_program_officers or ticket.can_be_managed_by_specialist)
     ):
         messages.warning(request, "This ticket is waiting for the staff to process.")
-    
 
     if (
         request.user != ticket.creator

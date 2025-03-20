@@ -32,6 +32,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @login_required
 def close_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -57,7 +58,11 @@ def close_ticket(request, ticket_id):
             report, created = DailyTicketClosureReport.objects.get_or_create(
                 date=today,
                 department=ticket.assigned_department,
-                defaults={"closed_by_inactivity": 0,"closed_by_inactivity": 0, "closed_manually": 0},
+                defaults={
+                    "closed_by_inactivity": 0,
+                    "closed_by_inactivity": 0,
+                    "closed_manually": 0,
+                },
             )
             report.closed_manually += 1
             report.save()
@@ -331,9 +336,7 @@ def update_ticket(request, ticket_id):
 
     if request.method == "POST" and "update_message" in request.POST:
         update_message = request.POST.get("update_message")
-        ticket.description += (
-            f"\n\nAdded Information:\n{update_message}"
-        )
+        ticket.description += f"\n\nAdded Information:\n{update_message}"
         ticket.status = "in_progress"
         ticket.latest_action = "status_updated"
         ticket.assigned_user = ticket.latest_editor
@@ -361,7 +364,7 @@ def manage_ticket_page(request, ticket_id):
     ticket = get_object_or_404(
         Ticket.objects.select_related("creator", "assigned_user"), id=ticket_id
     )
-    
+
     attachments = ticket.attachments.all().order_by("uploaded_at")
 
     user = request.user
@@ -449,7 +452,7 @@ def manage_ticket_page(request, ticket_id):
                 "specialists": specialists,
                 "potential_tickets": potential_tickets,
                 "approved_merged_tickets": approved_merged_tickets,
-                "attachments": attachments
+                "attachments": attachments,
             },
         )
 
