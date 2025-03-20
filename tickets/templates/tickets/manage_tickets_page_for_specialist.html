@@ -44,6 +44,31 @@
                 <input type="text" class="form-control" value="{{ ticket.title }}" readonly>
             </div>
         </div>
+
+        <!-- Attachments -->
+        <div class="mb-3 row align-items-center">
+          <div class="col-sm-3">
+            <div class="readonly-box subtitle-box">Attachments</div>
+          </div>
+          <div class="col-sm-9">
+            {% if attachments %}
+            <div class="form-control" style="height:auto; background-color: white; padding:10px;">
+              <ul class="list-unstyled mb-0">
+                {% for attachment in attachments %}
+                <li>
+                  <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                    📎 {{ attachment.filename }}
+                  </a>
+                  <span class="text-muted"> ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})</span>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% else %}
+            <input type="text" class="form-control" value="No attachments" readonly>
+            {% endif %}
+          </div>
+        </div>
       
         <!-- Description -->
         <div class="mb-3 row align-items-center description-row">
