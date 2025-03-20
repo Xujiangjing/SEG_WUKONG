@@ -36,7 +36,7 @@ class SupplementTicketViewTestCase(TestCase):
             {'supplement_info': 'Supplemental information'}
         )
 
-        self.assertRedirects(response, reverse('ticket_list'))
+        self.assertRedirects(response, reverse('dashboard'))
 
     def test_student_can_supplement_own_ticket(self):
         self.client.login(username="@johndoe", password="Password123")
@@ -47,7 +47,7 @@ class SupplementTicketViewTestCase(TestCase):
         self.ticket.refresh_from_db()
 
         self.assertEqual(self.ticket.status, 'open')
-        self.assertRedirects(response, reverse('ticket_list'))
+        self.assertRedirects(response, reverse('dashboard'))
 
     def test_get_request(self):
         self.client.login(username="@johndoe", password="Password123")
@@ -76,7 +76,7 @@ class SupplementTicketViewTestCase(TestCase):
         )
         self.ticket.refresh_from_db()
         self.assertEqual(self.ticket.status, "returned")
-        self.assertRedirects(response, reverse('ticket_list'))
+        self.assertRedirects(response, reverse('dashboard'))
 
     def test_form_invalid(self):
         self.client.login(username="@johndoe", password="Password123")

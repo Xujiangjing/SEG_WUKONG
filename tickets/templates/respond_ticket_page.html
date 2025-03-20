@@ -33,11 +33,41 @@
                         </tr>
                         <tr class="table-info">
                             <td><strong>Assigned to:</strong></td>
-                            <td>{% if ticket.assigned_user %}{{ ticket.assigned_user.username }}{% else %}Unassigned{% endif %}</td>
+                            <td>
+                                {% if ticket.assigned_user %}
+                                    {{ ticket.assigned_user.username }}
+                                {% else %}
+                                    Unassigned
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr>
-                            <td><strong>Discription:</strong></td>
+                            <td><strong>Description:</strong></td>
                             <td>{{ ticket.description }}</td>
+                        </tr>
+
+
+                        
+                        <tr>
+                            <td><strong>Attachments:</strong></td>
+                            <td>
+                                {% if attachments %}
+                                    <ul class="list-unstyled">
+                                        {% for attachment in attachments %}
+                                            <li>
+                                                <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                                                    📎 {{ attachment.filename}}
+                                                </a>
+                                                <span class="text-muted">
+                                                    ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <span class="text-muted">No attachments</span>
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -51,7 +81,7 @@
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center" onclick="toggleSection('activity-log', 'activity-arrow')">
                     <strong>Activity Log</strong>
                     <span id="activity-arrow">▼</span>
-                </div>                
+                </div>
                 <div class="card-body" id="activity-log" style="display: none;">
                     <ul class="timeline">
                         {% for activity in activities %}
@@ -67,6 +97,46 @@
                             <p>No activities yet.</p>
                         {% endfor %}
                     </ul>
+                </div>
+            </div>
+
+            <!-- New section for potential tickets to merge -->
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-warning text-white">
+                    <strong>Potential Tickets to Merge</strong>
+                </div>
+                <div class="card-body">
+                    {% if potential_tickets %}
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for potential_ticket in potential_tickets %}
+                                    <tr>
+                                        <td>{{ potential_ticket.title }}</td>
+                                        <td>{{ potential_ticket.description }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'merge_ticket' ticket.id potential_ticket.id %}">
+                                                {% csrf_token %}    
+                                                {% if potential_ticket in approved_merged_tickets %}
+                                                    <button type="submit" class="btn btn-danger">Undo</button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-success">Merge</button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No potential tickets to merge found.</p>
+                    {% endif %}
                 </div>
             </div>
 
@@ -124,7 +194,6 @@
         responseBox.addEventListener("keydown", function (event) {
             if (aiPlaceholderActive) {
                 if (event.key !== "Enter") {
-                    // Clear the AI response once the user starts typing
                     responseBox.value = ""; 
                     responseBox.style.fontStyle = "normal"; 
                     responseBox.style.color = "black"; 
@@ -133,7 +202,6 @@
             }
         });
 
-        // When pressing Enter, set the text to normal (confirm the input)
         responseBox.addEventListener("keydown", function (event) {
             if (aiPlaceholderActive && event.key === "Enter") {
                 event.preventDefault();
@@ -143,7 +211,6 @@
             }
         });
 
-        // Prevent the cursor from moving when AI text is active
         responseBox.addEventListener("mousedown", function (event) {
             if (aiPlaceholderActive) {
                 responseBox.setSelectionRange(0, 0);
@@ -151,7 +218,6 @@
             }
         });
 
-        // If the textarea loses focus, clear AI response if not typed over
         responseBox.addEventListener("blur", function () {
             if (aiPlaceholderActive && responseBox.value.trim() === aiResponse) {
                 responseBox.value = "";
@@ -178,10 +244,9 @@
         .then(data => {
             if (data.success) {
                 document.getElementById('response-box').value = '';
-
                 let notification = document.getElementById('response-success');
-                    notification.innerText = "Response submitted successfully!";
-                    notification.style.display = "block"; 
+                notification.innerText = "Response submitted successfully!";
+                notification.style.display = "block"; 
 
                 let activityLog = document.getElementById('activity-log');
                 activityLog.innerHTML = '<ul class="timeline">';
@@ -199,16 +264,17 @@
                     `;
                 });
                 activityLog.innerHTML += '</ul>';
-
-                // Show the updated activity log if it was hidden
                 activityLog.style.display = "block";
                 document.getElementById("activity-arrow").innerHTML = "▲";
             } else {
                 alert('Error: Could not submit response');
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+    alert("Error submitting response: " + error);
+    console.error("Error:", error);
     });
+});
 
 </script>
 

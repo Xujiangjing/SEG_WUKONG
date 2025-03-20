@@ -76,6 +76,30 @@
                     </ul>
                 </div>
             </div>
+            {% if attachments %}
+            <div class="card mb-4 shadow-lg rounded">
+                <div class="card-header bg-info text-white">
+                    <strong>Attachments</strong>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for attachment in attachments %}
+                        <li class="list-group-item">
+                            <a href="{{ attachment.file.url }}" download class="text-decoration-none">
+                                📎 {{ attachment.filename}}
+                            </a>
+                            <span class="text-muted">
+                                ({{ attachment.uploaded_at|date:"Y-m-d H:i:s" }})
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% else %}
+            <span class="text-muted">No attachments</span>
+            {% endif %}
+            
 
             <div class="card mb-4 shadow-lg rounded">
                 <div class="card-header bg-primary text-white">

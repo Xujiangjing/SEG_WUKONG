@@ -201,4 +201,8 @@ AWS_S3_OBJECT_PARAMETERS = {"ACL": "public-read"}
 
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 
+<<<<<<< HEAD
 Media_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+=======
+Media_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+>>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb

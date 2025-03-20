@@ -48,6 +48,7 @@ from tickets.views.base_views import CreateTicketView
 
 
 urlpatterns = [
+<<<<<<< HEAD
     path("admin/", admin.site.urls),
     path("", base_views.home, name="home"),
     path("log_in/", authentication.LogInView.as_view(), name="log_in"),
@@ -111,6 +112,37 @@ urlpatterns = [
         ticket_operations.update_ticket,
         name="update_ticket",
     ),
+=======
+    path('admin/', admin.site.urls),
+    path('', views.home, name='home'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('log_in/', views.LogInView.as_view(), name='log_in'),
+    path('log_out/', views.log_out, name='log_out'),
+    path('password/', views.PasswordView.as_view(), name='password'),
+    path('profile/', views.ProfileUpdateView.as_view(), name='profile'),
+    path('sign_up/', views.SignUpView.as_view(), name='sign_up'),
+    path('tickets/', views.TicketListView.as_view(), name='ticket_list'),
+    path('tickets/create/', views.CreateTicketView.as_view(), name='create_ticket'),
+    path('tickets/<uuid:pk>/', views.TicketDetailView.as_view(), name='ticket_detail'),
+    path('close_ticket/<uuid:ticket_id>/', views.close_ticket, name='close_ticket'),
+    path('tickets/table/', views.TicketsTableView.as_view(), name='tickets_table'),
+    path("ticket/<uuid:pk>/return/", views.return_ticket, name="return_ticket"),
+    path("ticket/<uuid:pk>/supplement/", views.supplement_ticket, name="supplement_ticket"),
+    path('ticket/<uuid:ticket_id>/redirect', views.redirect_ticket_page, name='redirect_ticket_page'),
+    path('ticket/<uuid:ticket_id>/assign/', views.redirect_ticket, name='redirect_ticket'),
+    path('ticket/<uuid:ticket_id>/respond_page/', views.respond_ticket_page, name='respond_ticket_page'),
+    path('ticket/<uuid:ticket_id>/respond/', views.respond_ticket, name='respond_ticket'),
+    path('ticket/<uuid:ticket_id>/merge_page/', views.merge_ticket_page, name='merge_ticket_page'),
+    path('ticket/<uuid:ticket_id>/merge/', views.merge_ticket, name='merge_ticket'),
+    path('ticket/<uuid:ticket_id>/detail/', views.ticket_detail, name='ticket_detail'),
+    path('ticket/<uuid:ticket_id>/return_page/', views.return_ticket_page, name='return_ticket_page'),
+    path('ticket/<uuid:ticket_id>/return_ticket_specailist/', views.return_ticket_specailist, name='return_ticket_specailist'),
+    path('ticket/<uuid:ticket_id>/update_page/', views.update_ticket_page, name='update_ticket_page'),
+    path('ticket/<uuid:ticket_id>/update_ticket/', views.update_ticket, name='update_ticket'),
+    path('ticket/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', views.merge_ticket, name='merge_ticket'),
+    
+
+>>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT
