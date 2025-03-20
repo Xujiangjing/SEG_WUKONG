@@ -37,7 +37,8 @@ def close_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.user.is_student() and request.user == ticket.creator:
         ticket.status = "closed"
-        ticket.can_be_managed = False
+        ticket.can_be_managed_by_program_officers = False
+        ticket.can_be_managed_by_specialist = False
         ticket.save()
 
         TicketActivity.objects.create(
@@ -90,7 +91,8 @@ def return_ticket(request, ticket_id):
             ticket.latest_action = "status_updated"
             ticket.assigned_user = ticket.creator
             ticket.latest_editor = request.user
-            ticket.can_be_managed = False
+            ticket.can_be_managed_by_specialist = False
+            ticket.can_be_managed_by_program_officers = False
             ticket.need_student_update = True
             ticket.save()
 
@@ -150,7 +152,8 @@ def redirect_ticket(request, ticket_id):
         ticket.assigned_user = None
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
-        ticket.can_be_managed = True
+        ticket.can_be_managed_by_program_officers = False
+        ticket.can_be_managed_by_specialist = True
         ticket.save()
 
         TicketActivity.objects.create(
@@ -173,10 +176,10 @@ def redirect_ticket(request, ticket_id):
         new_assignee = User.objects.get(id=new_assignee_id)
         ticket.assigned_user = new_assignee
         ticket.assigned_department = new_assignee.department.name
-        ticket.department = ticket.assigned_department
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
-        ticket.can_be_managed = True
+        ticket.can_be_managed_by_specialist = True
+        ticket.can_be_managed_by_program_officers = False
         ticket.save()
 
         TicketActivity.objects.create(
@@ -330,7 +333,8 @@ def update_ticket(request, ticket_id):
         ticket.latest_action = "status_updated"
         ticket.assigned_user = ticket.latest_editor
         ticket.latest_editor = request.user
-        ticket.can_be_managed = True
+        ticket.can_be_managed_by_specialist = True
+        ticket.can_be_managed_by_program_officers = True
         ticket.need_student_update = False
         ticket.save()
         TicketActivity.objects.create(
