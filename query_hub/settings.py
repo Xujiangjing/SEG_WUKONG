@@ -45,10 +45,12 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
-EMAIL_HOST_USER = "wukonghelpdesk@gmail.com"
-EMAIL_HOST_PASSWORD = "bynw apnb vmuu nmun"
+# SMTP Configuration (For Sending Emails)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "wukonghelpdesk@gmail.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
-PERSPECTIVE_API_KEY = "AIzaSyCUq-kMK-CtvEHP8v65bGtRpyzFN8h63Vo"
+
+PERSPECTIVE_API_KEY = os.getenv("PERSPECTIVE_API_KEY", "")
 
 # Testing Mode
 TESTING = "test" in sys.argv
@@ -187,8 +189,6 @@ REDIRECT_URL_WHEN_LOGGED_IN = "dashboard"
 MESSAGE_TAGS = {
     messages.ERROR: "danger",
 }
-
-
 
 
 AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "eu-west-2")
