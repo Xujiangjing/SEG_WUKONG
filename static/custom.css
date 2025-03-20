@@ -272,6 +272,7 @@ h3.profile-title {
     &-resolved { background-color: #198754; }
     &-closed { background-color: #6c757d; }
 }
+
 .table-blue th {
   background-color: #0d6efd;
   color: rgb(0, 0, 0);
@@ -947,6 +948,25 @@ align-items: stretch;  /* 让所有列高度一致 */
 
 .description-row .description-subtitle {
 height: 150px !important;  /* 覆盖 .readonly-box 中的 height: 58px */
+display: flex;
+align-items: center;       /* 根据需要，可选择居中或者左对齐 */
+padding: 0 15px;
+}
+
+.attachments-box {
+    height: 100px !important; /* 根据实际需求设置合适的固定高度 */
+    overflow-y: auto; /* 当内容超出时出现垂直滚动条 */
+    padding:10px;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important
+}  
+
+.attachments-row {
+    align-items: stretch;  /* 让所有列高度一致 */
+}
+    
+.attachments-row .attachments-subtitle {
+height: 100px !important;  /* 覆盖 .readonly-box 中的 height: 58px */
 display: flex;
 align-items: center;       /* 根据需要，可选择居中或者左对齐 */
 padding: 0 15px;

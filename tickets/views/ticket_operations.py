@@ -150,6 +150,7 @@ def redirect_ticket(request, ticket_id):
         ticket.assigned_user = None
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
+        ticket.can_be_managed = True
         ticket.save()
 
         TicketActivity.objects.create(
@@ -175,7 +176,7 @@ def redirect_ticket(request, ticket_id):
         ticket.department = ticket.assigned_department
         ticket.status = "in_progress"
         ticket.latest_action = "redirected"
-        ticket.can_be_managed = False
+        ticket.can_be_managed = True
         ticket.save()
 
         TicketActivity.objects.create(

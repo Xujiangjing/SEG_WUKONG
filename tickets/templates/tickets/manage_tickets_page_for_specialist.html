@@ -151,6 +151,60 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
+
+  document.addEventListener("DOMContentLoaded", function () {
+        const responseBox = document.getElementById("response_message");
+        const aiResponse = "{{ ticket.ai_processing.ai_generated_response|escapejs }}";
+        let aiPlaceholderActive = false;
+
+        responseBox.addEventListener("focus", function () {
+            if (!aiPlaceholderActive && responseBox.value.trim() === "") {
+                responseBox.value = aiResponse;
+                responseBox.style.fontStyle = "italic";
+                responseBox.style.color = "grey"; 
+                aiPlaceholderActive = true;
+                setTimeout(() => {
+                    responseBox.setSelectionRange(0, 0);
+                }, 0);
+            }
+        });
+
+        responseBox.addEventListener("keydown", function (event) {
+            if (aiPlaceholderActive) {
+                if (event.key !== "Enter") {
+                    responseBox.value = ""; 
+                    responseBox.style.fontStyle = "normal"; 
+                    responseBox.style.color = "black"; 
+                    aiPlaceholderActive = false; 
+                }
+            }
+        });
+
+        responseBox.addEventListener("keydown", function (event) {
+            if (aiPlaceholderActive && event.key === "Enter") {
+                event.preventDefault();
+                responseBox.style.fontStyle = "normal"; 
+                responseBox.style.color = "black"; 
+                aiPlaceholderActive = false; 
+            }
+        });
+
+        responseBox.addEventListener("mousedown", function (event) {
+            if (aiPlaceholderActive) {
+                responseBox.setSelectionRange(0, 0);
+                event.preventDefault();
+            }
+        });
+
+        responseBox.addEventListener("blur", function () {
+            if (aiPlaceholderActive && responseBox.value.trim() === aiResponse) {
+                responseBox.value = "";
+                responseBox.style.fontStyle = "normal";
+                responseBox.style.color = "black";
+                aiPlaceholderActive = false;
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

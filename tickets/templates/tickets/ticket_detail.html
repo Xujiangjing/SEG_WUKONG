@@ -80,13 +80,13 @@
       {% endif %}
 
       <!-- Attachments -->
-      <div class="mb-3 row align-items-center">
+    <div class="mb-3 row align-items-center attachments-row">
         <div class="col-sm-3">
-          <div class="readonly-box subtitle-box">Attachments</div>
+          <div class="readonly-box subtitle-box attachments-subtitle">Attachments</div>
         </div>
         <div class="col-sm-9">
           {% if attachments %}
-          <div class="form-control" style="height:auto; background-color: white; padding:17px;">
+          <div class="form-control attachments-box">
             <ul class="list-unstyled mb-0">
               {% for attachment in attachments %}
               <li>
@@ -99,10 +99,10 @@
             </ul>
           </div>
           {% else %}
-          <input type="text" class="form-control" value="No attachments" readonly>
+          <input type="text" class="form-control attachments-box" value="No attachments" readonly>
           {% endif %}
         </div>
-      </div>
+    </div>
 
       <!-- Description -->
         <div class="mb-3 row align-items-center description-row">
@@ -133,22 +133,26 @@
             <strong>Activity Log</strong>
             </div>
             <div class="card-body">
-            <ul class="timeline">
-                {% for activity in activities %}
-                <li class="timeline-item">
-                <div class="timeline-point bg-info"></div>
-                <div class="timeline-content">
-                    <h5>
-                    <strong>{{ activity.username }}</strong> - {{ activity.action }}
-                    </h5>
-                    <p>
-                    <small class="text-muted">{{ activity.action_time }}</small>
-                    </p>
-                    <p>{{ activity.comment }}</p>
-                </div>
-                </li>
-                {% endfor %}
-            </ul>
+            {% if activities %}
+                <ul class="timeline">
+                    {% for activity in activities %}
+                    <li class="timeline-item">
+                    <div class="timeline-point bg-info"></div>
+                    <div class="timeline-content">
+                        <h5>
+                        <strong>{{ activity.username}}</strong> - {{ activity.action}}
+                        </h5>
+                        <p>
+                        <small class="text-muted">{{ activity.action_time}}</small>
+                        </p>
+                        <p>{{ activity.comment}}</p>
+                    </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <pre class="text-muted"> No activity log yet.</pre>
+            {% endif %}
             </div>
         </div>
       {% endif %}
