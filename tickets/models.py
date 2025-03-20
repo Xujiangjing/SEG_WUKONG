@@ -1,11 +1,6 @@
 import os
-<<<<<<< HEAD
 import uuid
-=======
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
 import re
-import uuid
-
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
@@ -14,10 +9,6 @@ from libgravatar import Gravatar
 
 
 class Department(models.Model):
-    """
-    Represents a department within the system.
-    Used to categorize users and tickets by department.
-    """
     """Model used to represent a department in Django Admin."""
 
     name = models.CharField(max_length=50, unique=True)
@@ -33,10 +24,6 @@ class Department(models.Model):
 
 
 class User(AbstractUser):
-    """
-    Custom user model extending Django's AbstractUser.
-    Adds role-based access and optional department association.
-    """
     """Custom User model with roles and optional department association."""
 
     ROLE_CHOICES = [
@@ -45,7 +32,7 @@ class User(AbstractUser):
         ("specialists", "Specialists"),
         ("others", "Others"),  # Admins, superusers, etc.
     ]
-    # Custom username validation: must start with '@' followed by at least three alphanumeric characters
+
     username = models.CharField(
         max_length=30,
         unique=True,
@@ -70,33 +57,20 @@ class User(AbstractUser):
 
     class Meta:
         """Model options."""
-<<<<<<< HEAD
 
         ordering = ["last_name", "first_name"]
 
-=======
-        """
-        Defines ordering for the User model.
-        """
-        ordering = ['last_name', 'first_name']
-    
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
     def clean(self):
-        """
-        Ensures that specialists must be assigned to a department.
-        """
         # Specialists must have a department
         if self.role == "specialists" and not self.department:
             raise ValidationError("Specialists must have a department.")
 
     def full_name(self):
-        """Returns the user's full name."""
         """Return a string containing the user's full name."""
 
         return f"{self.first_name} {self.last_name}"
 
     def gravatar(self, size=120):
-        """Returns the Gravatar URL for the user."""
         """Return a URL to the user's gravatar."""
 
         gravatar_object = Gravatar(self.email)
@@ -104,7 +78,6 @@ class User(AbstractUser):
         return gravatar_url
 
     def mini_gravatar(self):
-        """Returns a smaller version of the Gravatar."""
         """Return a URL to a miniature version of the user's gravatar."""
 
         return self.gravatar(size=60)
@@ -119,40 +92,20 @@ class User(AbstractUser):
         return self.role == "specialists"
 
     def __str__(self):
-        """String representation of the user."""
         if self.department:
             return f"{self.username} ({self.role}) - {self.department}"
         return f"{self.username} ({self.role})"
 
 
-<<<<<<< HEAD
-=======
-"""
-Represents a support ticket submitted by users.
-Tracks status, priority, assigned department, and updates.
-"""
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
 class Ticket(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
     STATUS_CHOICES = [
-<<<<<<< HEAD
         ("in_progress", "In Progress"),
         ("closed", "Closed"),
     ]
     ## get_priority_choices function
-=======
-        ('open', 'Open'),
-        ('in_progress', 'In Progress'),
-        ('resolved', 'Resolved'),
-        ('closed', 'Closed'),
-        ('returned', 'Returned'),
-        ('returned_student', 'Returned To Student'), 
-        ('returned_officer', 'Returned To Officer')
-    ]
-
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
     PRIORITY_CHOICES = [
         ("low", "Low"),
         ("medium", "Medium"),
@@ -243,20 +196,13 @@ class Ticket(models.Model):
     )
 
     def __str__(self):
-        """Returns a readable string representation of the ticket."""
         return f"Ticket {self.id}: {self.title} ({self.status})"
 
     def save(self, *args, **kwargs):
-<<<<<<< HEAD
         if (
             self.latest_action is None
         ):  # If no action has yet been recorded, set a default action
             self.latest_action = "created"
-=======
-        """Sets the default latest action if not provided."""
-        if self.latest_action is None:  # If no action has yet been recorded, set a default action
-            self.latest_action = 'created'
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
         super().save(*args, **kwargs)
 
     def get_department_name(self):
@@ -281,25 +227,14 @@ def user_directory_path(instance, filename):
 
 
 class TicketAttachment(models.Model):
-<<<<<<< HEAD
     ticket = models.ForeignKey(
         Ticket, on_delete=models.CASCADE, related_name="attachments"
     )
-=======
-    """
-    Stores file attachments related to tickets.
-    """
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='attachments')
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
     file = models.FileField(upload_to=user_directory_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     @property
     def filename(self):
-<<<<<<< HEAD
-=======
-
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
         return os.path.basename(self.file.name)
 
     def __str__(self):
@@ -322,9 +257,6 @@ class TicketActivity(models.Model):
 
 
 class Response(models.Model):
-    """
-    Represents a response to a ticket, typically from an assigned user.
-    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     ticket = models.ForeignKey(
         Ticket, on_delete=models.CASCADE, related_name="responses"
@@ -367,7 +299,6 @@ class AITicketProcessing(models.Model):
     def __str__(self):
         return f"AI Processing for Ticket {self.ticket.id}"
 
-<<<<<<< HEAD
 
 class MergedTicket(models.Model):
     # A ticket that will be used as the main one to answer for the merged tickets
@@ -381,38 +312,17 @@ class MergedTicket(models.Model):
         Ticket, related_name="approved_merged_tickets"
     )
 
-=======
-class MergedTicket(models.Model):
-    primary_ticket = models.OneToOneField(
-        Ticket,
-        related_name='primary_ticket',
-        on_delete=models.CASCADE
-    )
-    suggested_merged_tickets = models.ManyToManyField(
-        Ticket, 
-        related_name='suggested_merged_tickets'
-    )
-    approved_merged_tickets = models.ManyToManyField(
-        Ticket, 
-        related_name='approved_merged_tickets'
-    )
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
     merged_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Merged into Ticket {self.primary_ticket.id}"
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
 class DailyTicketClosureReport(models.Model):
     date = models.DateField()
     department = models.CharField(max_length=50, choices=Ticket.DEPARTMENT_CHOICES)
     closed_by_inactivity = models.PositiveIntegerField(default=0)
     closed_manually = models.PositiveIntegerField(default=0)
-<<<<<<< HEAD
     in_progress = models.PositiveIntegerField(
         default=0
     )  # Add this field with a default value
@@ -422,8 +332,3 @@ class DailyTicketClosureReport(models.Model):
 
     def __str__(self):
         return f"Report for {self.date} for {self.department}"
-=======
-
-    def __str__(self):
-        return f"Report for {self.date} for {self.department}"
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb

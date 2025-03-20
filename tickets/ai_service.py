@@ -1,43 +1,12 @@
-import json
 import os
-
+import json
 import boto3
 from botocore.exceptions import ClientError
-<<<<<<< HEAD
 from tickets.models import Ticket, AITicketProcessing, MergedTicket
 
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-=======
-from tickets.models import AITicketProcessing, MergedTicket, Ticket
 
-# Importing OS module to access environment variables
-# Importing JSON module for handling JSON data
-# Importing Boto3 to interact with AWS services
-# Handling AWS-specific client errors
-# Importing Django settings to access project settings
- 
-
-"""
-SUMMARY:
-
-This script integrates AWS Bedrock's Meta Llama 3 70B model with a Django-based ticketing system. It performs the following tasks:
-
-1. **AWS Bedrock Client Initialization** - Establishes a connection to AWS Bedrock.
-
-2. **AI-Powered Ticket Classification & Processing** - Uses AI to classify ticket departments, predict priority levels, and generate responses.
-
-3. **AI-Driven Ticket Merging** - Identifies similar tickets for potential merging based on their descriptions.
-
-4. **Database Interaction** - Stores AI-generated insights in Django models for further processing.
-"""
-
-# Retrieve AWS credentials from environment variables
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
-
-# Initialize AWS Bedrock client with the specified region
 try:
     client = boto3.client("bedrock-runtime", region_name="eu-west-2")
     print("✅ AWS Bedrock client initialized successfully.")
@@ -49,9 +18,7 @@ model_id = "meta.llama3-70b-instruct-v1:0"
 # code to query the model format the prompt and return the response
 def query_bedrock(prompt):
     """
-    
     Query AWS Bedrock's Meta Llama 3 70B Instruct model with a given prompt.
-    
     """
     formatted_prompt = f"""
     <|begin_of_text|><|start_header_id|>user<|end_header_id|>
@@ -81,11 +48,6 @@ def query_bedrock(prompt):
 
 
 def classify_department(ticket_description):
-    """
-    
-    Classifies the given ticket description into a predefined department.
-    
-    """
     prompt = f"""
     Classify the following university student query into one of these departments: 
     {', '.join([d[0] for d in Ticket.DEPARTMENT_CHOICES])}.
@@ -97,11 +59,6 @@ def classify_department(ticket_description):
 
 
 def predict_priority(ticket_description):
-    """
-    
-    Predicts the priority level of a given student query.
-    
-    """
     prompt = f"""
     Predict the priority level for the following university student query: 
     {', '.join([d[0] for d in Ticket.PRIORITY_CHOICES])}.
@@ -113,24 +70,13 @@ def predict_priority(ticket_description):
 
 
 def generate_ai_answer(ticket_description):
-    """
-
-    Generates a short, AI-generated response to a student query.
-    
-    """
     prompt = f"You are a university program officer, reply the student's query in only two or three sentences, 60 words max. Please note down 3 things in your answer: 1. Output the response only. Do not include things like: Here is a concise response to the student's query, [Your Name], Dear, Sincerely,  or any reflection on the answer, etc. that are not related to the response itself. Just give the answer itself. 2. 60 words max. 3. Do not include any bold or italic formatting. Provide a concise answer for the following student query: '{ticket_description}'"
     return query_bedrock(prompt)
 
 # code to process the ticket and update the model with the AI response, department and priority
 def ai_process_ticket(ticket):
     """
-    
-    Processes a support ticket using AI to classify the department,
-    predict the priority, and generate an AI response.
-    """
-    """
     Classifies the department and generates an AI response for the ticket description.
-    
     """
     ai_department = classify_department(ticket.description)
     ai_answer = generate_ai_answer(ticket.description)
@@ -144,18 +90,9 @@ def ai_process_ticket(ticket):
     )
     ticket.priority = AITicketProcessing.objects.get(ticket=ticket).ai_assigned_priority
 
-<<<<<<< HEAD
 
 def find_potential_tickets_to_merge(ticket):
     """
-=======
-def find_potential_tickets_to_merge(ticket):
-    """
-    Identifies similar open tickets that could be merged based on AI evaluation.
-    
-    """
-    """
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
     Find potential tickets that can be merged with the current ticket by evaluating
     their descriptions using the AI model.
     """
@@ -163,7 +100,6 @@ def find_potential_tickets_to_merge(ticket):
     # Fetch open tickets that are not the current ticket
     ai_assigned_department = ticket.ai_processing.ai_assigned_department
     potential_tickets = Ticket.objects.filter(
-<<<<<<< HEAD
         status="in_progress",
         ai_processing__ai_assigned_department=ai_assigned_department,
     ).exclude(id=ticket.id)
@@ -171,15 +107,6 @@ def find_potential_tickets_to_merge(ticket):
     # Generate a prompt to compare the current ticket's description with other ticket descriptions
     similar_tickets = []
 
-=======
-        status='open',
-        ai_processing__ai_assigned_department=ai_assigned_department
-    ).exclude(id=ticket.id)
-    
-    # Generate a prompt to compare the current ticket's description with other ticket descriptions
-    similar_tickets = []
-    
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
     for potential_ticket in potential_tickets:
         print(f"Checking ticket {potential_ticket.id}...")
         prompt = f"""
@@ -188,28 +115,17 @@ def find_potential_tickets_to_merge(ticket):
         The potential ticket: '{potential_ticket.title}' - {potential_ticket.description}
         Should these tickets be merged? Return "Yes" or "No".
         """
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
         result = query_bedrock(prompt)
 
         if result.lower() == "yes":
             similar_tickets.append(potential_ticket)
-<<<<<<< HEAD
 
     # Create a new MergedTicket entry with the primary ticket and the suggested tickets
     if similar_tickets:
         merged_ticket, created = MergedTicket.objects.get_or_create(
             primary_ticket=ticket
         )
-=======
-    
-    # Create a new MergedTicket entry with the primary ticket and the suggested tickets
-    if similar_tickets:
-        merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
         merged_ticket.suggested_merged_tickets.set(similar_tickets)
         merged_ticket.save()
 

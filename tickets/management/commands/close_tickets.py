@@ -1,10 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-<<<<<<< HEAD
 from tickets.models import Ticket, DailyTicketClosureReport
-=======
-from tickets.models import Ticket,DailyTicketClosureReport
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
 from datetime import timedelta
 
 
@@ -36,23 +32,6 @@ class Command(BaseCommand):
                 f"Successfully closed {closed_by_inactivity_count} stale tickets by inactivity"
             )
         )
-<<<<<<< HEAD
-=======
-        closed_by_inactivity_count = stale_tickets.count()
-        stale_tickets.update(status='closed', latest_action='closed_by_inactivity')
-
-        # Update or create DailyTicketClosureReport for each department
-        for ticket in stale_tickets:
-            report, created = DailyTicketClosureReport.objects.get_or_create(
-                date=today,
-                department=ticket.assigned_department,
-                defaults={'closed_by_inactivity': 0, 'closed_manually': 0}
-            )
-            report.closed_by_inactivity += 1
-            report.save()
-
-        self.stdout.write(self.style.SUCCESS(f'Successfully closed {closed_by_inactivity_count} stale tickets by inactivity'))
->>>>>>> f546b48ce5036e8d7a60d12d0314cdb4832e5fcb
 
         urgent_tickets = Ticket.objects.filter(
             status__in=["in_progress", "closed"], updated_at__lt=now - timedelta(days=6)

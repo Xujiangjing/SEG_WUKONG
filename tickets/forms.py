@@ -5,39 +5,8 @@ from django.core.validators import RegexValidator
 
 from .models import Ticket, TicketAttachment, User
 
-"""
-Forms for the tickets app.
-
-This module defines several Django forms used for authentication, user management, and ticket handling in the application. 
-It includes:
-
-1. **LogInForm** - Handles user authentication via username and password.
-
-2. **UserForm** - Allows users to update their profile information.
-
-3. **PasswordForm** - Enables users to change their password.
-
-4. **PasswordForm** - Enables users to change their password after authentication.
-
-5. **SignUpForm** - Allows new users to sign up with necessary details and password validation.
-
-6. **TicketForm** - Facilitates ticket creation and editing, allowing students to submit requests.
-
-7. **MultipleFileInput & MultipleFileField** - Custom field and widget enabling multiple file uploads.
-
-8. **TicketAttachmentForm** - Handles file attachments for tickets.
-
-9. **ReturnTicketForm** - Allows users to provide reasons when returning a ticket.
-
-10. **SupplementTicketForm** - Enables users to supplement additional information to an existing ticket.
-Each form ensures data integrity, user validation, and proper interaction with the models.
-"""
 
 class LogInForm(forms.Form):
-    
-    """Form enabling registered users to log in using their username and password."""
-
-
     """Form enabling registered users to log in."""
 
     username = forms.CharField(label="Username")
@@ -57,24 +26,14 @@ class LogInForm(forms.Form):
 class UserForm(forms.ModelForm):
     """Form to update user profiles."""
 
-
-    """Form to allow users to update their profile details such as first name, last name, username, and email."""
-    
-    
     class Meta:
         """Form options."""
-        
-        """Specify model and fields to be included in the form."""
-
 
         model = User
         fields = ['first_name', 'last_name', 'username', 'email']
 
 class NewPasswordMixin(forms.Form):
     """Form mixing for new_password and password_confirmation fields."""
-
-    """Form allowing authenticated users to change their password."""
-
 
     new_password = forms.CharField(
         label='Password',
@@ -133,7 +92,6 @@ class PasswordForm(NewPasswordMixin):
 class SignUpForm(NewPasswordMixin, forms.ModelForm):
     """Form enabling unregistered users to sign up."""
 
-    """Form enabling new users to sign up and create an account."""
     class Meta:
         """Form options."""
 
@@ -156,10 +114,6 @@ class SignUpForm(NewPasswordMixin, forms.ModelForm):
 # tickets/forms.py
 
 class TicketForm(forms.ModelForm):
-    """Form allowing users to create and update tickets."""
-     
-     
-     
     class Meta:
         model = Ticket
         fields = ['title', 'description', 'priority']  
@@ -178,16 +132,10 @@ class TicketForm(forms.ModelForm):
 
 
 class MultipleFileInput(forms.ClearableFileInput):
-    
-    """Custom file input widget that allows multiple file uploads."""
-    
-    
     allow_multiple_selected = True
 
 ##
 class MultipleFileField(forms.FileField):
-    """Custom file field allowing multiple file uploads."""
-    
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("widget", MultipleFileInput())
         super().__init__(*args, **kwargs)
@@ -195,10 +143,6 @@ class MultipleFileField(forms.FileField):
 ## MultipleFileField is a custom field that allows multiple files to be uploaded at once.
 
 class TicketAttachmentForm(forms.ModelForm):
-    """Form for handling ticket attachments."""
-     
-     
-    
     file = MultipleFileField()
     
     ## The Meta class is used to define the model and fields that the form will use.
