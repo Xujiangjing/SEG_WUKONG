@@ -55,7 +55,7 @@
             {% for ticket in assigned_tickets %}
                 {% if ticket.status != 'closed' %}
                     <div class="ticket-row">
-                        <div>{{ ticket.title }}</div>
+                        <div class="ticket-title">{{ ticket.title }}</div>
                         <div>{{ ticket.get_status_name }}</div>
                         <div>{{ ticket.get_priority_name }}</div>
                         <div>{% if ticket.answers %}Answered{% else %}Not yet answered{% endif %}</div>

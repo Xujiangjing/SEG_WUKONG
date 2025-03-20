@@ -78,7 +78,7 @@
                             {% for ticket in all_tickets %}
                                 {% if ticket.assigned_user.role != "program_officers" %}
                                     <div class="ticket-row">
-                                        <div>{{ ticket.title }}</div>
+                                        <div class="ticket-title">{{ ticket.title }}</div>
                                         <div>{{ ticket.get_department_name }}</div>
                                         <div>{{ ticket.get_status_name }}</div>
                                         <div>{{ ticket.get_priority_name }}</div>
