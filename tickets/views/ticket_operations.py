@@ -339,6 +339,8 @@ def manage_ticket_page(request, ticket_id):
     ticket = get_object_or_404(
         Ticket.objects.select_related("creator", "assigned_user"), id=ticket_id
     )
+    
+    attachments = ticket.attachments.all().order_by("uploaded_at")
 
     user = request.user
     is_student = user.is_student()
@@ -425,6 +427,7 @@ def manage_ticket_page(request, ticket_id):
                 "specialists": specialists,
                 "potential_tickets": potential_tickets,
                 "approved_merged_tickets": approved_merged_tickets,
+                "attachments": attachments
             },
         )
 
