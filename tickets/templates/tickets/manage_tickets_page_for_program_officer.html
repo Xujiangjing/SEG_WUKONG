@@ -143,9 +143,9 @@
                 </div>
                 <!-- Merge Section -->
                 <div id="merge-section" style="display: none;">
-                    <div class="card-body">
+                    
                         {% if potential_tickets %}
-                            <table class="table table-bordered table-striped">
+                            <table class="table table-striped">
                                 <thead>
                                     <tr>
                                         <th>Title</th>
@@ -180,17 +180,17 @@
                 </div>
 
                 <!--Return to student-->
-                <div id="return-section" style="display: none;">
-                    <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+                <div id="return-section" style="display: none; width: 97%; margin: 0 auto;">
+                    <textarea id="return_reason" name="return_reason" class="form-control" style="width: 100%;"></textarea>
                     <button type="submit" id="return_submit_btn" class="btn btn-success mt-3">Submit</button>
                 </div>
             </form>
-
-            <div class="profile-actions d-flex justify-content-end align-items-center">
-                <a href="{% url 'dashboard' %}" class="back-btn">← Back</a>
-            </div>
-
         </div>
+
+        <div class="profile-actions d-flex justify-content-end align-items-center">
+            <a href="{% url 'dashboard' %}" class="back-btn">← Back</a>
+        </div>
+        
     </div>
 </div>
 

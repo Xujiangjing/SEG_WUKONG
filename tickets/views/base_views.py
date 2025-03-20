@@ -145,7 +145,7 @@ def ticket_detail(request, ticket_id):
     if (
         request.user.is_student()
         and ticket.status == "in_progress"
-        and ticket.can_be_managed
+        and (ticket.can_be_managed_by_program_officers or ticket.can_be_managed_by_specialist)
     ):
         messages.warning(request, "This ticket is waiting for the staff to process.")
 
