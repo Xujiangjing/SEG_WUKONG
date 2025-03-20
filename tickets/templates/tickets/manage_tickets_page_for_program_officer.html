@@ -189,6 +189,28 @@
 
                 
             </form>
+
+            <h3>Activity Log:</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Time</th>
+                        <th>Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for activity in activities %}
+                        <tr>
+                            <td>{{ activity.username }}</td>
+                            <td>{{ activity.action }}</td>
+                            <td>{{ activity.action_time }}</td>
+                            <td>{{ activity.comment }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
