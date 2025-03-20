@@ -319,6 +319,10 @@ class DailyTicketClosureReport(models.Model):
     department = models.CharField(max_length=50, choices=Ticket.DEPARTMENT_CHOICES)
     closed_by_inactivity = models.PositiveIntegerField(default=0)
     closed_manually = models.PositiveIntegerField(default=0)
+    in_progress = models.PositiveIntegerField(default=0)  # Add this field with a default value
+
+    class Meta:
+        unique_together = ('date', 'department')
 
     def __str__(self):
         return f"Report for {self.date} for {self.department}"

@@ -28,7 +28,9 @@ from tickets.models import (
     DailyTicketClosureReport,
 )
 from django.db.models.functions import Coalesce
+import logging
 
+logger = logging.getLogger(__name__)
 
 @login_required
 def close_ticket(request, ticket_id):
@@ -48,13 +50,19 @@ def close_ticket(request, ticket_id):
 
         # Update or create DailyTicketClosureReport for the department
         today = timezone.now().date()
-        report, created = DailyTicketClosureReport.objects.get_or_create(
-            date=today,
-            department=ticket.assigned_department,
-            defaults={"closed_by_inactivity": 0, "closed_manually": 0},
-        )
-        report.closed_manually += 1
-        report.save()
+        try:
+            report, created = DailyTicketClosureReport.objects.get_or_create(
+                date=today,
+                department=ticket.assigned_department,
+                defaults={"closed_by_inactivity": 0,"closed_by_inactivity": 0, "closed_manually": 0},
+            )
+            report.closed_manually += 1
+            report.save()
+        except Exception as e:
+            logger.error(f"Error creating or updating DailyTicketClosureReport: {e}")
+            messages.error(request, "An error occurred while closing the ticket.")
+            return redirect("dashboard")
+
         messages.success(request, "Ticket closed successfully.")
     else:
         messages.error(request, "You do not have permission to close this ticket.")

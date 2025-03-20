@@ -104,53 +104,20 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
         ticket.save()
 
-        existing_ticket = (
-            Ticket.objects.filter(title=ticket.title, status="in_progress")
-            .exclude(id=ticket.id)
-            .first()
+        
+        files = self.request.FILES.getlist("file")
+        for f in files:
+            handle_uploaded_file_in_chunks(ticket, f)
+
+        TicketActivity.objects.create(
+            ticket=ticket, action="created", action_by=self.request.user
         )
 
-        if existing_ticket:
+        ai_process_ticket(ticket)
 
-            existing_ticket.description += (
-                f"\n\nMerged with ticket ID: {ticket.id}. "
-                f"New description: {ticket.description}"
-            )
-            existing_ticket.save()
-
-            files = self.request.FILES.getlist("file")
-            for f in files:
-                handle_uploaded_file_in_chunks(existing_ticket, f)
-
-            TicketActivity.objects.create(
-                ticket=existing_ticket,
-                action="merged",
-                action_by=self.request.user,
-                comment=f"Merged with ticket {ticket.id}",
-            )
-
-            ticket.delete()
-
-            messages.success(
-                self.request,
-                f"Ticket merged with existing ticket {existing_ticket.id} successfully!",
-            )
-            return redirect("ticket_detail", ticket_id=existing_ticket.id)
-
-        else:
-            files = self.request.FILES.getlist("file")
-            for f in files:
-                handle_uploaded_file_in_chunks(ticket, f)
-
-            TicketActivity.objects.create(
-                ticket=ticket, action="created", action_by=self.request.user
-            )
-
-            ai_process_ticket(ticket)
-
-            send_ticket_confirmation_email(ticket)
-            messages.success(self.request, "Query submitted successfully!")
-            return redirect("ticket_detail", ticket_id=ticket.id)
+        send_ticket_confirmation_email(ticket)
+        messages.success(self.request, "Query submitted successfully!")
+        return redirect("ticket_detail", ticket_id=ticket.id)
 
 
 @login_required
