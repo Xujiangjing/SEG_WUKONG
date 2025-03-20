@@ -182,7 +182,11 @@ class Ticket(models.Model):
     return_reason = models.TextField(
         blank=True, null=True
     )  # Reason for returning the ticket
-    can_be_managed = models.BooleanField(
+    can_be_managed_by_program_officers = models.BooleanField(
+        default=True,
+        help_text="Whether the ticket can be managed by the current user.",
+    )
+    can_be_managed_by_specialist = models.BooleanField(
         default=True,
         help_text="Whether the ticket can be managed by the current user.",
     )
