@@ -1,3 +1,4 @@
+import os
 import uuid
 import re
 from django.contrib.auth.models import AbstractUser
@@ -227,6 +228,10 @@ class TicketAttachment(models.Model):
     )
     file = models.FileField(upload_to=user_directory_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
 
     def __str__(self):
         return f"Attachment {self.file} for Ticket {self.ticket.id}"
