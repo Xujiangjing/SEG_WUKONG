@@ -5,20 +5,14 @@ import sys
 import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
+from tickets.models import Ticket, Department, User, AITicketProcessing, TicketAttachment
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
+import os
 from django.db.models import Count
-from django.core.files.base import ContentFile
-
-from tickets.models import (
-    Ticket,
-    Department,
-    User,
-    AITicketProcessing,
-    TicketAttachment,
-)
 from tickets.ai_service import ai_process_ticket
+from django.core.files.base import ContentFile
 
 
 class Command(BaseCommand):
@@ -26,35 +20,29 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         try:
-            # Connect to Gmail IMAP server
             mail = imaplib.IMAP4_SSL(settings.IMAP_HOST, settings.IMAP_PORT)
             mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            mail.select("inbox")  # Select the inbox
+            mail.select("inbox") 
 
-            # Search for unread emails
             status, messages = mail.search(None, "UNSEEN")
             email_ids = messages[0].split()
 
             for email_id in email_ids:
                 status, msg_data = mail.fetch(email_id, "(RFC822)")
                 for response_part in msg_data:
-                    if len(response_part) < 2:
-                        # Skip any non-message parts
+                    if not isinstance(response_part, tuple):
                         continue
                     payload = response_part[1]
                     msg = email.message_from_bytes(payload)
 
-                    # Decode email subject/body
                     subject, sender_email, body = self.parse_email_message(msg)
 
-                    # Filter out failure notifications
                     if (
                         "mailer-daemon" in sender_email.lower()
                         or "delivery status notification" in subject.lower()
                     ):
                         continue
 
-                    # Create a new user if needed
                     user, created = User.objects.get_or_create(
                         email=sender_email,
                         defaults={
@@ -66,20 +54,17 @@ class Command(BaseCommand):
                         user.set_password("TemporaryPass123")
                         user.save()
 
-                    # AI-based spam detection
                     if self.is_spam(subject, body):
                         continue
-
-                    # Check for duplicate tickets
                     existing_ticket = self.is_duplicate_ticket(sender_email, subject, body)
                     if existing_ticket:
                         self.send_duplicate_notice(sender_email, subject, existing_ticket.id)
-                        continue  # Skip creating the ticket
+                        continue
 
-                    # Categorize the ticket
+
                     department = self.categorize_ticket(subject, body)
 
-                    # Create a new ticket
+
                     ticket = Ticket.objects.create(
                         title=subject,
                         description=body,
@@ -89,16 +74,27 @@ class Command(BaseCommand):
                         assigned_department=department,
                     )
 
-                    # Run AI post-processing
+                    for part in msg.walk():
+                        if part.get_content_maintype() == "multipart":
+                            continue
+                        content_disposition = str(part.get("Content-Disposition") or "")
+                        if "attachment" in content_disposition.lower():
+                            attachment_data = part.get_payload(decode=True)
+                            filename = part.get_filename()
+                            if filename and attachment_data:
+
+                                attachment = TicketAttachment(ticket=ticket)
+
+                                attachment.file.save(
+                                    filename,
+                                    ContentFile(attachment_data),
+                                    save=True
+                                )
+
                     ai_process_ticket(ticket)
 
-                    # Handle any attachments
-                    self._handle_attachments(msg, ticket)
-
-                    # Send a confirmation email to the student
                     self.send_confirmation_email(sender_email, subject)
 
-                    # Mark the email as read
                     mail.store(email_id, "+FLAGS", "\\Seen")
 
             mail.logout()
