@@ -115,6 +115,13 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ai_process_ticket(ticket)
 
         send_ticket_confirmation_email(ticket)
+        
+        if self.request.GET.get("ajax") == "1":
+            return JsonResponse({
+                "success": True,
+                "redirect_url": reverse("ticket_detail", kwargs={"ticket_id": ticket.id})
+            }) 
+            
         messages.success(self.request, "Query submitted successfully!")
         return redirect("ticket_detail", ticket_id=ticket.id)
 
