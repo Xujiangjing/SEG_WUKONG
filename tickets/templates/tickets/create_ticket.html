@@ -7,46 +7,145 @@
     <div class="container my-4">
       <div class="row">
         <div class="col-12">
-          <h1 class="text-center" style="color: #000C40; font-weight: bold;">Create New Ticket</h1>
+          <h1 class="text-center" style="color: #000C40; font-weight: bold;">
+            Create New Ticket
+          </h1>
+          
+          <!-- Django CSRF Token -->
+          {% csrf_token %}
+
           <div class="form-container">
 
-            <form action="{% url 'create_ticket' %}" method="POST" enctype="multipart/form-data">
-              {% csrf_token %}
-              
-              
-              <div class="mb-3 row align-items-center">
-                <label for="id_title" class="form-label">Title</label>
-                <div class="w-100">
-                  {{ form.title|add_class:"form-control custom-width" }}
-                </div>
+            <!-- Title -->
+            <div class="mb-3 row align-items-center">
+              <label class="form-label" for="titleInput">Title</label>
+              <div class="w-100">
+                <input type="text" class="form-control custom-width" id="titleInput" placeholder="Enter Title"/>
               </div>
+            </div>
 
-              
-              <div class="mb-3 row align-items-center">
-                <label for="id_description" class="form-label">Description</label>
-                <div class="w-100">
-                  {{ form.description|add_class:"form-control custom-width" }}
-                </div>
+            <!-- Description -->
+            <div class="mb-3 row align-items-center">
+              <label class="form-label" for="descInput">Description</label>
+              <div class="w-100">
+                <textarea id="descInput" class="form-control custom-width" rows="5" placeholder="Enter Description"></textarea>
               </div>
+            </div>
 
-              
-              <div class="mb-3 row align-items-center">
-                <label for="id_file" class="form-label">Attach Files</label>
-                <div class="w-100">
-                  
-                  <input type="file" name="file" id="id_file" class="form-control" multiple>
-                </div>
+            <!-- File Preview -->
+            <div class="mb-3">
+              <label class="form-label">Selected Attachments (multiple additions):</label>
+              <div id="filePreview" style="border:1px solid #ddd; min-height:40px; padding:10px;">
+                <!-- Show list of selected files here -->
               </div>
+            </div>
 
-              <div class="profile-actions">
-                <input type="submit" value="Submit" class="btn change-password-btn">
-                <a href="{% url 'dashboard' %}" class="btn back-btn">← Back</a>
-              </div>
-            </form>
+            <!-- File Input + Add Files -->
+            <div class="mb-3">
+              <input type="file" id="fileInput" multiple class="form-control" />
+              <button type="button" id="addFilesBtn" class="btn btn-secondary mt-2">
+                Add Files
+              </button>
+            </div>
+
+            <!-- Final Submit Button -->
+            <div class="profile-actions">
+              <button type="button" id="submitBtn" class="btn change-password-btn">
+                Submit
+              </button>
+              <a href="{% url 'dashboard' %}" class="btn back-btn">← Back</a>
+            </div>
+
           </div> 
         </div>
       </div>
     </div>
   </div>
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  // 1. Django CSRF token
+  const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+  // 2. Grab relevant DOM elements
+  const titleInput   = document.getElementById("titleInput");
+  const descInput    = document.getElementById("descInput");
+  const fileInput    = document.getElementById("fileInput");
+  const addFilesBtn  = document.getElementById("addFilesBtn");
+  const filePreview  = document.getElementById("filePreview");
+  const submitBtn    = document.getElementById("submitBtn");
+
+  // 3. We'll store all selected files in this array
+  let allFiles = [];
+
+  // When user clicks "Add Files"
+  addFilesBtn.addEventListener("click", () => {
+    const newFiles = fileInput.files;
+    if(newFiles.length > 0){
+      // push each newly selected file into allFiles
+      for(let i=0; i<newFiles.length; i++){
+        allFiles.push(newFiles[i]);
+      }
+      // re-render preview
+      renderFilePreview();
+      // clear the file input
+      fileInput.value = "";
+    }
+  });
+
+  // Show the list of files in #filePreview
+  function renderFilePreview(){
+    filePreview.innerHTML = "";
+    allFiles.forEach( (file, idx) => {
+      let p = document.createElement("p");
+      p.textContent = `(${idx+1}) ${file.name}`;
+      filePreview.appendChild(p);
+    });
+  }
+
+  // When user clicks final "Submit"
+  submitBtn.addEventListener("click", async () => {
+    // 1) Build FormData
+    let formData = new FormData();
+    formData.append("title", titleInput.value);
+    formData.append("description", descInput.value);
+
+    // put each selected file
+    allFiles.forEach(f => formData.append("file", f));
+
+    // 2) Add CSRF token so Django can validate
+    formData.append("csrfmiddlewaretoken", csrfToken);
+
+    try {
+      // 3) POST to our create_ticket endpoint, but we want JSON back
+      const response = await fetch("{% url 'create_ticket' %}?ajax=1", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if(!response.ok){
+        // e.g. 400 or 500
+        const msg = await response.text();
+        alert("Failed to create ticket: " + msg);
+        return;
+      }
+
+      const data = await response.json();
+
+      if(data.success){
+        // We can redirect to the ticket detail
+        window.location.href = data.redirect_url;
+      } else {
+        alert("Error: " + data.error);
+      }
+
+    } catch(err){
+      console.error("AJAX error", err);
+      alert("Network error or server error!");
+    }
+  });
+});
+</script>
 {% endblock %}
