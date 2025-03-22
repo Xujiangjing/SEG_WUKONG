@@ -183,7 +183,6 @@ def handle_uploaded_file_in_chunks(ticket, file_obj, filename=None):
         else:
             return
     except Exception as e:
-        print("Exception during file.save:", e)
         raise e
 
     attachment.save()

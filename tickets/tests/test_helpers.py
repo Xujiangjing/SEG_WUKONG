@@ -1,14 +1,16 @@
 from django.test import TestCase, override_settings, RequestFactory
 from unittest.mock import patch
 from django.core.mail import send_mail
-from tickets.models import User, Ticket
+from tickets.models import TicketAttachment, User, Ticket
 from unittest.mock import MagicMock
 from tickets.helpers import (
     filter_tickets,
     get_filtered_tickets,
     send_response_notification_email,
     send_updated_notification_email,
+    handle_uploaded_file_in_chunks,
 )
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class EmailNotificationTests(TestCase):
@@ -220,3 +222,48 @@ class GetFilteredTicketsTests(TestCase):
     def test_base_queryset_defaults_to_all(self):
         result = get_filtered_tickets(self.user)
         self.assertIn(self.ticket, result)
+
+
+class HandleUploadedFileInChunksTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="testuser", password="testpass")
+        self.ticket = Ticket.objects.create(
+            title="Test Ticket",
+            description="This is a test ticket",
+            status="open",
+            priority="low",
+            creator=self.user,
+        )
+        self.file_content = b"some binary data"
+
+    def test_handle_uploaded_file_bytes(self):
+        handle_uploaded_file_in_chunks(
+            self.ticket, self.file_content, filename="test.txt"
+        )
+        attachment = TicketAttachment.objects.get(ticket=self.ticket)
+        self.assertEqual(attachment.file.read(), self.file_content)
+
+    def test_handle_uploaded_file_readable_object(self):
+        file_obj = SimpleUploadedFile("uploaded.txt", b"file content")
+        handle_uploaded_file_in_chunks(self.ticket, file_obj)
+        attachment = TicketAttachment.objects.get(ticket=self.ticket)
+        self.assertEqual(attachment.file.read(), b"file content")
+
+    def test_handle_uploaded_file_invalid_object(self):
+        class Dummy:
+            pass
+
+        dummy_obj = Dummy()
+        handle_uploaded_file_in_chunks(self.ticket, dummy_obj)
+        self.assertEqual(TicketAttachment.objects.filter(ticket=self.ticket).count(), 0)
+
+    def test_handle_uploaded_file_exception(self):
+        file_obj = SimpleUploadedFile("error.txt", b"error content")
+
+        with patch(
+            "django.core.files.storage.Storage.save",
+            side_effect=Exception("save error"),
+        ):
+            with self.assertRaises(Exception) as context:
+                handle_uploaded_file_in_chunks(self.ticket, file_obj)
+            self.assertIn("save error", str(context.exception))
