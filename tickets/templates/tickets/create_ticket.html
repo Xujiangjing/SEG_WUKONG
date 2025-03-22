@@ -82,6 +82,7 @@
   </div>
 </div>
 
+
 <script>
 document.addEventListener("DOMContentLoaded", function(){
   // 1) Grab important DOM elements
@@ -92,6 +93,7 @@ document.addEventListener("DOMContentLoaded", function(){
   const addFilesBtn      = document.getElementById("addFilesBtn");
   const filePreview      = document.getElementById("filePreview");
   const submitBtn        = document.getElementById("submitBtn");
+  // define const  variable
 
   // 2) An array to store all user-selected files (in case user presses "Add Files" multiple times)
   let allFiles = [];
@@ -161,6 +163,7 @@ document.addEventListener("DOMContentLoaded", function(){
       console.error("AJAX error:", err);
       alert("Network error or server error!");
     }
+    // detect error 
   });
 });
 </script>
