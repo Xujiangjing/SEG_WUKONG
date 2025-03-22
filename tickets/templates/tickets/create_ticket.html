@@ -7,46 +7,164 @@
     <div class="container my-4">
       <div class="row">
         <div class="col-12">
-          <h1 class="text-center" style="color: #000C40; font-weight: bold;">Create New Ticket</h1>
+          <h1 class="text-center" style="color: #000C40; font-weight: bold;">
+            Create New Ticket
+          </h1>
+          
+          <!-- Use a <form> to hold csrf_token and form fields -->
           <div class="form-container">
-
-            <form action="{% url 'create_ticket' %}" method="POST" enctype="multipart/form-data">
+            <form id="createTicketForm" method="post" enctype="multipart/form-data">
               {% csrf_token %}
-              
-              
+
+              <!-- Title -->
               <div class="mb-3 row align-items-center">
-                <label for="id_title" class="form-label">Title</label>
+                <label class="form-label" for="titleInput">Title</label>
                 <div class="w-100">
-                  {{ form.title|add_class:"form-control custom-width" }}
+                  <input
+                    type="text"
+                    class="form-control custom-width"
+                    id="titleInput"
+                    name="title"
+                    placeholder="Enter Title"
+                  />
                 </div>
               </div>
 
-              
+              <!-- Description -->
               <div class="mb-3 row align-items-center">
-                <label for="id_description" class="form-label">Description</label>
+                <label class="form-label" for="descInput">Description</label>
                 <div class="w-100">
-                  {{ form.description|add_class:"form-control custom-width" }}
+                  <textarea
+                    id="descInput"
+                    name="description"
+                    class="form-control custom-width"
+                    rows="5"
+                    placeholder="Enter Description"
+                  ></textarea>
                 </div>
               </div>
 
-              
-              <div class="mb-3 row align-items-center">
-                <label for="id_file" class="form-label">Attach Files</label>
-                <div class="w-100">
-                  
-                  <input type="file" name="file" id="id_file" class="form-control" multiple>
+              <!-- File Preview Section -->
+              <div class="mb-3">
+                <label class="form-label">Selected Attachments (multiple additions):</label>
+                <div id="filePreview" style="border:1px solid #ddd; min-height:40px; padding:10px;">
+                  <!-- Preview of user-selected files will be rendered here -->
                 </div>
               </div>
 
+              <!-- File Input + Add Files Button -->
+              <div class="mb-3">
+                <input
+                  type="file"
+                  id="fileInput"
+                  multiple
+                  class="form-control"
+                />
+                <button type="button" id="addFilesBtn" class="btn btn-secondary mt-2">
+                  Add Files
+                </button>
+              </div>
+
+              <!-- Submit Button -->
               <div class="profile-actions">
-                <input type="submit" value="Submit" class="btn change-password-btn">
+                <!-- Note: type="button" to prevent default form submission -->
+                <button type="button" id="submitBtn" class="btn change-password-btn">
+                  Submit
+                </button>
                 <a href="{% url 'dashboard' %}" class="btn back-btn">← Back</a>
               </div>
-            </form>
+
+            </form> <!-- End of form -->
           </div> 
         </div>
       </div>
     </div>
   </div>
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  // 1) Grab important DOM elements
+  const createTicketForm = document.getElementById("createTicketForm");
+  const titleInput       = document.getElementById("titleInput");
+  const descInput        = document.getElementById("descInput");
+  const fileInput        = document.getElementById("fileInput");
+  const addFilesBtn      = document.getElementById("addFilesBtn");
+  const filePreview      = document.getElementById("filePreview");
+  const submitBtn        = document.getElementById("submitBtn");
+  // define const  variable
+
+  // 2) An array to store all user-selected files (in case user presses "Add Files" multiple times)
+  let allFiles = [];
+
+  // When the user clicks "Add Files", push newly selected files into allFiles
+  addFilesBtn.addEventListener("click", () => {
+    const newFiles = fileInput.files;
+    if(newFiles.length > 0){
+      for(let i = 0; i < newFiles.length; i++){
+        allFiles.push(newFiles[i]);
+      }
+      renderFilePreview();
+      // Clear the original <input type="file" /> so it can select again
+      fileInput.value = "";
+    }
+  });
+
+  // Render the file preview in the #filePreview div
+  function renderFilePreview(){
+    filePreview.innerHTML = "";
+    allFiles.forEach((file, idx) => {
+      let p = document.createElement("p");
+      p.textContent = `(${idx + 1}) ${file.name}`;
+      filePreview.appendChild(p);
+    });
+  }
+
+  // 3) When user clicks "Submit", send an AJAX request via Fetch
+  submitBtn.addEventListener("click", async (e) => {
+    e.preventDefault(); // Prevent default form submission
+
+    // Build a FormData object from the form, which already includes the csrf token
+    let formData = new FormData(createTicketForm);
+
+    // The form only has one <input type="file">, it won't automatically append multiple times 
+    // So we remove the fileInput key from FormData to avoid duplicates
+    formData.delete("fileInput");
+
+    // Then we manually append each file in allFiles array
+    allFiles.forEach(file => formData.append("file", file));
+
+    try {
+      // Using fetch with credentials:'include' to ensure cookies (incl. csrftoken) are sent
+      const response = await fetch("{% url 'create_ticket' %}?ajax=1", {
+        method: "POST",
+        body: formData,
+        credentials: 'include'
+      });
+
+      if(!response.ok){
+        // e.g. 400, 500, etc.
+        const msg = await response.text();
+        alert("Failed to create ticket: " + msg);
+        return;
+      }
+
+      // Parse JSON response
+      const data = await response.json();
+      if(data.success){
+        // Redirect the user to the ticket detail page
+        window.location.href = data.redirect_url;
+      } else {
+        alert("Error: " + data.error);
+      }
+
+    } catch(err){
+      console.error("AJAX error:", err);
+      alert("Network error or server error!");
+    }
+    // detect error 
+  });
+});
+</script>
 {% endblock %}

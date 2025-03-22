@@ -20,7 +20,6 @@ from tickets.forms import (
     LogInForm,
     PasswordForm,
     ReturnTicketForm,
-    SignUpForm,
     SupplementTicketForm,
     TicketAttachmentForm,
     TicketForm,
@@ -115,8 +114,13 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ai_process_ticket(ticket)
 
         send_ticket_confirmation_email(ticket)
+    
+            
         messages.success(self.request, "Query submitted successfully!")
-        return redirect("ticket_detail", ticket_id=ticket.id)
+        return JsonResponse({
+            "success": True,
+            "redirect_url": reverse("ticket_detail", kwargs={"ticket_id": ticket.id})
+            })
 
 
 @login_required
