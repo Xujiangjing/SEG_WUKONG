@@ -6,6 +6,9 @@ from django.utils.html import strip_tags
 from django.core.mail import send_mail
 from django.db.models import Q, Case, When, IntegerField
 from tickets.models import Ticket, TicketAttachment
+from django.core.files.base import ContentFile
+from django.utils.text import get_valid_filename
+from tickets.models import user_directory_path
 
 
 def login_prohibited(view_function):
@@ -164,10 +167,22 @@ def get_filtered_tickets(
     return base_queryset
 
 
-def handle_uploaded_file_in_chunks(ticket, file_obj):
+def handle_uploaded_file_in_chunks(ticket, file_obj, filename=None):
 
+    filename = get_valid_filename(filename or "unnamed_attachment")
     attachment = TicketAttachment(ticket=ticket)
 
-    attachment.file.save(file_obj.name, file_obj, save=True)
+    try:
+        if isinstance(file_obj, bytes):
+            content = ContentFile(file_obj)
+            attachment.file.save(filename, content, save=True)
+        elif hasattr(file_obj, "read"):
+            attachment.file.save(
+                getattr(file_obj, "name", filename), file_obj, save=True
+            )
+        else:
+            return
+    except Exception as e:
+        raise e
 
     attachment.save()
