@@ -106,9 +106,6 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f"❌ Error fetching emails: {e}"))
 
     def _handle_attachments(self, msg, ticket):
-        """
-        Walk through the MIME parts of 'msg' and save any attachments to TicketAttachment.
-        """
         if not msg.is_multipart():
             # No attachments if not multipart
             return
@@ -130,7 +127,6 @@ class Command(BaseCommand):
                     attachment.file.save(filename, django_file, save=True)
 
     def categorize_ticket(self, subject, body):
-        """Assign a category based on keywords in subject or body."""
         categories = {
             "general": "general_enquiry",
             "course|academic|exam|grades|study": "academic_support",
@@ -159,7 +155,6 @@ class Command(BaseCommand):
         return Department.objects.filter(name="general_enquiry").first()
 
     def send_confirmation_email(self, student_email, ticket_title):
-        """Send a confirmation email to the student with stylized HTML content."""
         subject = f"Your Ticket '{ticket_title}' Has Been Received"
         html_message = f"""
         <html>
@@ -204,10 +199,6 @@ class Command(BaseCommand):
         )
 
     def is_duplicate_ticket(self, sender_email, subject, body):
-        """
-        Checks if a duplicate ticket exists in the last 7 days.
-        Allows resubmission if no response is received within 7 days.
-        """
         time_threshold = now() - timedelta(days=7)
         old_ticket = (
             Ticket.objects.annotate(response_count=Count("responses"))
@@ -266,7 +257,6 @@ class Command(BaseCommand):
         send_mail(subject, message, settings.EMAIL_HOST_USER, [student_email], fail_silently=False)
 
     def is_spam(self, subject, body):
-        """Uses Google's Perspective API to detect spam (optional)."""
         if settings.TESTING:
             return False
 
@@ -301,14 +291,19 @@ class Command(BaseCommand):
             return False
 
     def parse_email_message(self, msg):
-        """Decodes email subject, extracts sender email, and returns plaintext body."""
-        subject = ""
         raw_subject = msg.get("Subject", "")
+        subject = ""
+
         for part, encoding in decode_header(raw_subject):
             if isinstance(part, bytes):
-                subject += part.decode(encoding or "utf-8", errors="ignore")
-            else:
+                try:
+                    subject += part.decode(encoding or "utf-8", errors="ignore")
+                except UnicodeDecodeError:
+                    subject += part.decode("utf-8", errors="ignore")
+            elif isinstance(part, str):
                 subject += part
+            else:
+                subject += str(part)
 
         sender = msg.get("From", "")
         match = re.search(r"<(.+?)>", sender)
