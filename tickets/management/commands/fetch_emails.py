@@ -5,6 +5,7 @@ import sys
 import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
+from tickets.helpers import handle_uploaded_file_in_chunks
 from tickets.models import Ticket, Department, User, AITicketProcessing
 from django.conf import settings
 from django.core.mail import send_mail
@@ -19,79 +20,96 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         try:
-            # Connect to Gmail IMAP server
             mail = imaplib.IMAP4_SSL(settings.IMAP_HOST, settings.IMAP_PORT)
             mail.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-            mail.select("inbox")  # Select the inbox
+            mail.select("inbox")
 
-            # Search for unread emails
             status, messages = mail.search(None, "UNSEEN")
             email_ids = messages[0].split()
 
             for email_id in email_ids:
-                status, msg_data = mail.fetch(email_id, "(RFC822)")
-                for response_part in msg_data:
-                    payload = response_part[1]
-                    msg = email.message_from_bytes(payload)
+                try:
 
-                    # Decode email subject
-                    subject, sender_email, body = self.parse_email_message(msg)
+                    status, msg_data = mail.fetch(email_id, "(RFC822)")
+                    for response_part in msg_data:
 
-                    # filter out failure notifications
-                    if (
-                        "mailer-daemon" in sender_email.lower()
-                        or "delivery status notification" in subject.lower()
-                    ):
-                        continue
+                        if not isinstance(response_part, tuple):
+                            continue
+                        payload = response_part[1]
+                        msg = email.message_from_bytes(payload)
 
-                    # revise the code to create a new user if the sender is not in the database
-                    user, created = User.objects.get_or_create(
-                        email=sender_email,
-                        defaults={
-                            "username": sender_email.split("@")[0],
-                            "password": "TemporaryPass123",
-                        },
-                    )
-                    if created:
-                        user.set_password("TemporaryPass123")
-                        user.save()
-
-                    # Check for AI-based spam detection
-                    if self.is_spam(subject, body):
-                        continue
-
-                    # Check for duplicate tickets
-                    existing_ticket = self.is_duplicate_ticket(
-                        sender_email, subject, body
-                    )
-
-                    if existing_ticket:
-                        self.send_duplicate_notice(
-                            sender_email, subject, existing_ticket.id
+                        subject, sender_email, body, attachments = (
+                            self.parse_email_message(msg)
                         )
-                        continue  # Skip creating the ticket
 
-                    department = self.categorize_ticket(subject, body)
+                        if (
+                            "mailer-daemon" in sender_email.lower()
+                            or "delivery status notification" in subject.lower()
+                        ):
+                            continue
 
-                    # create a new ticket
-                    ticket = Ticket.objects.create(
-                        title=subject,
-                        description=body,
-                        creator=user,
-                        sender_email=sender_email,
-                        status="in_progress",
-                        assigned_department=department,
+                        user, created = User.objects.get_or_create(
+                            email=sender_email,
+                            defaults={
+                                "username": sender_email.split("@")[0],
+                                "password": "TemporaryPass123",
+                            },
+                        )
+                        if created:
+                            user.set_password("TemporaryPass123")
+                            user.save()
+
+                        if self.is_spam(subject, body):
+                            continue
+
+                        existing_ticket = self.is_duplicate_ticket(
+                            sender_email, subject, body
+                        )
+                        if existing_ticket:
+                            self.send_duplicate_notice(
+                                sender_email, subject, existing_ticket.id
+                            )
+                            continue
+
+                        department = self.categorize_ticket(subject, body)
+
+                        ticket = Ticket.objects.create(
+                            title=subject,
+                            description=body,
+                            creator=user,
+                            sender_email=sender_email,
+                            status="in_progress",
+                            assigned_department=department,
+                        )
+
+                        for attachment in attachments:
+                            try:
+                                handle_uploaded_file_in_chunks(
+                                    ticket,
+                                    file_obj=attachment["data"],
+                                    filename=attachment["filename"],
+                                )
+                            except Exception as e:
+                                self.stderr.write(
+                                    self.style.ERROR(f"❌ Error saving attachment: {e}")
+                                )
+
+                        ai_process_ticket(ticket)
+
+                        self.send_confirmation_email(sender_email, subject)
+
+                        mail.store(email_id, "+FLAGS", "\\Seen")
+
+                except Exception as e:
+                    self.stderr.write(
+                        self.style.ERROR(f"❌ Error processing email: {e}")
                     )
 
-                    ai_process_ticket(ticket)
-
-                    # send a confirmation email to the student
-                    self.send_confirmation_email(sender_email, subject)
-
-                    # mark the email as read
                     mail.store(email_id, "+FLAGS", "\\Seen")
+                    continue
 
             mail.logout()
+
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"❌ Error fetching emails: {e}"))
 
@@ -133,8 +151,6 @@ class Command(BaseCommand):
 
         subject = f"Your Ticket '{ticket_title}' Has Been Received"
 
-        # HTML Email Content
-        # 吗的彩色的Logo和Signature打不出来 需要替换成其他的
         html_message = f"""
         <html>
             <body style="font-family: Arial, sans-serif; color: #333; text-align: center;">
@@ -299,40 +315,99 @@ class Command(BaseCommand):
             return False
 
     def parse_email_message(self, msg):
-        """Decodes the email message and extracts the subject, sender, and body."""
+        """Parses subject, sender, body, and attachments (robust version)."""
 
-        # Decode email subject
-        subject = ""
-        for part, encoding in decode_header(msg.get("Subject", "")):
-            if isinstance(part, bytes):
-                subject += part.decode(encoding or "utf-8", errors="ignore")
+        try:
+            # Decode subject
+            subject = ""
+            for part, encoding in decode_header(msg.get("Subject", "")):
+                try:
+                    if isinstance(part, bytes):
+                        subject += part.decode(encoding or "utf-8", errors="ignore")
+                    elif isinstance(part, str):
+                        subject += part
+                    else:
+                        subject += str(part)
+                except Exception as e:
+                    print("❌ Error decoding subject part:", e)
+
+            # Extract sender
+            sender = msg.get("From", "")
+            match = re.search(r"<(.+?)>", sender)
+            sender_email = match.group(1) if match else sender
+
+            body = ""
+            attachments = []
+
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    content_disposition = str(part.get("Content-Disposition"))
+
+                    # Body
+                    if (
+                        content_type == "text/plain"
+                        and "attachment" not in content_disposition
+                    ):
+                        part_payload = part.get_payload(decode=True)
+                        try:
+                            if isinstance(part_payload, bytes):
+                                body = part_payload.decode("utf-8", errors="ignore")
+                            elif isinstance(part_payload, str):
+                                body = part_payload
+                            else:
+                                body = str(part_payload)
+                        except Exception as e:
+
+                            body = "[Decode Error]"
+
+                    # Attachment
+                    elif "attachment" in content_disposition:
+                        filename = part.get_filename()
+
+                        if filename:
+                            decoded_filename = ""
+                            for p, enc in decode_header(filename):
+
+                                try:
+                                    if isinstance(p, bytes):
+                                        decoded_filename += p.decode(
+                                            enc or "utf-8", errors="ignore"
+                                        )
+                                    elif isinstance(p, str):
+                                        decoded_filename += p
+                                    else:
+                                        decoded_filename += str(p)
+                                except Exception as e:
+                                    print("❌ Error decoding attachment filename:", e)
+                            file_data = part.get_payload(decode=True)
+
+                            if not isinstance(file_data, (bytes, str)):
+
+                                continue
+                            attachments.append(
+                                {
+                                    "filename": decoded_filename,
+                                    "content_type": content_type,
+                                    "data": file_data,
+                                }
+                            )
+
             else:
-                subject += part
+                payload = msg.get_payload(decode=True)
+                try:
+                    if isinstance(payload, bytes):
+                        body = payload.decode("utf-8", errors="ignore")
+                    elif isinstance(payload, str):
+                        body = payload
+                    else:
+                        body = str(payload)
+                except Exception as e:
 
-        # Extract sender's email
-        sender = msg.get("From", "")
-        match = re.search(r"<(.+?)>", sender)
-        sender_email = match.group(1) if match else sender
+                    body = "[Decode Error]"
 
-        # Extract email body only if necessary
-        body = ""
-        if msg.is_multipart():
-            for part in msg.walk():
-                if part.get_content_maintype() == "multipart":
-                    continue
-                content_type = part.get_content_type()
-                content_disposition = str(part.get("Content-Disposition"))
-                if (
-                    content_type == "text/plain"
-                    and "attachment" not in content_disposition
-                ):
-                    part_payload = part.get_payload(decode=True)
-                    if part_payload:
-                        body = part_payload.decode("utf-8", errors="ignore")
-                    break
-        else:
-            payload = msg.get_payload(decode=True)
-            if payload:
-                body = payload.decode("utf-8", errors="ignore")
+            return subject, sender_email, body, attachments
 
-        return subject, sender_email, body
+        except Exception as e:
+            print("❌ Error parsing email message:", e)
+            return "", "", "", []
