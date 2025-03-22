@@ -1,5 +1,5 @@
 # WUKONG
-- Our Project Title: 2.4. Ticketing system for student queries
+- Our Project Title: Ticketing system for student queries
 - Our Software Name: WUKONG University Ticket System
 - Name of Authors:
   - Kaicheng Chen
