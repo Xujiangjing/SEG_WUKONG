@@ -52,9 +52,9 @@ class TicketViewTestCase(TestCase):
         self.assertEqual(activity.action_by, self.student)
         self.assertEqual(activity.comment, "Ticket closed manually by the student.")
         
-#         report = DailyTicketClosureReport.objects.filter(date=timezone.now().date(), department=self.department.name).first()
-#         self.assertIsNotNone(report)
-#         self.assertGreaterEqual(report.closed_manually, 1)
+        report = DailyTicketClosureReport.objects.filter(date=timezone.now().date(), department=self.department.name).first()
+        self.assertIsNotNone(report)
+        self.assertGreaterEqual(report.closed_manually, 1)
     
     # def test_return_ticket_by_specialist(self):
     #     self.client.login(username='@specialist', password='Password123')
