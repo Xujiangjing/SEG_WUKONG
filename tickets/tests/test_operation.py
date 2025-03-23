@@ -34,12 +34,12 @@ class TicketViewTestCase(TestCase):
             status="in_progress"
         )
 
-#     def test_close_ticket_by_student(self):
-#         self.client.login(username='@student', password='Password123')
-#         url = reverse('close_ticket', kwargs={'ticket_id': self.ticket.id})
-#         response = self.client.post(url)
+    def test_close_ticket_by_student(self):
+        self.client.login(username='@student', password='Password123')
+        url = reverse('close_ticket', kwargs={'ticket_id': self.ticket.id})
+        response = self.client.post(url)
         
-#         self.ticket.refresh_from_db()
+        self.ticket.refresh_from_db()
 #         self.assertEqual(response.status_code, 302)
 #         self.assertEqual(self.ticket.status, "closed")
 #         self.assertFalse(self.ticket.can_be_managed_by_program_officers)
