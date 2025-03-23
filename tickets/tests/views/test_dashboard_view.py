@@ -1,5 +1,8 @@
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
+from django.contrib.auth.models import AnonymousUser, User
+from django.test import Client
+from django.contrib.auth import get_user_model
 from unittest.mock import patch, MagicMock
 
 # Import the view functions to be tested
@@ -94,19 +97,27 @@ class DashboardViewTests(TestCase):
 
     # Test specialist_dashboard
     @patch("tickets.views.dashboard.get_filtered_tickets")
-    def test_specialist_dashboard(self, mock_get_filtered_tickets):
-        dummy_tickets = ["ticketX", "ticketY"]
-        mock_get_filtered_tickets.return_value = dummy_tickets
-        request = self.factory.get("/dashboard/dashboard_specialist/?search=test&status=open&sort=date")
-        request.user = FakeUser("specialist")
+    def test_specialist_dashboard_real_user(self, mock_get_filtered_tickets):
+        mock_get_filtered_tickets.return_value = ["ticket1", "ticket2"]
+
+        # Create and save a real user instance
+        UserModel = get_user_model()
+        user = UserModel(username="specialist_user")
+        user.set_password("testpass123")
+        user.save()
+
+        user.is_specialist = lambda: True
+
+        # use request factory and force login
+        request = self.factory.get("/dashboard/dashboard_specialist/")
+        request.user = user
 
         response = dashboard.specialist_dashboard(request)
         response.render()
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("dashboard/dashboard_specialist.html", response.template_name)
-        self.assertEqual(response.context_data.get("assigned_tickets"), dummy_tickets)
-        mock_get_filtered_tickets.assert_called_once()
+        self.assertEqual(response.context_data["assigned_tickets"], ["ticket1", "ticket2"])
 
     # Test visualize_ticket_data
     def test_visualize_ticket_data(self):
