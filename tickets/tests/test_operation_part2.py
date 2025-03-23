@@ -62,7 +62,7 @@ class RedirectTicketViewTestCase(TestCase):
         self.client.login(username="@student", password="Password123")
         url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
         response = self.client.post(url, {"new_assignee_id": "ai"})
-    #     self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
     
     # def test_redirect_ticket_ai_assignment(self):
     #     self.client.login(username="@officer", password="Password123")
