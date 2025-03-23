@@ -142,3 +142,14 @@ class GetUserRoleTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)  # Redirect to login
         self.assertIn(reverse("log_in"), response.url)
+
+    def test_get_user_role_unknown(self):
+        unknown_user = User.objects.create_user(
+            username='@someone',
+            password='Password123',
+            role='random_role'  # not program_officer, specialist or student
+        )
+        self.client.login(username=unknown_user.username, password='Password123')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, {"role": "unknown"})

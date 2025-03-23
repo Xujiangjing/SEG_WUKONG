@@ -65,10 +65,10 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 def get_user_role(request):
     """Return the role of the current user."""
     role = "unknown"
-    if request.user.is_program_officer:
+    if request.user.role in ["program_officer", "program_officers"]:
         role = "program_officer"
-    elif request.user.is_specialist:
+    elif request.user.role in ["specialist", "specialists"]:
         role = "specialist"
-    elif request.user.is_student:
+    elif request.user.role in ["student", "students"]:
         role = "student"
     return JsonResponse({"role": role})
