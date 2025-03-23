@@ -20,16 +20,17 @@ def dashboard_redirect(request):
     elif user.is_specialist():
         return redirect("dashboard_specialist")
 
-    return redirect("home")  # 如果没有角色，回到首页或者显示错误信息
+    return redirect("home")  # If there is no character, return to the homepage or display an error message.
 
 
 @login_required
 def student_dashboard(request):
 
-    search_query = request.GET.get("search", "")
-    status_filter = request.GET.get("status", "")
+    search_query = request.GET.get("search", "")  # Get search term from query string
+    status_filter = request.GET.get("status", "") # Get ticket status filter
     sort_option = request.GET.get("sort", "")
 
+    # Retrieve and filter tickets based on the search and status
     tickets = get_filtered_tickets(
         request.user,
         Ticket.objects.filter(creator=request.user),

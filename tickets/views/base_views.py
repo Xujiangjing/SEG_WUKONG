@@ -52,11 +52,13 @@ def home(request):
 
 
 class TicketListView(ListView):
+    """Displays a list of tickets depending on the user's role."""
     model = Ticket
     template_name = "tickets/ticket_list.html"
     context_object_name = "tickets"
 
     def dispatch(self, request, *args, **kwargs):
+        # Prevent students from accessing the general ticket list view
         if request.user.is_student():
             messages.error(
                 request, "You do not have permission to view the ticket list."
@@ -65,6 +67,12 @@ class TicketListView(ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
+        """
+        Return ticket list filtered by user role:
+        - Program officer sees all
+        - Specialist sees only assigned
+        - Student sees only their own tickets
+        """
         if self.request.user.is_program_officer():
             return Ticket.objects.all()
         elif self.request.user.is_specialist():
@@ -74,6 +82,10 @@ class TicketListView(ListView):
 
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
+    """
+    View for students to create new tickets (queries).
+    Attaches uploaded files, sends confirmation, and starts AI processing.
+    """
     model = Ticket
     form_class = TicketForm
     template_name = "tickets/create_ticket.html"
@@ -87,35 +99,41 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
+        # Pass user info to the form
         kwargs = super().get_form_kwargs()
 
         kwargs["user"] = self.request.user
         return kwargs
 
     def form_valid(self, form):
-
+        """Save the ticket and related files, notify, and return JSON response."""
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = "in_progress"
 
+        # Set default priority for student-created tickets
         if self.request.user.is_student():
             ticket.priority = "low"
 
         ticket.save()
 
+        # Save file attachments (if any)
         files = self.request.FILES.getlist("file")
         for f in files:
             handle_uploaded_file_in_chunks(ticket, f)
 
+        # Log creation activity
         TicketActivity.objects.create(
             ticket=ticket, action="created", action_by=self.request.user
         )
 
+        # Start AI processing logic
         ai_process_ticket(ticket)
 
+        # Send confirmation email
         send_ticket_confirmation_email(ticket)
     
-            
+        # Return success JSON
         messages.success(self.request, "Query submitted successfully!")
         return JsonResponse({
             "success": True,
@@ -125,9 +143,14 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
 @login_required
 def ticket_detail(request, ticket_id):
+    """
+    Show the ticket detail page including its activity history and attachments.
+    Permissions vary by role and assignment.
+    """
     ticket = get_object_or_404(Ticket, id=ticket_id)
     attachments = ticket.attachments.order_by("uploaded_at")
 
+    # List of activity log entries with formatted times
     activities = TicketActivity.objects.filter(ticket=ticket).order_by("-action_time")
     formatted_activities = [
         {
@@ -139,6 +162,7 @@ def ticket_detail(request, ticket_id):
         for activity in activities
     ]
 
+    # Student submitted, staff returned to update
     if (
         not request.user.is_student()
         and ticket.status == "in_progress"
@@ -146,6 +170,7 @@ def ticket_detail(request, ticket_id):
     ):
         messages.warning(request, "This ticket is waiting for the student to update.")
 
+    # Ticket is still being handled by staff
     if (
         request.user.is_student()
         and ticket.status == "in_progress"
@@ -153,6 +178,7 @@ def ticket_detail(request, ticket_id):
     ):
         messages.warning(request, "This ticket is waiting for the staff to process.")
 
+    # Block access if user is unrelated to this ticket
     if (
         request.user != ticket.creator
         and request.user != ticket.assigned_user
