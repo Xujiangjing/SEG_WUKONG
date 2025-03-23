@@ -1,31 +1,16 @@
 from django.test import TestCase, RequestFactory
 from django.urls import reverse
-from django.contrib.auth.models import AnonymousUser, User
-from django.test import Client
-from django.contrib.auth import get_user_model
-from unittest.mock import patch, MagicMock
-
-# Import the view functions to be tested
-from tickets.views import dashboard
+from tickets.models import Department, Ticket, TicketActivity, User
 
 
-# A simple FakeUser class to simulate users with different roles
-class FakeUser:
-    def __init__(self, role=None):
-        self.role = role
-        self.is_authenticated = True
+class DashboardViewTestCase(TestCase):
+    """Tests for the dashboard view."""
 
-    def is_program_officer(self):
-        return self.role == "program_officer"
+    fixtures = [
+        'tickets/tests/fixtures/default_user.json',
+        'tickets/tests/fixtures/other_users.json'
+] 
 
-    def is_student(self):
-        return self.role == "student"
-
-    def is_specialist(self):
-        return self.role == "specialist"
-
-
-class DashboardViewTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
 
