@@ -47,10 +47,10 @@ class TicketViewTestCase(TestCase):
         self.assertTrue(self.ticket.program_officer_resolved)
         self.assertTrue(self.ticket.specialist_resolved)
         
-#         activity = TicketActivity.objects.filter(ticket=self.ticket, action='closed_manually').first()
-#         self.assertIsNotNone(activity)
-#         self.assertEqual(activity.action_by, self.student)
-#         self.assertEqual(activity.comment, "Ticket closed manually by the student.")
+        activity = TicketActivity.objects.filter(ticket=self.ticket, action='closed_manually').first()
+        self.assertIsNotNone(activity)
+        self.assertEqual(activity.action_by, self.student)
+        self.assertEqual(activity.comment, "Ticket closed manually by the student.")
         
 #         report = DailyTicketClosureReport.objects.filter(date=timezone.now().date(), department=self.department.name).first()
 #         self.assertIsNotNone(report)
