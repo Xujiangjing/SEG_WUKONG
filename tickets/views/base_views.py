@@ -69,8 +69,8 @@ class TicketListView(ListView):
             return Ticket.objects.all()
         elif self.request.user.is_specialist():
             return Ticket.objects.filter(assigned_user=self.request.user)
-        elif self.request.user.is_student():
-            return Ticket.objects.filter(creator=self.request.user)
+        # elif self.request.user.is_student():
+        #     return Ticket.objects.filter(creator=self.request.user)
 
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
@@ -81,9 +81,9 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
 
-        if request.user.is_authenticated and not request.user.is_student():
-            messages.error(request, "Only students can create tickets.")
-            return redirect("dashboard")
+        # if request.user.is_authenticated and not request.user.is_student():
+        #     messages.error(request, "Only students can create tickets.")
+        #     return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):

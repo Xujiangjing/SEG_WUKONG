@@ -7,7 +7,10 @@ from tickets.models import Department, Ticket, TicketActivity, User
 class DashboardViewTestCase(TestCase):
     """Tests for the dashboard view."""
 
-    fixtures = ['tickets/tests/fixtures/default_user.json'] 
+    fixtures = [
+        'tickets/tests/fixtures/default_user.json',
+        'tickets/tests/fixtures/other_users.json'
+] 
 
     def setUp(self):
         self.department = Department.objects.create(name='it_support', description='IT Support')
