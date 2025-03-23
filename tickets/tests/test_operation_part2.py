@@ -87,9 +87,9 @@ class RedirectTicketViewTestCase(TestCase):
         self.assertEqual(self.ticket.status, "in_progress")
         self.assertEqual(self.ticket.latest_action, "redirected")
 
-    # def test_redirect_ticket_invalid_specialist(self):
-    #     self.client.login(username="@officer", password="Password123")
-    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    def test_redirect_ticket_invalid_specialist(self):
+        self.client.login(username="@officer", password="Password123")
+        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
     #     response = self.client.post(url, {"new_assignee_id": 9999})
     #     self.assertEqual(response.status_code, 400)
