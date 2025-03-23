@@ -95,9 +95,9 @@ class RedirectTicketViewTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"], "Selected specialist does not exist")
 
-    # def test_redirect_ticket_missing_assignee(self):
-    #     self.client.login(username="@officer", password="Password123")
-    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    def test_redirect_ticket_missing_assignee(self):
+        self.client.login(username="@officer", password="Password123")
+        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
     #     response = self.client.post(url, {})
     #     self.assertEqual(response.status_code, 400)
