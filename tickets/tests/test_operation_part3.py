@@ -88,7 +88,7 @@ class TicketViewTests(TestCase):
         url = reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id})
         response = self.client.get(url)
 
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_specialist.html")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_specialist.html")
     #     self.assertIn("respond_ticket", response.context["actions"])
 
