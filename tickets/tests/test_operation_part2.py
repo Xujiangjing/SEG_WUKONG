@@ -99,9 +99,9 @@ class RedirectTicketViewTestCase(TestCase):
         self.client.login(username="@officer", password="Password123")
         url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
-    #     response = self.client.post(url, {})
-    #     self.assertEqual(response.status_code, 400)
-    #     self.assertEqual(response.json()["error"], "Selected specialist does not exist")
+        response = self.client.post(url, {})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"], "Selected specialist does not exist")
 
 
     # def test_respond_ticket(self):
