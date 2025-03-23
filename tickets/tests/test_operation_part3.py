@@ -83,8 +83,8 @@ class TicketViewTests(TestCase):
         self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_student.html")
         self.assertIn("update_ticket", response.context["actions"])
 
-    # def test_manage_ticket_page_specialist(self):
-    #     self.client.login(username="@specialist", password="Password123")
+    def test_manage_ticket_page_specialist(self):
+        self.client.login(username="@specialist", password="Password123")
     #     url = reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id})
     #     response = self.client.get(url)
 
