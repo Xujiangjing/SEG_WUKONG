@@ -25,14 +25,14 @@ class TicketViewTestCase(TestCase):
         self.specialist.department = self.department
         self.specialist.save()
 
-#         self.ticket = Ticket.objects.create(
-#             creator=self.student,
-#             title="Test Ticket",
-#             description="This is a test ticket.",
-#             assigned_department=self.department.name,
-#             assigned_user=self.specialist,
-#             status="in_progress"
-#         )
+        self.ticket = Ticket.objects.create(
+            creator=self.student,
+            title="Test Ticket",
+            description="This is a test ticket.",
+            assigned_department=self.department.name,
+            assigned_user=self.specialist,
+            status="in_progress"
+        )
 
 #     def test_close_ticket_by_student(self):
 #         self.client.login(username='@student', password='Password123')
