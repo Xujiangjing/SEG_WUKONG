@@ -80,5 +80,5 @@ class TicketViewTestCase(TestCase):
         response = self.client.post(url, {'return_reason': 'Invalid action'})
         
         self.ticket.refresh_from_db()
-    #     self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302)
     #     self.assertNotEqual(self.ticket.return_reason, "Invalid action")
