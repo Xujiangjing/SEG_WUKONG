@@ -60,9 +60,9 @@ class TicketViewTests(TestCase):
         activity = TicketActivity.objects.filter(ticket=self.ticket).first()
         self.assertIsNotNone(activity)
         self.assertEqual(activity.action, "status_updated")
-    #     self.assertEqual(activity.comment, "New update information")
+        self.assertEqual(activity.comment, "New update information")
 
-    #     self.assertRedirects(response, reverse("ticket_detail", kwargs={"ticket_id": self.ticket.id}))
+        self.assertRedirects(response, reverse("ticket_detail", kwargs={"ticket_id": self.ticket.id}))
 
     # def test_update_ticket_permission_denied(self):
     #     self.client.login(username="@specialist", password="Password123")
