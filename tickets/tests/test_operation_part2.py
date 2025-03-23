@@ -71,8 +71,8 @@ class RedirectTicketViewTestCase(TestCase):
         response = self.client.post(url, {"new_assignee_id": "ai"})
         self.ticket.refresh_from_db()
 
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertEqual(self.ticket.status, "in_progress")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.ticket.status, "in_progress")
     #     self.assertEqual(self.ticket.latest_action, "redirected")
 
     # def test_redirect_ticket_assign_specialist(self):
