@@ -75,8 +75,8 @@ class TicketViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_manage_ticket_page_student(self):
-    #     self.client.login(username="@student", password="Password123")
-    #     url = reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id})
+        self.client.login(username="@student", password="Password123")
+        url = reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id})
     #     response = self.client.get(url)
 
     #     self.assertEqual(response.status_code, 200)
