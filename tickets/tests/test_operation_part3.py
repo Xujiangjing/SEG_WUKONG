@@ -66,8 +66,8 @@ class TicketViewTests(TestCase):
 
     def test_update_ticket_permission_denied(self):
         self.client.login(username="@specialist", password="Password123")
-    #     url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
-    #     response = self.client.post(url, {"update_message": "Unauthorized update"})
+        url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
+        response = self.client.post(url, {"update_message": "Unauthorized update"})
 
     #     self.ticket.refresh_from_db()
     #     self.assertNotIn("Unauthorized update", self.ticket.description)
