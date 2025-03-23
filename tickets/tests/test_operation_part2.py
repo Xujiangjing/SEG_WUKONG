@@ -66,7 +66,7 @@ class RedirectTicketViewTestCase(TestCase):
     
     def test_redirect_ticket_ai_assignment(self):
         self.client.login(username="@officer", password="Password123")
-    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
     #     response = self.client.post(url, {"new_assignee_id": "ai"})
     #     self.ticket.refresh_from_db()
