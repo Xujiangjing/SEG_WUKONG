@@ -72,7 +72,7 @@ class TicketViewTestCase(TestCase):
         activity = TicketActivity.objects.filter(ticket=self.ticket, action='Returned').first()
         self.assertIsNotNone(activity)
         self.assertEqual(activity.action_by, self.specialist)
-    #     self.assertEqual(activity.comment, f"Return to student : {self.student.full_name()}")
+        self.assertEqual(activity.comment, f"Return to student : {self.student.full_name()}")
     
     # def test_return_ticket_by_student_forbidden(self):
     #     self.client.login(username='@student', password='Password123')
