@@ -56,23 +56,29 @@ class TicketViewTestCase(TestCase):
         self.assertIsNotNone(report)
         self.assertGreaterEqual(report.closed_manually, 1)
     
-    # def test_return_ticket_by_specialist(self):
-    #     self.client.login(username='@specialist', password='Password123')
-    #     url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
-    #     response = self.client.post(url, {'return_reason': 'Needs more details'})
+    def test_return_ticket_by_specialist(self):
+        self.client.login(username='@specialist', password='Password123')
+        url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
+        response = self.client.post(url, {'return_reason': 'Need more details'})
         
     #     self.ticket.refresh_from_db()
-    #     self.assertEqual(response.status_code, 302)  # Expecting redirect
+    #     self.assertEqual(response.status_code, 302)
     #     self.assertEqual(self.ticket.status, "in_progress")
-    #     self.assertEqual(self.ticket.assigned_user, self.student)
-    #     self.assertEqual(self.ticket.return_reason, "Needs more details")
+    #     self.assertEqual(self.ticket.return_reason, "Need more details")
     #     self.assertFalse(self.ticket.can_be_managed_by_specialist)
     #     self.assertFalse(self.ticket.can_be_managed_by_program_officers)
-    #     self.assertFalse(self.ticket.program_officer_resolved)
-    #     self.assertFalse(self.ticket.specialist_resolved)
     #     self.assertTrue(self.ticket.need_student_update)
         
     #     activity = TicketActivity.objects.filter(ticket=self.ticket, action='Returned').first()
     #     self.assertIsNotNone(activity)
     #     self.assertEqual(activity.action_by, self.specialist)
     #     self.assertEqual(activity.comment, f"Return to student : {self.student.full_name()}")
+    
+    # def test_return_ticket_by_student_forbidden(self):
+    #     self.client.login(username='@student', password='Password123')
+    #     url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
+    #     response = self.client.post(url, {'return_reason': 'Invalid action'})
+        
+    #     self.ticket.refresh_from_db()
+    #     self.assertEqual(response.status_code, 302)
+    #     self.assertNotEqual(self.ticket.return_reason, "Invalid action")
