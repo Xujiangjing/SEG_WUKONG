@@ -74,10 +74,10 @@ class TicketViewTestCase(TestCase):
         self.assertEqual(activity.action_by, self.specialist)
         self.assertEqual(activity.comment, f"Return to student : {self.student.full_name()}")
     
-    # def test_return_ticket_by_student_forbidden(self):
-    #     self.client.login(username='@student', password='Password123')
-    #     url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
-    #     response = self.client.post(url, {'return_reason': 'Invalid action'})
+    def test_return_ticket_by_student_forbidden(self):
+        self.client.login(username='@student', password='Password123')
+        url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
+        response = self.client.post(url, {'return_reason': 'Invalid action'})
         
     #     self.ticket.refresh_from_db()
     #     self.assertEqual(response.status_code, 302)
