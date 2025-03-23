@@ -385,7 +385,11 @@ def manage_ticket_page(request, ticket_id):
         return render(
             request,
             "tickets/manage_tickets_page_for_student.html",
-            {"ticket": ticket, "actions": actions},
+            {
+                "ticket": ticket, 
+                "actions": actions,
+                "attachments": attachments,
+            },
         )
 
     if is_specialist:
@@ -406,7 +410,11 @@ def manage_ticket_page(request, ticket_id):
         return render(
             request,
             "tickets/manage_tickets_page_for_specialist.html",
-            {"ticket": ticket, "actions": actions},
+            {
+                "ticket": ticket,
+                "actions": actions,
+                "attachments": attachments,
+            },
         )
 
     if is_program_officer:
