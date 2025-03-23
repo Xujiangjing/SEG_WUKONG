@@ -64,8 +64,8 @@ class TicketViewTests(TestCase):
 
         self.assertRedirects(response, reverse("ticket_detail", kwargs={"ticket_id": self.ticket.id}))
 
-    # def test_update_ticket_permission_denied(self):
-    #     self.client.login(username="@specialist", password="Password123")
+    def test_update_ticket_permission_denied(self):
+        self.client.login(username="@specialist", password="Password123")
     #     url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
     #     response = self.client.post(url, {"update_message": "Unauthorized update"})
 
