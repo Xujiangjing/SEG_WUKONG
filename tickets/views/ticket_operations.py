@@ -109,8 +109,8 @@ def return_ticket(request, ticket_id):
             )
 
             return redirect("ticket_detail", ticket_id=ticket_id)
-    else:
-        form = ReturnTicketForm()
+    # else:
+    #     form = ReturnTicketForm()
 
     return render(
         request, "tickets/ticket_detail.html", {"form": form, "ticket": ticket}
