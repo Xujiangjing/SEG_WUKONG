@@ -111,6 +111,9 @@ urlpatterns = [
         ticket_operations.update_ticket,
         name="update_ticket",
     ),
+    path('tickets/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', 
+         ticket_operations.merge_ticket, 
+         name='merge_ticket'),
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT

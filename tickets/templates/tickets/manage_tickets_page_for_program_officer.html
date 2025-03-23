@@ -143,40 +143,39 @@
                 </div>
                 <!-- Merge Section -->
                 <div id="merge-section" style="display: none;">
-                    
-                        {% if potential_tickets %}
-                            <table class="table table-striped">
-                                <thead>
+                    {% if potential_tickets %}
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for potential_ticket in potential_tickets %}
                                     <tr>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                        <th>Action</th>
+                                        <td>{{ potential_ticket.title }}</td>
+                                        <td>{{ potential_ticket.description }}</td>
+                                        <td>
+                                            <form method="post" action="{% url 'merge_ticket' ticket.id potential_ticket.id %}" class="merge-ticket-form" id="merge-ticket-form-{{ potential_ticket.id }}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="potential_ticket_id" value="{{ potential_ticket.id }}">
+                                                {% if potential_ticket in approved_merged_tickets %}
+                                                    <button type="submit" class="btn btn-danger">Undo</button>
+                                                {% else %}
+                                                    <button type="submit" class="btn btn-success">Merge</button>
+                                                {% endif %}
+                                            </form>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {% for potential_ticket in potential_tickets %}
-                                        <tr>
-                                            <td>{{ potential_ticket.title }}</td>
-                                            <td>{{ potential_ticket.description }}</td>
-                                            <td>
-                                                <form method="post" class="merge-ticket-form">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="potential_ticket_id" value="{{ potential_ticket.id }}">
-                                                    {% if potential_ticket in approved_merged_tickets %}
-                                                        <button type="submit" class="btn btn-danger">Undo</button>
-                                                    {% else %}
-                                                        <button type="submit" class="btn btn-success">Merge</button>
-                                                    {% endif %}
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>No potential tickets to merge found.</p>
-                        {% endif %}
-                    </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No potential tickets to merge found.</p>
+                    {% endif %}
+                </div>
                 </div>
 
                 <!--Return to student-->
@@ -273,39 +272,6 @@
         });
 
 
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".merge-ticket-form").forEach(form => {
-            form.addEventListener("submit", function (event) {
-                event.preventDefault();
-
-                let formData = new FormData(this);
-                let ticketId = "{{ ticket.id }}";
-                let potentialTicketId = formData.get("potential_ticket_id");
-                let url = `/tickets/${ticketId}/merge/${potentialTicketId}/`;
-
-                fetch(url, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-                    }
-                })
-                .then(response => response.text())  // Get response as text
-                .then(text => {
-                    console.log("🔍 AJAX Response Text:", text);  // Log the response text
-                    let data = JSON.parse(text);  // Parse the text as JSON
-                    console.log("🔍 AJAX Response:", data);
-
-                    if (data.success) {
-                        window.location.href = data.redirect_url;
-                    } else {
-                        alert("⚠️ " + data.error);
-                    }
-                })
-                .catch(error => console.error("❌ AJAX Error:", error));
-            });
-        });
-    });
         document.getElementById("return_submit_btn").addEventListener("click", function (event) {
             let returnReason = document.getElementById("return_reason").value.trim();
             if (!returnReason) {

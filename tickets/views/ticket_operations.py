@@ -231,7 +231,7 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     potential_ticket = get_object_or_404(Ticket, id=potential_ticket_id)
     merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
-
+    print(f"🚀 Merged ticket: {ticket.title} merged with potential ticket{potential_ticket.title}")
     if potential_ticket in merged_ticket.approved_merged_tickets.all():
         merged_ticket.approved_merged_tickets.remove(potential_ticket)
         action = "unmerged"
