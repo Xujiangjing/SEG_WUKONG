@@ -11,10 +11,10 @@ class TicketViewTestCase(TestCase):
     def setUp(self):
         self.department = Department.objects.create(name='it_support', description='IT Support')
 
-#         self.student = User.objects.create_user(
-#             username='@student', password='Password123', role='students',
-#             email='student@example.com', first_name='Student', last_name='One'
-#         )
+        self.student = User.objects.create_user(
+            username='@student', password='Password123', role='students',
+            email='student@example.com', first_name='Student', last_name='One'
+        )
 #         self.student.department = self.department
 #         self.student.save()
 
