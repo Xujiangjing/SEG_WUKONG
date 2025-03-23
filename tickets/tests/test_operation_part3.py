@@ -69,8 +69,8 @@ class TicketViewTests(TestCase):
         url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
         response = self.client.post(url, {"update_message": "Unauthorized update"})
 
-    #     self.ticket.refresh_from_db()
-    #     self.assertNotIn("Unauthorized update", self.ticket.description)
+        self.ticket.refresh_from_db()
+        self.assertNotIn("Unauthorized update", self.ticket.description)
 
     #     self.assertEqual(response.status_code, 302)
 
