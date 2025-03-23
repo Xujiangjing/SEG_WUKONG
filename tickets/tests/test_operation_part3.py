@@ -58,8 +58,8 @@ class TicketViewTests(TestCase):
         self.assertEqual(self.ticket.status, "in_progress")
 
         activity = TicketActivity.objects.filter(ticket=self.ticket).first()
-    #     self.assertIsNotNone(activity)
-    #     self.assertEqual(activity.action, "status_updated")
+        self.assertIsNotNone(activity)
+        self.assertEqual(activity.action, "status_updated")
     #     self.assertEqual(activity.comment, "New update information")
 
     #     self.assertRedirects(response, reverse("ticket_detail", kwargs={"ticket_id": self.ticket.id}))
