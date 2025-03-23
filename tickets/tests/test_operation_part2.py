@@ -53,10 +53,10 @@ class RedirectTicketViewTestCase(TestCase):
         )
         self.potential_ticket.save()
 
-    # def test_redirect_ticket_unauthenticated(self):
-    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
-    #     response = self.client.post(url, {"new_assignee_id": "ai"})
-    #     self.assertEqual(response.status_code, 302)
+    def test_redirect_ticket_unauthenticated(self):
+        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+        # response = self.client.post(url, {"new_assignee_id": "ai"})
+        # self.assertEqual(response.status_code, 302)
 
     # def test_redirect_ticket_unauthorized(self):
     #     self.client.login(username="@student", password="Password123")
