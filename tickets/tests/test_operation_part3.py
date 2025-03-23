@@ -55,9 +55,9 @@ class TicketViewTests(TestCase):
 
         self.ticket.refresh_from_db()
         self.assertIn("New update information", self.ticket.description)
-    #     self.assertEqual(self.ticket.status, "in_progress")
+        self.assertEqual(self.ticket.status, "in_progress")
 
-    #     activity = TicketActivity.objects.filter(ticket=self.ticket).first()
+        activity = TicketActivity.objects.filter(ticket=self.ticket).first()
     #     self.assertIsNotNone(activity)
     #     self.assertEqual(activity.action, "status_updated")
     #     self.assertEqual(activity.comment, "New update information")
