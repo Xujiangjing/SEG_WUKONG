@@ -47,7 +47,7 @@ urlpatterns = [
         name="close_ticket",
     ),
     path(
-        "ticket/<uuid:ticket_id>/return/",
+        "ticket/<uuid:pk>/return/",
         ticket_operations.return_ticket,
         name="return_ticket",
     ),

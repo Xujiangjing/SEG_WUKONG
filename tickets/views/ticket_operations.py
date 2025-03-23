@@ -67,7 +67,8 @@ def close_ticket(request, ticket_id):
 
 
 @login_required
-def return_ticket(request, ticket_id):
+def return_ticket(request, pk):
+    ticket_id = pk
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if (
         not (request.user.is_specialist() or request.user.is_program_officer())

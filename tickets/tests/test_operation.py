@@ -38,7 +38,7 @@ class TicketViewTestCase(TestCase):
         )
     def test_return_ticket_by_specialist(self):
         self.client.login(username='@specialist', password='Password123')
-        url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
+        url = reverse('return_ticket', kwargs={'pk': self.ticket.id,})
         response = self.client.post(url, {'return_reason': 'Need more details'})
         
         self.ticket.refresh_from_db()
@@ -84,7 +84,7 @@ class TicketViewTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
     def test_by_specialist(self):
         self.client.login(username='@specialist', password='Password123')
-        url = reverse('return_ticket', kwargs={'ticket_id': self.ticket.id})
+        url = reverse('return_ticket', kwargs={'pk': self.ticket.id})
         self.ticket.status = 'closed'
         self.ticket.save()
         response = self.client.post(url)
