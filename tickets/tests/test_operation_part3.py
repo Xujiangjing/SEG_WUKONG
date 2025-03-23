@@ -50,8 +50,8 @@ class TicketViewTests(TestCase):
 
     def test_update_ticket_success(self):
         self.client.login(username="@student", password="Password123")
-    #     url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
-    #     response = self.client.post(url, {"update_message": "New update information"})
+        url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
+        response = self.client.post(url, {"update_message": "New update information"})
 
     #     self.ticket.refresh_from_db()
     #     self.assertIn("New update information", self.ticket.description)
