@@ -77,9 +77,9 @@
                         </div>
 
                         <!-- Attachments -->
-                        <div class="mb-3 row align-items-center">
+                        <div class="mb-3 row align-items-center attachments-row">
                             <div class="col-sm-3">
-                              <div class="readonly-box subtitle-box">Attachments</div>
+                              <div class="readonly-box subtitle-box attachments-subtitle">Attachments</div>
                             </div>
                             <div class="col-sm-9">
                               {% if attachments %}
@@ -96,7 +96,7 @@
                                 </ul>
                               </div>
                               {% else %}
-                              <input type="text" class="form-control" value="No attachments" readonly>
+                              <input type="text" class="form-control attachments-box" value="No attachments" readonly>
                               {% endif %}
                             </div>
                         </div>
