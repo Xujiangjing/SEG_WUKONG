@@ -235,9 +235,11 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
     if potential_ticket in merged_ticket.approved_merged_tickets.all():
         merged_ticket.approved_merged_tickets.remove(potential_ticket)
         action = "unmerged"
+        messages.success(request, 'Tickets unmerged successfully.')
     else:
         merged_ticket.approved_merged_tickets.add(potential_ticket)
         action = "merged"
+        messages.success(request, 'Tickets merged successfully.')
 
     merged_ticket.save()
     potential_tickets = find_potential_tickets_to_merge(ticket)
