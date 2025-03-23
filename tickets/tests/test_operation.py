@@ -8,8 +8,8 @@ from tickets.models import (DailyTicketClosureReport, Department, Ticket,
 class TicketViewTestCase(TestCase):
     fixtures = ['tickets/tests/fixtures/default_user.json']
 
-#     def setUp(self):
-#         self.department = Department.objects.create(name='it_support', description='IT Support')
+    def setUp(self):
+        self.department = Department.objects.create(name='it_support', description='IT Support')
 
 #         self.student = User.objects.create_user(
 #             username='@student', password='Password123', role='students',
