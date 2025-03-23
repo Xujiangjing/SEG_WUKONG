@@ -104,15 +104,15 @@ class RedirectTicketViewTestCase(TestCase):
         self.assertEqual(response.json()["error"], "Selected specialist does not exist")
 
 
-    # def test_respond_ticket(self):
-    #     self.client.login(username='@officer', password='Password123')
-    #     url = reverse('respond_ticket', kwargs={'ticket_id': self.ticket.id})
-    #     response_message = "Test response"
-    #     response = self.client.post(url, {'response_message': response_message})
-    #     self.ticket.refresh_from_db()
-    #     self.assertEqual(self.ticket.status, 'in_progress')
-    #     activity = TicketActivity.objects.filter(ticket=self.ticket, action="responded").first()
-    #     self.assertIsNotNone(activity)
-    #     self.assertEqual(activity.comment, response_message)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, 'tickets/ticket_detail.html')
+    def test_respond_ticket(self):
+        self.client.login(username='@officer', password='Password123')
+        url = reverse('respond_ticket', kwargs={'ticket_id': self.ticket.id})
+        response_message = "Test response"
+        response = self.client.post(url, {'response_message': response_message})
+        self.ticket.refresh_from_db()
+        self.assertEqual(self.ticket.status, 'in_progress')
+        activity = TicketActivity.objects.filter(ticket=self.ticket, action="responded").first()
+        self.assertIsNotNone(activity)
+        self.assertEqual(activity.comment, response_message)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'tickets/ticket_detail.html')
