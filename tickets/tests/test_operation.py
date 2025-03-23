@@ -22,8 +22,8 @@ class TicketViewTestCase(TestCase):
             username='@specialist', password='Password123', role='specialists',
             email='specialist@example.com', first_name='Specialist', last_name='One'
         )
-#         self.specialist.department = self.department
-#         self.specialist.save()
+        self.specialist.department = self.department
+        self.specialist.save()
 
 #         self.ticket = Ticket.objects.create(
 #             creator=self.student,
