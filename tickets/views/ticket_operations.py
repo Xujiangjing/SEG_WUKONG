@@ -238,8 +238,9 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
         messages.success(request, 'Tickets unmerged successfully.')
     else:
         merged_ticket.approved_merged_tickets.add(potential_ticket)
+        numtickets = merged_ticket.approved_merged_tickets.count()
         action = "merged"
-        messages.success(request, 'Tickets merged successfully.')
+        messages.success(request, f'Success! There are currently {numtickets} tickets merged with the current ticket, by submitting a response to the current ticket your answer will be sent to all the merged tickets you selected. If you want to check or edit which tickets are merged, click the "Merge”button again.')
 
     merged_ticket.save()
     potential_tickets = find_potential_tickets_to_merge(ticket)
