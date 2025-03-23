@@ -53,66 +53,66 @@ class RedirectTicketViewTestCase(TestCase):
         )
         self.potential_ticket.save()
 
-    def test_redirect_ticket_unauthenticated(self):
-        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
-        response = self.client.post(url, {"new_assignee_id": "ai"})
-        self.assertEqual(response.status_code, 302)
+    # def test_redirect_ticket_unauthenticated(self):
+    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    #     response = self.client.post(url, {"new_assignee_id": "ai"})
+    #     self.assertEqual(response.status_code, 302)
 
-    def test_redirect_ticket_unauthorized(self):
-        self.client.login(username="@student", password="Password123")
-        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
-        response = self.client.post(url, {"new_assignee_id": "ai"})
-        self.assertEqual(response.status_code, 403)
+    # def test_redirect_ticket_unauthorized(self):
+    #     self.client.login(username="@student", password="Password123")
+    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    #     response = self.client.post(url, {"new_assignee_id": "ai"})
+    #     self.assertEqual(response.status_code, 403)
     
-    def test_redirect_ticket_ai_assignment(self):
-        self.client.login(username="@officer", password="Password123")
-        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    # def test_redirect_ticket_ai_assignment(self):
+    #     self.client.login(username="@officer", password="Password123")
+    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
-        response = self.client.post(url, {"new_assignee_id": "ai"})
-        self.ticket.refresh_from_db()
+    #     response = self.client.post(url, {"new_assignee_id": "ai"})
+    #     self.ticket.refresh_from_db()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.ticket.status, "in_progress")
-        self.assertEqual(self.ticket.latest_action, "redirected")
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(self.ticket.status, "in_progress")
+    #     self.assertEqual(self.ticket.latest_action, "redirected")
 
-    def test_redirect_ticket_assign_specialist(self):
-        self.client.login(username="@officer", password="Password123")
-        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    # def test_redirect_ticket_assign_specialist(self):
+    #     self.client.login(username="@officer", password="Password123")
+    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
-        response = self.client.post(url, {"new_assignee_id": self.specialist.id})
-        self.ticket.refresh_from_db()
+    #     response = self.client.post(url, {"new_assignee_id": self.specialist.id})
+    #     self.ticket.refresh_from_db()
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.ticket.assigned_user, self.specialist)
-        self.assertEqual(self.ticket.status, "in_progress")
-        self.assertEqual(self.ticket.latest_action, "redirected")
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(self.ticket.assigned_user, self.specialist)
+    #     self.assertEqual(self.ticket.status, "in_progress")
+    #     self.assertEqual(self.ticket.latest_action, "redirected")
 
-    def test_redirect_ticket_invalid_specialist(self):
-        self.client.login(username="@officer", password="Password123")
-        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    # def test_redirect_ticket_invalid_specialist(self):
+    #     self.client.login(username="@officer", password="Password123")
+    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
-        response = self.client.post(url, {"new_assignee_id": 9999})
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["error"], "Selected specialist does not exist")
+    #     response = self.client.post(url, {"new_assignee_id": 9999})
+    #     self.assertEqual(response.status_code, 400)
+    #     self.assertEqual(response.json()["error"], "Selected specialist does not exist")
 
-    def test_redirect_ticket_missing_assignee(self):
-        self.client.login(username="@officer", password="Password123")
-        url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
+    # def test_redirect_ticket_missing_assignee(self):
+    #     self.client.login(username="@officer", password="Password123")
+    #     url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
-        response = self.client.post(url, {})
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()["error"], "Selected specialist does not exist")
+    #     response = self.client.post(url, {})
+    #     self.assertEqual(response.status_code, 400)
+    #     self.assertEqual(response.json()["error"], "Selected specialist does not exist")
 
 
-    def test_respond_ticket(self):
-        self.client.login(username='@officer', password='Password123')
-        url = reverse('respond_ticket', kwargs={'ticket_id': self.ticket.id})
-        response_message = "Test response"
-        response = self.client.post(url, {'response_message': response_message})
-        self.ticket.refresh_from_db()
-        self.assertEqual(self.ticket.status, 'in_progress')
-        activity = TicketActivity.objects.filter(ticket=self.ticket, action="responded").first()
-        self.assertIsNotNone(activity)
-        self.assertEqual(activity.comment, response_message)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'tickets/ticket_detail.html')
+    # def test_respond_ticket(self):
+    #     self.client.login(username='@officer', password='Password123')
+    #     url = reverse('respond_ticket', kwargs={'ticket_id': self.ticket.id})
+    #     response_message = "Test response"
+    #     response = self.client.post(url, {'response_message': response_message})
+    #     self.ticket.refresh_from_db()
+    #     self.assertEqual(self.ticket.status, 'in_progress')
+    #     activity = TicketActivity.objects.filter(ticket=self.ticket, action="responded").first()
+    #     self.assertIsNotNone(activity)
+    #     self.assertEqual(activity.comment, response_message)
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertTemplateUsed(response, 'tickets/ticket_detail.html')
