@@ -90,5 +90,5 @@ class TicketViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_specialist.html")
-    #     self.assertIn("respond_ticket", response.context["actions"])
+        self.assertIn("respond_ticket", response.context["actions"])
 
