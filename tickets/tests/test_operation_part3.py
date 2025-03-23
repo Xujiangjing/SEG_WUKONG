@@ -80,8 +80,8 @@ class TicketViewTests(TestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-    #     self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_student.html")
-    #     self.assertIn("update_ticket", response.context["actions"])
+        self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_student.html")
+        self.assertIn("update_ticket", response.context["actions"])
 
     # def test_manage_ticket_page_specialist(self):
     #     self.client.login(username="@specialist", password="Password123")
