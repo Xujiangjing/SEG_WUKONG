@@ -40,12 +40,12 @@ class TicketViewTestCase(TestCase):
         response = self.client.post(url)
         
         self.ticket.refresh_from_db()
-#         self.assertEqual(response.status_code, 302)
-#         self.assertEqual(self.ticket.status, "closed")
-#         self.assertFalse(self.ticket.can_be_managed_by_program_officers)
-#         self.assertFalse(self.ticket.can_be_managed_by_specialist)
-#         self.assertTrue(self.ticket.program_officer_resolved)
-#         self.assertTrue(self.ticket.specialist_resolved)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.ticket.status, "closed")
+        self.assertFalse(self.ticket.can_be_managed_by_program_officers)
+        self.assertFalse(self.ticket.can_be_managed_by_specialist)
+        self.assertTrue(self.ticket.program_officer_resolved)
+        self.assertTrue(self.ticket.specialist_resolved)
         
 #         activity = TicketActivity.objects.filter(ticket=self.ticket, action='closed_manually').first()
 #         self.assertIsNotNone(activity)
