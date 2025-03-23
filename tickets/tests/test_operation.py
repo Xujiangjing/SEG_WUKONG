@@ -4,8 +4,9 @@ from django.utils import timezone
 from tickets.models import (DailyTicketClosureReport, Department, Ticket,
                             TicketActivity, User)
 
-# class TicketViewTestCase(TestCase):
-#     fixtures = ['tickets/tests/fixtures/default_user.json']
+
+class TicketViewTestCase(TestCase):
+    fixtures = ['tickets/tests/fixtures/default_user.json']
 
 #     def setUp(self):
 #         self.department = Department.objects.create(name='it_support', description='IT Support')
