@@ -53,8 +53,8 @@ class TicketViewTests(TestCase):
         url = reverse("update_ticket", kwargs={"ticket_id": self.ticket.id})
         response = self.client.post(url, {"update_message": "New update information"})
 
-    #     self.ticket.refresh_from_db()
-    #     self.assertIn("New update information", self.ticket.description)
+        self.ticket.refresh_from_db()
+        self.assertIn("New update information", self.ticket.description)
     #     self.assertEqual(self.ticket.status, "in_progress")
 
     #     activity = TicketActivity.objects.filter(ticket=self.ticket).first()
