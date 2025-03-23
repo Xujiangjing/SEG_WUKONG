@@ -1,34 +1,23 @@
+import logging
 from types import SimpleNamespace
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Value
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
-from django.urls import reverse
+from tickets.ai_service import (ai_process_ticket, classify_department,
+                                find_potential_tickets_to_merge)
 from tickets.forms import ReturnTicketForm, SupplementTicketForm, TicketForm
-from tickets.ai_service import (
-    ai_process_ticket,
-    find_potential_tickets_to_merge,
-    classify_department,
-)
-from tickets.helpers import (
-    send_ticket_confirmation_email,
-    send_updated_notification_email,
-)
-from tickets.models import (
-    TicketAttachment,
-    User,
-    Ticket,
-    TicketActivity,
-    Department,
-    MergedTicket,
-    DailyTicketClosureReport,
-)
-from django.db.models.functions import Coalesce
-import logging
+from tickets.helpers import (send_ticket_confirmation_email,
+                             send_updated_notification_email)
+from tickets.models import (DailyTicketClosureReport, Department, MergedTicket,
+                            Ticket, TicketActivity, TicketAttachment, User)
 
 logger = logging.getLogger(__name__)
 
