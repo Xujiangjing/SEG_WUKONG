@@ -25,7 +25,10 @@ class FakeUser:
         return self.role == "specialist"
 
 
-class DashboardViewTests(TestCase):
+
+class DashboardViewTestCase(TestCase):
+    """Tests for the dashboard view."""
+
     def setUp(self):
         self.factory = RequestFactory()
 
