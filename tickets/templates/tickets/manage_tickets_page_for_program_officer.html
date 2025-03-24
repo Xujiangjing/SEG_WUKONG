@@ -197,7 +197,6 @@
     document.addEventListener("DOMContentLoaded", function () {
         let actionTypeInput = document.getElementById("action_type");
         let actionForm = document.getElementById("action_form");
-        let submitBtn = document.getElementById("submit_btn");
         let respondSection = document.getElementById("respond-section");
         let redirectSection = document.getElementById("redirect-section");
         let mergeSection = document.getElementById("merge-section");
@@ -224,10 +223,12 @@
                 } else if (selectedAction === "merge_ticket") {
                     mergeSection.style.display = "block";
                 } else if (selectedAction === "return_to_student") {
+                    const ticketId = "{{ ticket.id }}";
+                    actionForm.action = `/tickets/${ticketId}/return/`;
                     returnSection.style.display = "block";
                 }
 
-                submitBtn.style.display = "block"; // 显示提交按钮
+                
             });
         });
 
@@ -277,6 +278,8 @@
             if (!returnReason) {
                 event.preventDefault();
                 alert("⚠️ Return reason cannot be empty.");
+            }else{
+                actionForm.submit();
             }
         });
     });
