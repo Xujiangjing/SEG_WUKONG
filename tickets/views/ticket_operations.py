@@ -138,7 +138,6 @@ def redirect_ticket(request, ticket_id):
 
     if request.method == "GET":
         specialists = get_specialists(ticket)
-        "需修改: 此处单测未覆盖,需要改动,存在序列化问题"
         return JsonResponse({"specialists": specialists})
 
     new_assignee_id = request.POST.get("new_assignee_id")
@@ -146,15 +145,11 @@ def redirect_ticket(request, ticket_id):
     try:
         ai_assigned_department = classify_department(ticket.description)
         ticket.assigned_department = ai_assigned_department
-        "需修改: 此处ticket和department的字段错误,需要改动,临时注释掉了"
-        # ticket.department = ticket.assigned_department.name
         ticket.save()
     except Exception as e:
         print("❌ Error in classify_department:", e)
         ai_assigned_department = ticket.assigned_department or "IT"
         ticket.assigned_department = ai_assigned_department
-        "需修改: 此处ticket的字段错误,需要改动,临时注释掉了"
-        # ticket.department = ticket.assigned_department
         ticket.save()
 
     if new_assignee_id == "ai":
@@ -478,9 +473,6 @@ def manage_ticket_page(request, ticket_id):
 
 
 def get_specialists(ticket):
-    """
-    获取所有 specialists，并将 AI 推荐的放在最前面
-    """
     try:
         ai_assigned_department = classify_department(ticket.description)
     except Exception as e:
@@ -519,8 +511,17 @@ def get_specialists(ticket):
         dummy_spec = SimpleNamespace(
             id="ai",
             username=f"---------- {ai_assigned_department} (recommend) ----------",
-            department__name=ai_assigned_department,
+            department__name=SimpleNamespace(name=ai_assigned_department),
         )
         recommended_list = [dummy_spec]
 
-    return recommended_list + non_recommended_list
+    return [
+        {
+            "id": spec.id,
+            "username": spec.username,
+            "department": spec.department.name if spec.department else "",
+            "open_tickets": getattr(spec, "open_tickets", 0),
+            "is_ai": False,
+        }
+        for spec in recommended_list + non_recommended_list
+    ]
