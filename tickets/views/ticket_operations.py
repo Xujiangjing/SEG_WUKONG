@@ -21,6 +21,7 @@ from tickets.helpers import (
     send_ticket_confirmation_email,
     send_updated_notification_email,
     send_response_notification_email,
+    send_notification_email_to_specialist,
 )
 from tickets.models import (
     DailyTicketClosureReport,
@@ -187,6 +188,14 @@ def redirect_ticket(request, ticket_id):
         ticket.can_be_managed_by_program_officers = False
         ticket.program_officer_resolved = True
         ticket.save()
+
+        send_notification_email_to_specialist(
+            specialist_email=new_assignee.email,
+            ticket_title=ticket.title,
+            ticket_id=ticket.id,
+            student_email=ticket.creator.email,
+            response_message=ticket.description,
+        )
 
         TicketActivity.objects.create(
             ticket=ticket,

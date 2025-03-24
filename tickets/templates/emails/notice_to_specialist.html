@@ -1,0 +1,14 @@
+<p>Dear {{ specialist_name }},</p>
+
+<p>You have been assigned a new ticket titled <strong>"{{ ticket_title }}"</strong>.</p>
+
+{% if response_message %}
+<p>Latest response:</p>
+<blockquote>{{ response_message }}</blockquote>
+{% endif %}
+
+<p>
+You can view the ticket on your dashboard<br>
+</p>
+
+<p>Thank you,<br>Wukong Help Desk</p>
