@@ -15,6 +15,7 @@ except Exception as e:
 
 model_id = "meta.llama3-70b-instruct-v1:0"
 
+
 # code to query the model format the prompt and return the response
 def query_bedrock(prompt):
     """
@@ -41,10 +42,11 @@ def query_bedrock(prompt):
         return generation
 
     except ClientError as e:
-        print(f"AWS ClientError: {e}")
+        pass
     except Exception as e:
-        print(f"Unexpected error querying Bedrock: {e}")
-    return "" # Return an empty string if the query fails
+        pass
+
+    return ""  # Return an empty string if the query fails
 
 
 def classify_department(ticket_description):
@@ -73,6 +75,7 @@ def generate_ai_answer(ticket_description):
     prompt = f"You are a university program officer, reply the student's query in only two or three sentences, 60 words max. Please note down 3 things in your answer: 1. Output the response only. Do not include things like: Here is a concise response to the student's query, [Your Name], Dear, Sincerely,  or any reflection on the answer, etc. that are not related to the response itself. Just give the answer itself. 2. 60 words max. 3. Do not include any bold or italic formatting. Provide a concise answer for the following student query: '{ticket_description}'"
     return query_bedrock(prompt)
 
+
 # code to process the ticket and update the model with the AI response, department and priority
 def ai_process_ticket(ticket):
     """
@@ -85,10 +88,10 @@ def ai_process_ticket(ticket):
     ai_ticket_processing, created = AITicketProcessing.objects.get_or_create(
         ticket=ticket,
         defaults={
-            'ai_generated_response': ai_answer,
-            'ai_assigned_department': ai_department,
-            'ai_assigned_priority': ai_priority,
-        }
+            "ai_generated_response": ai_answer,
+            "ai_assigned_department": ai_department,
+            "ai_assigned_priority": ai_priority,
+        },
     )
 
     if not created:
@@ -117,7 +120,6 @@ def find_potential_tickets_to_merge(ticket):
     similar_tickets = []
 
     for potential_ticket in potential_tickets:
-        print(f"Checking ticket {potential_ticket.id}...")
         prompt = f"""
         Determine whether the following tickets should be merged. Consider their similarity.
         The current ticket: '{ticket.title}' - {ticket.description}
