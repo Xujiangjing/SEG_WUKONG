@@ -168,24 +168,6 @@ class FetchEmailsTest(TransactionTestCase):
             self.assertIsNotNone(ticket)
             self.assertEqual(ticket.title, "test subject")
 
-    def test_duplicate_ticket_with_response(self):
-        """Test that a ticket with a response is detected as a duplicate."""
-        if self.existing_ticket.responses.count() > 0:
-            self.existing_ticket.status = "closed"
-            self.existing_ticket.save()
-            self.existing_ticket.refresh_from_db()
-
-        duplicate_ticket = self.command.is_duplicate_ticket(
-            self.sender_email, self.subject, self.body
-        )
-
-        self.assertIsNotNone(duplicate_ticket)  # Should detect a duplicate
-        self.assertEqual(
-            duplicate_ticket.id,
-            self.existing_ticket.id,
-            "❌ Duplicate ticket not detected",
-        )
-
     def test_duplicate_ticket_without_response_after_7_days(self):
         """Test that a ticket can be resubmitted if no response after 7 days."""
         old_created_at = now() - timedelta(days=8)
@@ -1019,3 +1001,32 @@ class FetchEmailsTest(TransactionTestCase):
 
         self.assertEqual(body, "This is a string payload")
         self.assertEqual(sender, "test@wukong.ac.uk")
+
+    @patch.object(Command, "send_duplicate_notice")
+    def test_duplicate_ticket_within_7_days_triggers_notice(
+        self, mock_send_duplicate_notice
+    ):
+        """Test recent ticket (<7 days) with same content is detected as duplicate"""
+
+        recent_ticket = Ticket.objects.create(
+            title=self.subject,
+            description=self.body,
+            creator=self.user,
+            sender_email=self.sender_email,
+            status="in_progress",
+            assigned_department=self.department,
+            created_at=now() - timedelta(days=3),
+        )
+
+        duplicate_ticket = self.command.is_duplicate_ticket(
+            self.sender_email, self.subject, self.body
+        )
+
+        self.assertIsNotNone(duplicate_ticket, "should detect duplicate ticket")
+        self.assertEqual(
+            duplicate_ticket.id, recent_ticket.id, "It should return the recent ticket"
+        )
+
+        mock_send_duplicate_notice.assert_called_once_with(
+            self.sender_email, self.subject, recent_ticket.id
+        )
