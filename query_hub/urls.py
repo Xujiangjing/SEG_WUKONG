@@ -20,17 +20,30 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from tickets.views import *
-from tickets.views import (authentication, base_views, dashboard,
-                           ticket_operations, user_management)
+from tickets.views import (
+    authentication,
+    base_views,
+    dashboard,
+    ticket_operations,
+    user_management,
+)
 from tickets.views.base_views import CreateTicketView
-from tickets.views.dashboard import (dashboard_redirect,
-                                     program_officer_dashboard,
-                                     specialist_dashboard, student_dashboard,
-                                     visualize_ticket_data)
-from tickets.views.ticket_operations import (close_ticket, manage_ticket_page,
-                                             merge_ticket, redirect_ticket,
-                                             respond_ticket, return_ticket,
-                                             update_ticket)
+from tickets.views.dashboard import (
+    dashboard_redirect,
+    program_officer_dashboard,
+    specialist_dashboard,
+    student_dashboard,
+    visualize_ticket_data,
+)
+from tickets.views.ticket_operations import (
+    close_ticket,
+    manage_ticket_page,
+    merge_ticket,
+    redirect_ticket,
+    respond_ticket,
+    return_ticket,
+    update_ticket,
+)
 from tickets.views.user_management import get_user_role
 
 urlpatterns = [
@@ -47,7 +60,7 @@ urlpatterns = [
         name="close_ticket",
     ),
     path(
-        "ticket/<uuid:pk>/return/",
+        "tickets/<uuid:ticket_id>/return/",
         ticket_operations.return_ticket,
         name="return_ticket",
     ),
@@ -97,9 +110,11 @@ urlpatterns = [
         ticket_operations.update_ticket,
         name="update_ticket",
     ),
-    path('tickets/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', 
-         ticket_operations.merge_ticket, 
-         name='merge_ticket'),
+    path(
+        "tickets/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/",
+        ticket_operations.merge_ticket,
+        name="merge_ticket",
+    ),
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT

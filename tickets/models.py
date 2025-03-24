@@ -99,6 +99,7 @@ class User(AbstractUser):
 
 class Ticket(models.Model):
     """Model representing a submitted student query/ticket."""
+
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
@@ -142,6 +143,7 @@ class Ticket(models.Model):
         ("responded", "Responded"),
         ("closed", "Closed"),
         ("merged", "Merged"),
+        ("returned", "Returned"),
     ]
 
     creator = models.ForeignKey(

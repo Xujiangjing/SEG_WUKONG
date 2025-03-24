@@ -11,13 +11,25 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
-from tickets.ai_service import (ai_process_ticket, classify_department,
-                                find_potential_tickets_to_merge)
+from tickets.ai_service import (
+    ai_process_ticket,
+    classify_department,
+    find_potential_tickets_to_merge,
+)
 from tickets.forms import ReturnTicketForm, SupplementTicketForm, TicketForm
-from tickets.helpers import (send_ticket_confirmation_email,
-                             send_updated_notification_email)
-from tickets.models import (DailyTicketClosureReport, Department, MergedTicket,
-                            Ticket, TicketActivity, TicketAttachment, User)
+from tickets.helpers import (
+    send_ticket_confirmation_email,
+    send_updated_notification_email,
+)
+from tickets.models import (
+    DailyTicketClosureReport,
+    Department,
+    MergedTicket,
+    Ticket,
+    TicketActivity,
+    TicketAttachment,
+    User,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +79,9 @@ def close_ticket(request, ticket_id):
 
 
 @login_required
-def return_ticket(request, pk):
-    ticket_id = pk
+def return_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+
     if (
         not (request.user.is_specialist() or request.user.is_program_officer())
         or ticket.status != "in_progress"
@@ -103,15 +115,13 @@ def return_ticket(request, pk):
 
             TicketActivity.objects.create(
                 ticket=ticket,
-                action="Returned",
+                action="returned",
                 action_by=request.user,
                 action_time=timezone.now(),
                 comment=f"Return to student : {ticket.creator.full_name()}",
             )
 
             return redirect("ticket_detail", ticket_id=ticket_id)
-    # else:
-    #     form = ReturnTicketForm()
 
     return render(
         request, "tickets/ticket_detail.html", {"form": form, "ticket": ticket}
@@ -225,16 +235,21 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     potential_ticket = get_object_or_404(Ticket, id=potential_ticket_id)
     merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
-    print(f"🚀 Merged ticket: {ticket.title} merged with potential ticket{potential_ticket.title}")
+    print(
+        f"🚀 Merged ticket: {ticket.title} merged with potential ticket{potential_ticket.title}"
+    )
     if potential_ticket in merged_ticket.approved_merged_tickets.all():
         merged_ticket.approved_merged_tickets.remove(potential_ticket)
         action = "unmerged"
-        messages.success(request, 'Tickets unmerged successfully.')
+        messages.success(request, "Tickets unmerged successfully.")
     else:
         merged_ticket.approved_merged_tickets.add(potential_ticket)
         numtickets = merged_ticket.approved_merged_tickets.count()
         action = "merged"
-        messages.success(request, f'Success! There are currently {numtickets} tickets merged with the current ticket, by submitting a response to the current ticket your answer will be sent to all the merged tickets you selected. If you want to check or edit which tickets are merged, click the "Merge”button again.')
+        messages.success(
+            request,
+            f'Success! There are currently {numtickets} tickets merged with the current ticket, by submitting a response to the current ticket your answer will be sent to all the merged tickets you selected. If you want to check or edit which tickets are merged, click the "Merge”button again.',
+        )
 
     merged_ticket.save()
     potential_tickets = find_potential_tickets_to_merge(ticket)
@@ -383,7 +398,7 @@ def manage_ticket_page(request, ticket_id):
             request,
             "tickets/manage_tickets_page_for_student.html",
             {
-                "ticket": ticket, 
+                "ticket": ticket,
                 "actions": actions,
                 "attachments": attachments,
             },

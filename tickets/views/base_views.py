@@ -53,6 +53,7 @@ def home(request):
 
 class TicketListView(ListView):
     """Displays a list of tickets depending on the user's role."""
+
     model = Ticket
     template_name = "tickets/ticket_list.html"
     context_object_name = "tickets"
@@ -86,6 +87,7 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
     View for students to create new tickets (queries).
     Attaches uploaded files, sends confirmation, and starts AI processing.
     """
+
     model = Ticket
     form_class = TicketForm
     template_name = "tickets/create_ticket.html"
@@ -132,13 +134,17 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
 
         # Send confirmation email
         send_ticket_confirmation_email(ticket)
-    
+
         # Return success JSON
         messages.success(self.request, "Query submitted successfully!")
-        return JsonResponse({
-            "success": True,
-            "redirect_url": reverse("ticket_detail", kwargs={"ticket_id": ticket.id})
-            })
+        return JsonResponse(
+            {
+                "success": True,
+                "redirect_url": reverse(
+                    "ticket_detail", kwargs={"ticket_id": ticket.id}
+                ),
+            }
+        )
 
 
 @login_required
@@ -174,7 +180,10 @@ def ticket_detail(request, ticket_id):
     if (
         request.user.is_student()
         and ticket.status == "in_progress"
-        and (ticket.can_be_managed_by_program_officers or ticket.can_be_managed_by_specialist)
+        and (
+            ticket.can_be_managed_by_program_officers
+            or ticket.can_be_managed_by_specialist
+        )
     ):
         messages.warning(request, "This ticket is waiting for the staff to process.")
 
