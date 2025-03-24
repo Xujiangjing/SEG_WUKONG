@@ -66,11 +66,9 @@ class TicketListView(ListView):
             return Ticket.objects.all()
 
         # Specialists can only see tickets they edited
-        if user.is_specialist():
+        else:
             return Ticket.objects.filter(latest_editor=user)
 
-        # Students and others should not access this view
-        return Ticket.objects.none()
 
     def dispatch(self, request, *args, **kwargs):
         # Prevent students from accessing the general ticket list view
