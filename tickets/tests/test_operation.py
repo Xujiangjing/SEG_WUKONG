@@ -71,7 +71,7 @@ class TicketViewTestCase(TestCase):
         self.assertTrue(self.ticket.need_student_update)
 
         activity = TicketActivity.objects.filter(
-            ticket=self.ticket, action="Returned"
+            ticket=self.ticket, action="returned"
         ).first()
         self.assertIsNotNone(activity)
         self.assertEqual(activity.action_by, self.specialist)

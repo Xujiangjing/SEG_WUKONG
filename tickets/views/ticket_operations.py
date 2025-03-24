@@ -68,7 +68,6 @@ def close_ticket(request, ticket_id):
             report.closed_manually += 1
             report.save()
         except Exception as e:
-            logger.error(f"Error creating or updating DailyTicketClosureReport: {e}")
             messages.error(request, "An error occurred while closing the ticket.")
             return redirect("dashboard")
 
@@ -201,9 +200,6 @@ def redirect_ticket(request, ticket_id):
         ).count()
 
         new_assignee.open_tickets = open_tickets_count
-        print(
-            f"🚀 Specialist {new_assignee.username} now has {new_assignee.open_tickets} open tickets."
-        )
 
         messages.success(
             request, f"Ticket successfully redirected to {new_assignee.username}!"
