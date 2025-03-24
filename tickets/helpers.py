@@ -46,7 +46,6 @@ def send_ticket_confirmation_email(ticket):
 
 # This function sends an email to the student when their ticket has been responded to.
 def send_response_notification_email(
-    
     student_email, ticket_title, response_message, ticket_id
 ):
     """Sends an email to notify the student that their ticket has been responded to."""
@@ -98,6 +97,33 @@ def send_updated_notification_email(
         [student_email],
         fail_silently=False,
         html_message=html_message,  # HTML version
+    )
+
+
+def send_notification_email_to_specialist(
+    specialist_email, ticket_title, ticket_id, student_email, response_message
+):
+    """Sends an email to notify the specialist they are assigned to a ticket."""
+
+    subject = f"You have a new ticket to handle: '{ticket_title}'"
+
+    context = {
+        "specialist_name": specialist_email.split("@")[0],
+        "ticket_title": ticket_title,
+        "response_message": response_message,
+        "ticket_id": ticket_id,
+    }
+
+    html_message = render_to_string("emails/notice_to_specialist.html", context)
+    text_message = strip_tags(html_message)
+
+    send_mail(
+        subject,
+        text_message,
+        settings.EMAIL_HOST_USER,
+        [specialist_email],
+        fail_silently=False,
+        html_message=html_message,
     )
 
 
@@ -177,7 +203,7 @@ def handle_uploaded_file_in_chunks(ticket, file_obj, filename=None):
     Save uploaded file to the ticket.
     Handles both file objects and bytes data.
     """
-    
+
     filename = get_valid_filename(filename or "unnamed_attachment")
     attachment = TicketAttachment(ticket=ticket)
 

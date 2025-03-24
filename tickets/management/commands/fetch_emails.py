@@ -39,6 +39,8 @@ class Command(BaseCommand):
             email_ids = messages[0].split()
 
             for email_id in email_ids:
+                print("📥 开始处理邮件:", email_id)
+
                 try:
 
                     status, msg_data = mail.fetch(email_id, "(RFC822)")
@@ -52,6 +54,9 @@ class Command(BaseCommand):
                         subject, sender_email, body, attachments = (
                             self.parse_email_message(msg)
                         )
+                        print(f"📬 Subject: {subject}")
+                        print(f"👤 Sender: {sender_email}")
+                        print(f"📝 Body:\n{body}")
 
                         if (
                             "mailer-daemon" in sender_email.lower()
@@ -83,14 +88,13 @@ class Command(BaseCommand):
                             continue
 
                         department = self.categorize_ticket(subject, body)
-
                         ticket = Ticket.objects.create(
                             title=subject,
                             description=body,
                             creator=user,
                             sender_email=sender_email,
                             status="in_progress",
-                            assigned_department=department,
+                            assigned_department="general_enquiry",
                         )
 
                         for attachment in attachments:
