@@ -156,7 +156,7 @@
             </div>
         </div>
       {% endif %}
-      {% if request.user.role == "students" %}
+      {% if request.user.role == "students" and ticket.status != "closed"%}
         <div class="d-flex justify-content-center my-4">
             <a href="#" class="btn btn-danger btn-lg" id="close_ticket_btn">Close this ticket</a>
         </div>

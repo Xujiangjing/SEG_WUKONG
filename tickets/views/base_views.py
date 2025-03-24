@@ -68,7 +68,6 @@ class TicketListView(ListView):
         return super().dispatch(request, *args, **kwargs)
 
 
-
 class CreateTicketView(LoginRequiredMixin, CreateView):
     """
     View for students to create new tickets (queries).
@@ -99,7 +98,6 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = "in_progress"
-
 
         ticket.priority = "low"
 
