@@ -121,6 +121,9 @@ def return_ticket(request, ticket_id):
             )
 
             return redirect("ticket_detail", ticket_id=ticket_id)
+        
+    else:
+        form = ReturnTicketForm()
 
     return render(
         request, "tickets/ticket_detail.html", {"form": form, "ticket": ticket}
@@ -146,7 +149,6 @@ def redirect_ticket(request, ticket_id):
         ticket.assigned_department = ai_assigned_department
         ticket.save()
     except Exception as e:
-        print("❌ Error in classify_department:", e)
         ai_assigned_department = ticket.assigned_department or "IT"
         ticket.assigned_department = ai_assigned_department
         ticket.save()
@@ -226,9 +228,6 @@ def merge_ticket(request, ticket_id, potential_ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     potential_ticket = get_object_or_404(Ticket, id=potential_ticket_id)
     merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
-    print(
-        f"🚀 Merged ticket: {ticket.title} merged with potential ticket{potential_ticket.title}"
-    )
     if potential_ticket in merged_ticket.approved_merged_tickets.all():
         merged_ticket.approved_merged_tickets.remove(potential_ticket)
         action = "unmerged"
@@ -472,7 +471,6 @@ def get_specialists(ticket):
     try:
         ai_assigned_department = classify_department(ticket.description)
     except Exception as e:
-        print("❌ Error in classify_department:", e)
         ai_assigned_department = ticket.assigned_department or "IT"
 
     specialists_qs = (
@@ -507,7 +505,7 @@ def get_specialists(ticket):
         dummy_spec = SimpleNamespace(
             id="ai",
             username=f"---------- {ai_assigned_department} (recommend) ----------",
-            department__name=SimpleNamespace(name=ai_assigned_department),
+            department=SimpleNamespace(name=ai_assigned_department),
         )
         recommended_list = [dummy_spec]
 
