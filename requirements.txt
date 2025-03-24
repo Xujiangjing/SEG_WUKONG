@@ -19,3 +19,4 @@ boto3
 django-storages
 moto
 coverage
+selenium
