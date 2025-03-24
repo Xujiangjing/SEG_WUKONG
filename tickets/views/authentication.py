@@ -17,7 +17,11 @@ from tickets.forms import LogInForm, PasswordForm
 
 
 class LoginProhibitedMixin:
-    """Mixin that redirects when a user is logged in."""
+    """
+    A mixin that prevents logged-in users from accessing certain views,
+    such as the login page. Redirects them to a specified URL.
+    """
+
 
     redirect_when_logged_in_url = None
 
@@ -28,6 +32,7 @@ class LoginProhibitedMixin:
         return super().dispatch(*args, **kwargs)
 
     def handle_already_logged_in(self, *args, **kwargs):
+        """Redirect the user to the specified URL if already logged in."""
         url = self.get_redirect_when_logged_in_url()
         return redirect(url)
 
@@ -44,7 +49,10 @@ class LoginProhibitedMixin:
 
 
 class LogInView(LoginProhibitedMixin, View):
-    """Display login screen and handle user login."""
+    """
+    View to handle the login process.
+    Supports GET (show login form) and POST (process login).
+    """
 
     http_method_names = ["get", "post"]
     redirect_when_logged_in_url = settings.REDIRECT_URL_WHEN_LOGGED_IN

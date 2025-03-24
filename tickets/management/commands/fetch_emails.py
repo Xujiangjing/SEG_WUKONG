@@ -6,13 +6,21 @@ import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
 from tickets.helpers import handle_uploaded_file_in_chunks
-from tickets.models import Ticket, Department, User, AITicketProcessing
+from tickets.models import (
+    Ticket,
+    Department,
+    User,
+    AITicketProcessing,
+    TicketAttachment,
+)
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
 import os
 from django.db.models import Count
 from tickets.ai_service import ai_process_ticket
+from django.core.files.base import ContentFile
+from django.utils.text import get_valid_filename
 
 
 class Command(BaseCommand):

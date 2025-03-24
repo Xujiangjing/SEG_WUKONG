@@ -25,6 +25,10 @@ def login_prohibited(view_function):
 
 # Student will receive an email when they submit a ticket in tickets system
 def send_ticket_confirmation_email(ticket):
+    """
+    Send a confirmation email to the student after submitting a ticket.
+    Uses HTML + plain text fallback.
+    """
     ticket_id = ticket.id
     subject = f"Ticket #{ticket_id} Confirmation"
     recipient_email = ticket.creator.email
@@ -42,6 +46,7 @@ def send_ticket_confirmation_email(ticket):
 
 # This function sends an email to the student when their ticket has been responded to.
 def send_response_notification_email(
+    
     student_email, ticket_title, response_message, ticket_id
 ):
     """Sends an email to notify the student that their ticket has been responded to."""
@@ -168,7 +173,11 @@ def get_filtered_tickets(
 
 
 def handle_uploaded_file_in_chunks(ticket, file_obj, filename=None):
-
+    """
+    Save uploaded file to the ticket.
+    Handles both file objects and bytes data.
+    """
+    
     filename = get_valid_filename(filename or "unnamed_attachment")
     attachment = TicketAttachment(ticket=ticket)
 

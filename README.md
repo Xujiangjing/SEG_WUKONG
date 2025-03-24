@@ -11,4 +11,6 @@
   - Xuyang Xiao
   - Jiangjing Xu
   - Hongyuan Zhao
-- Reference List: We have used ChatGPT to assist us with writing some of our automated tests. They are under "tickets/tests".
+- Reference List:
+  - We have used ChatGPT to assist us with writing some of our automated tests. They are under "tickets/tests".
+  - We have used the some of the base code from last Small Group Project for login. They are under "authentication.py".
