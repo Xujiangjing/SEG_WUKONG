@@ -137,6 +137,18 @@ class AITicketProcessingTests(TestCase):
         self.assertEqual(result, "Success")
         mock_invoke_model.assert_called_once()
 
+    @patch("tickets.ai_service.query_bedrock")
+    def test_find_potential_tickets_to_merge_no_similar_tickets(self, mock_query_bedrock):
+        mock_query_bedrock.return_value = "No"
+
+        result = find_potential_tickets_to_merge(self.ticket)
+
+        self.assertEqual(result, [])
+
+        merged_ticket = MergedTicket.objects.filter(primary_ticket=self.ticket).first()
+        self.assertIsNone(merged_ticket)
+
+
 
 class TicketMergingTests(TestCase):
     fixtures = [
