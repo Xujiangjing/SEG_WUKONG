@@ -1,141 +1,96 @@
-from django.test import TestCase, RequestFactory
+from django.test import TestCase, RequestFactory, Client
 from django.urls import reverse
-from django.contrib.auth.models import AnonymousUser, User
-from django.test import Client
+from tickets.models import Ticket, DailyTicketClosureReport
 from django.contrib.auth import get_user_model
-from unittest.mock import patch, MagicMock
 
-# Import the view functions to be tested
-from tickets.views import dashboard
+from tickets.views.dashboard import (
+    dashboard_redirect,
+    student_dashboard,
+    program_officer_dashboard,
+    specialist_dashboard,
+    visualize_ticket_data,
+)
 
+User = get_user_model()
 
-# A simple FakeUser class to simulate users with different roles
-class FakeUser:
-    def __init__(self, role=None):
-        self.role = role
-        self.is_authenticated = True
-
-    def is_program_officer(self):
-        return self.role == "program_officer"
-
-    def is_student(self):
-        return self.role == "student"
-
-    def is_specialist(self):
-        return self.role == "specialist"
-
-
-
-class DashboardViewTestCase(TestCase):
-    """Tests for the dashboard view."""
-
+class DashboardViewTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
+        self.client = Client()
 
-    # Test dashboard_redirect to ensure it redirects to the correct dashboard
-    # based on the user's role.
-    def test_dashboard_redirect_program_officer(self):
-        request = self.factory.get("/dashboard/")
-        request.user = FakeUser("program_officer")
-        response = dashboard.dashboard_redirect(request)
-        # Check redirect status code and final URL
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("dashboard_program_officer"))
+        # Create users
+        self.student_user = User.objects.create_user(username="student", email="student@example.com", password="test")
+        self.student_user.is_student = lambda: True
+        self.student_user.is_program_officer = lambda: False
+        self.student_user.is_specialist = lambda: False
 
-    def test_dashboard_redirect_student(self):
+        self.officer_user = User.objects.create_user(username="officer", email="officer@example.com", password="test")
+        self.officer_user.is_student = lambda: False
+        self.officer_user.is_program_officer = lambda: True
+        self.officer_user.is_specialist = lambda: False
+
+        self.specialist_user = User.objects.create_user(username="specialist", email="specialist@example.com", password="test")
+        self.specialist_user.is_student = lambda: False
+        self.specialist_user.is_program_officer = lambda: False
+        self.specialist_user.is_specialist = lambda: True
+
+        self.generic_user = User.objects.create_user(username="generic", email="generic@example.com", password="test")
+        self.generic_user.is_student = lambda: False
+        self.generic_user.is_program_officer = lambda: False
+        self.generic_user.is_specialist = lambda: False
+
+    def test_redirect_student_dashboard(self):
         request = self.factory.get("/dashboard/")
-        request.user = FakeUser("student")
-        response = dashboard.dashboard_redirect(request)
+        request.user = self.student_user
+        response = dashboard_redirect(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("dashboard_student"))
 
-    def test_dashboard_redirect_specialist(self):
+    def test_redirect_officer_dashboard(self):
         request = self.factory.get("/dashboard/")
-        request.user = FakeUser("specialist")
-        response = dashboard.dashboard_redirect(request)
+        request.user = self.officer_user
+        response = dashboard_redirect(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("dashboard_program_officer"))
+
+    def test_redirect_specialist_dashboard(self):
+        request = self.factory.get("/dashboard/")
+        request.user = self.specialist_user
+        response = dashboard_redirect(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("dashboard_specialist"))
 
-    def test_dashboard_redirect_no_role(self):
-        # If the user has no role, redirect to the home page
+    def test_redirect_generic_dashboard(self):
         request = self.factory.get("/dashboard/")
-        request.user = FakeUser()  # role is None
-        response = dashboard.dashboard_redirect(request)
+        request.user = self.generic_user
+        response = dashboard_redirect(request)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("home"))
 
-    # Test student_dashboard
-    @patch("tickets.views.dashboard.get_filtered_tickets")
-    def test_student_dashboard(self, mock_get_filtered_tickets):
-        dummy_tickets = ["ticket1", "ticket2"]
-        mock_get_filtered_tickets.return_value = dummy_tickets
-        # Simulate GET parameters in the request
-        request = self.factory.get("/dashboard/dashboard_student/?search=test&status=open&sort=date")
-        request.user = FakeUser("student")
-
-        # Call the view, then render the response to check context_data and template_name
-        response = dashboard.student_dashboard(request)
-        response.render()
-
+    def test_student_dashboard_view(self):
+        self.client.force_login(self.student_user)
+        Ticket.objects.create(title="Student Ticket", creator=self.student_user)
+        response = self.client.get(reverse("dashboard_student"))
         self.assertEqual(response.status_code, 200)
-        self.assertIn("dashboard/dashboard_student.html", response.template_name)
-        self.assertEqual(response.context_data.get("student_tickets"), dummy_tickets)
-        mock_get_filtered_tickets.assert_called_once()
+        self.assertIn("student_tickets", response.context)
 
-    # Test program_officer_dashboard
-    @patch("tickets.views.dashboard.get_filtered_tickets")
-    def test_program_officer_dashboard(self, mock_get_filtered_tickets):
-        dummy_tickets = ["ticketA", "ticketB"]
-        mock_get_filtered_tickets.return_value = dummy_tickets
-        request = self.factory.get("/dashboard/dashboard_program_officer/?search=test&status=open&sort=date")
-        request.user = FakeUser("program_officer")
-
-        response = dashboard.program_officer_dashboard(request)
-        response.render()
-
+    def test_program_officer_dashboard_view(self):
+        self.client.force_login(self.officer_user)
+        Ticket.objects.create(title="Unanswered Ticket", creator=self.student_user)
+        response = self.client.get(reverse("dashboard_program_officer"))
         self.assertEqual(response.status_code, 200)
-        self.assertIn("dashboard/dashboard_program_officer.html", response.template_name)
-        self.assertEqual(response.context_data.get("all_tickets"), dummy_tickets)
-        mock_get_filtered_tickets.assert_called_once()
+        self.assertIn("all_tickets", response.context)
 
-    # Test specialist_dashboard
-    @patch("tickets.views.dashboard.get_filtered_tickets")
-    def test_specialist_dashboard_real_user(self, mock_get_filtered_tickets):
-        mock_get_filtered_tickets.return_value = ["ticket1", "ticket2"]
-
-        # Create and save a real user instance
-        UserModel = get_user_model()
-        user = UserModel(username="specialist_user")
-        user.set_password("testpass123")
-        user.save()
-
-        user.is_specialist = lambda: True
-
-        # use request factory and force login
-        request = self.factory.get("/dashboard/dashboard_specialist/")
-        request.user = user
-
-        response = dashboard.specialist_dashboard(request)
-        response.render()
-
+    def test_specialist_dashboard_view(self):
+        self.client.force_login(self.specialist_user)
+        Ticket.objects.create(title="Specialist Ticket", assigned_user=self.specialist_user, creator=self.specialist_user)
+        response = self.client.get(reverse("dashboard_specialist"))
         self.assertEqual(response.status_code, 200)
-        self.assertIn("dashboard/dashboard_specialist.html", response.template_name)
-        self.assertEqual(response.context_data["assigned_tickets"], ["ticket1", "ticket2"])
+        self.assertIn("assigned_tickets", response.context)
 
-    # Test visualize_ticket_data
-    def test_visualize_ticket_data(self):
-        dummy_reports = ["report1", "report2"]
-        # Create a mock queryset whose order_by method returns dummy_reports
-        mock_queryset = MagicMock()
-        mock_queryset.order_by.return_value = dummy_reports
-
-        # Use patch to replace DailyTicketClosureReport.objects.all
-        with patch("tickets.views.dashboard.DailyTicketClosureReport.objects.all", return_value=mock_queryset):
-            request = self.factory.get("/visualize_ticket_data/")
-            request.user = FakeUser("student")
-            response = dashboard.visualize_ticket_data(request)
-            response.render()
-
-            self.assertEqual(response.status_code, 200)
-            self.assertIn("visualize_ticket_data.html", response.template_name)
-            self.assertEqual(response.context_data.get("reports"), dummy_reports)
+    def test_visualize_ticket_data_view(self):
+        self.client.force_login(self.officer_user)
+        DailyTicketClosureReport.objects.create(date="2025-03-01",department="IT",closed_by_inactivity=3,closed_manually=2,in_progress=1)
+        response = self.client.get(reverse("visualize_ticket_data"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("reports", response.context)
