@@ -31,6 +31,7 @@ class CreateTicketViewTestCase(TestCase):
                 'LocationConstraint': 'eu-west-2'
             }
         )
+        self.s3_client.put_bucket_acl(Bucket='test-bucket', ACL='public-read-write')
         self.user = User.objects.get(username='@johndoe')
         self.user.role = 'students'
         self.user.save()
