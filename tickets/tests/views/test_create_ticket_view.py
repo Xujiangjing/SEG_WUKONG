@@ -24,23 +24,22 @@ class CreateTicketViewTestCase(TestCase):
     ]
 
     def setUp(self):
-        self.s3_client = boto3.client("s3", region_name="eu-west-2")
+        self.s3_client = boto3.client('s3', region_name='eu-west-2')
         self.s3_client.create_bucket(
             Bucket='test-bucket',
-            CreateBucketConfiguration={
-                'LocationConstraint': 'eu-west-2'
-            }
+            CreateBucketConfiguration={'LocationConstraint': 'eu-west-2'}
         )
         self.s3_client.put_bucket_acl(Bucket='test-bucket', ACL='public-read-write')
         self.user = User.objects.get(username='@johndoe')
         self.user.role = 'students'
         self.user.save()
-        self.url = reverse("create_ticket")
+        self.url = reverse('create_ticket')
         self.form_input = {
-            "title": "My Test Ticket",
-            "description": "Hello, I have an issue with my coursework.",
-            "priority": "medium",
+            'title': 'My Test Ticket',
+            'description': 'Hello, I have an issue with my coursework.',
+            'priority': 'medium'
         }
+
 
     def test_create_ticket_url(self):
         self.assertEqual(self.url, "/tickets/create/")
