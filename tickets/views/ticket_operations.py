@@ -67,7 +67,8 @@ def close_ticket(request, ticket_id):
 
 
 @login_required
-def return_ticket(request, ticket_id):
+def return_ticket(request, pk):
+    ticket_id = pk
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if (
         not (request.user.is_specialist() or request.user.is_program_officer())
@@ -109,8 +110,8 @@ def return_ticket(request, ticket_id):
             )
 
             return redirect("ticket_detail", ticket_id=ticket_id)
-    else:
-        form = ReturnTicketForm()
+    # else:
+    #     form = ReturnTicketForm()
 
     return render(
         request, "tickets/ticket_detail.html", {"form": form, "ticket": ticket}

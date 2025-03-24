@@ -1,6 +1,7 @@
-from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib import messages
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.test import RequestFactory
+
 
 def test_respond_ticket():
     request = RequestFactory().post('/ticket/respond/')  # Simulate a request
