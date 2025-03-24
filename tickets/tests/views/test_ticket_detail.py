@@ -49,6 +49,8 @@ class TicketDetailViewTestCase(TestCase):
 
     def test_ticket_detail_view_as_assigned_user(self):
         self.client.login(username="@peterpickles", password="Password123")
+        self.ticket.latest_editor = self.specialist
+        self.ticket.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "tickets/ticket_detail.html")
@@ -62,6 +64,9 @@ class TicketDetailViewTestCase(TestCase):
             assigned_user=self.program_officer,
             assigned_department=self.department.name,
         )
+        ticket.latest_editor = self.program_officer
+        ticket.save()
+
         self.client.login(username="@janedoe", password="Password123")
         url = reverse("ticket_detail", kwargs={"ticket_id": ticket.id})
         response = self.client.get(url)
@@ -114,6 +119,8 @@ class TicketDetailViewTestCase(TestCase):
             assigned_user=self.program_officer,
             assigned_department="general_enquiry",
         )
+        ticket.latest_editor = self.program_officer
+        ticket.save()
         url = reverse("ticket_detail", kwargs={"ticket_id": ticket.id})
         response = self.client.get(url)
 
