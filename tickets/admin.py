@@ -6,11 +6,14 @@ from .models import User, Department, Ticket
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     """Admin configuration for the User model."""
+    # Fields shown in the list view
     list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'department', 'is_staff', 'is_active', 'date_joined', 'last_login')
-    list_filter = ('role', 'department', 'is_staff', 'is_superuser', 'is_active', 'date_joined')
-    search_fields = ('username', 'email', 'first_name', 'last_name')
-    ordering = ['role', 'username']
-    readonly_fields = ('date_joined', 'last_login')
+    list_filter = ('role', 'department', 'is_staff', 'is_superuser', 'is_active', 'date_joined')# Filters shown on the right side of the list page
+    search_fields = ('username', 'email', 'first_name', 'last_name')# Fields that can be searched
+    ordering = ['role', 'username'] # Default ordering of list view
+    readonly_fields = ('date_joined', 'last_login')# Fields that are read-only
+
+    # Field grouping for detail/edit view
     fieldsets = (
         ('Personal Info', {
             'fields': ('username', 'email', 'first_name', 'last_name', 'password')
@@ -25,6 +28,8 @@ class UserAdmin(admin.ModelAdmin):
             'fields': ('last_login', 'date_joined')
         }),
     )
+
+    # Fields shown when creating a new user in admin
     add_fieldsets = (
         (None, {
             'classes': ('wide',),

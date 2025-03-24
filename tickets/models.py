@@ -98,6 +98,7 @@ class User(AbstractUser):
 
 
 class Ticket(models.Model):
+    """Model representing a submitted student query/ticket."""
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True
     )
@@ -224,7 +225,7 @@ class Ticket(models.Model):
 
 
 def user_directory_path(instance, filename):
-
+    """Create a directory path for uploaded attachments based on email and date."""
     email = instance.ticket.creator.email
 
     safe_email = re.sub(r"[^0-9a-zA-Z@\._-]+", "_", email)
