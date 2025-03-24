@@ -82,13 +82,22 @@ def ai_process_ticket(ticket):
     ai_answer = generate_ai_answer(ticket.description)
     ai_priority = predict_priority(ticket.description)
 
-    AITicketProcessing.objects.create(
+    ai_ticket_processing, created = AITicketProcessing.objects.get_or_create(
         ticket=ticket,
-        ai_generated_response=ai_answer,
-        ai_assigned_department=ai_department,
-        ai_assigned_priority=ai_priority,
+        defaults={
+            'ai_generated_response': ai_answer,
+            'ai_assigned_department': ai_department,
+            'ai_assigned_priority': ai_priority,
+        }
     )
-    ticket.priority = AITicketProcessing.objects.get(ticket=ticket).ai_assigned_priority
+
+    if not created:
+        ai_ticket_processing.ai_generated_response = ai_answer
+        ai_ticket_processing.ai_assigned_department = ai_department
+        ai_ticket_processing.ai_assigned_priority = ai_priority
+        # ai_ticket_processing.save()
+
+    ticket.priority = ai_ticket_processing.ai_assigned_priority
 
 
 def find_potential_tickets_to_merge(ticket):
