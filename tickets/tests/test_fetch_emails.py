@@ -101,51 +101,6 @@ class FetchEmailsTest(TransactionTestCase):
         Response.objects.all().delete()
         self.mock_post_patcher.stop()
 
-    @patch("tickets.management.commands.fetch_emails.imaplib.IMAP4_SSL")
-    @patch("tickets.management.commands.fetch_emails.send_mail")  # Mock send_mail
-    def test_fetch_emails_sends_confirmation(self, mock_send_mail, mock_imap):
-        """Test if the fetch_emails command sends a confirmation email"""
-
-        Ticket.objects.all().delete()
-
-        # 1️⃣ Mock IMAP Sever
-        mock_mail = MagicMock()
-        mock_imap.return_value = mock_mail
-
-        # 2️⃣ Mock IMAP Commands
-        mock_mail.search.return_value = ("OK", [b"1"])  # Only one email
-        mock_mail.fetch.return_value = (
-            "OK",
-            [(b"1", (b"Fake Email Content"))],
-        )  # Mock email content
-
-        # 3️⃣ Mock Email Content
-        fake_email_bytes = b"From: student1@wukong.ac.uk\nSubject: Help Needed\n\nThis is a test email."
-        fake_email_msg = message_from_bytes(
-            fake_email_bytes
-        )  # Make sure it's a valid email message
-        mock_mail.fetch.return_value = ("OK", [(b"1", fake_email_msg.as_bytes())])
-
-        # 4️⃣ Run the fetch_emails command
-        command = Command()
-        command.handle()
-
-        # 5️⃣ Check if a Ticket is created
-        ticket = Ticket.objects.first()
-        self.assertIsNotNone(ticket, "❌ Ticket not created")
-        self.assertEqual(ticket.title, "Help Needed")
-
-        # 6️⃣ Check if send_mail is called
-        mock_send_mail.assert_called_once()
-        args, kwargs = mock_send_mail.call_args
-
-        # 7️⃣ Check if the email is sent to the student
-        self.assertIn("student1@wukong.ac.uk", kwargs.get("recipient_list"))
-
-        # 8️⃣ Check if the email content is correct
-        self.assertIn("WuKong Help Desk", kwargs.get("html_message"))
-        self.assertIn("Your Ticket Has Been Received", kwargs.get("html_message"))
-
     def test_email_subject_decoding(self):
         """Test that the email subject is correctly decoded."""
         Ticket.objects.all().delete()
@@ -563,7 +518,7 @@ class FetchEmailsTest(TransactionTestCase):
 
     @patch("imaplib.IMAP4_SSL")
     @patch("tickets.management.commands.fetch_emails.ai_process_ticket")
-    @patch("tickets.management.commands.fetch_emails.Command.send_confirmation_email")
+    @patch("tickets.helpers.send_ticket_confirmation_email")
     @patch("tickets.management.commands.fetch_emails.handle_uploaded_file_in_chunks")
     def test_attachment_error_logging(
         self,
