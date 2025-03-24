@@ -1,34 +1,23 @@
+import logging
 from types import SimpleNamespace
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q, Value
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.formats import date_format
 from django.views.decorators.http import require_POST
-from django.urls import reverse
+from tickets.ai_service import (ai_process_ticket, classify_department,
+                                find_potential_tickets_to_merge)
 from tickets.forms import ReturnTicketForm, SupplementTicketForm, TicketForm
-from tickets.ai_service import (
-    ai_process_ticket,
-    find_potential_tickets_to_merge,
-    classify_department,
-)
-from tickets.helpers import (
-    send_ticket_confirmation_email,
-    send_updated_notification_email,
-)
-from tickets.models import (
-    TicketAttachment,
-    User,
-    Ticket,
-    TicketActivity,
-    Department,
-    MergedTicket,
-    DailyTicketClosureReport,
-)
-from django.db.models.functions import Coalesce
-import logging
+from tickets.helpers import (send_ticket_confirmation_email,
+                             send_updated_notification_email)
+from tickets.models import (DailyTicketClosureReport, Department, MergedTicket,
+                            Ticket, TicketActivity, TicketAttachment, User)
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +67,8 @@ def close_ticket(request, ticket_id):
 
 
 @login_required
-def return_ticket(request, ticket_id):
+def return_ticket(request, pk):
+    ticket_id = pk
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if (
         not (request.user.is_specialist() or request.user.is_program_officer())
@@ -120,8 +110,8 @@ def return_ticket(request, ticket_id):
             )
 
             return redirect("ticket_detail", ticket_id=ticket_id)
-    else:
-        form = ReturnTicketForm()
+    # else:
+    #     form = ReturnTicketForm()
 
     return render(
         request, "tickets/ticket_detail.html", {"form": form, "ticket": ticket}
@@ -138,6 +128,7 @@ def redirect_ticket(request, ticket_id):
 
     if request.method == "GET":
         specialists = get_specialists(ticket)
+        "需修改: 此处单测未覆盖,需要改动,存在序列化问题"
         return JsonResponse({"specialists": specialists})
 
     new_assignee_id = request.POST.get("new_assignee_id")
@@ -145,13 +136,15 @@ def redirect_ticket(request, ticket_id):
     try:
         ai_assigned_department = classify_department(ticket.description)
         ticket.assigned_department = ai_assigned_department
-        ticket.department = ticket.assigned_department.name
+        "需修改: 此处ticket和department的字段错误,需要改动,临时注释掉了"
+        # ticket.department = ticket.assigned_department.name
         ticket.save()
     except Exception as e:
         print("❌ Error in classify_department:", e)
         ai_assigned_department = ticket.assigned_department or "IT"
         ticket.assigned_department = ai_assigned_department
-        ticket.department = ticket.assigned_department
+        "需修改: 此处ticket的字段错误,需要改动,临时注释掉了"
+        # ticket.department = ticket.assigned_department
         ticket.save()
 
     if new_assignee_id == "ai":
@@ -225,19 +218,23 @@ def redirect_ticket(request, ticket_id):
     return JsonResponse({"error": "No specialist selected"}, status=400)
 
 
+#### 需修改: ????测试服务覆盖，没有相应的url
 @login_required
 @require_POST
 def merge_ticket(request, ticket_id, potential_ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     potential_ticket = get_object_or_404(Ticket, id=potential_ticket_id)
     merged_ticket, created = MergedTicket.objects.get_or_create(primary_ticket=ticket)
-
+    print(f"🚀 Merged ticket: {ticket.title} merged with potential ticket{potential_ticket.title}")
     if potential_ticket in merged_ticket.approved_merged_tickets.all():
         merged_ticket.approved_merged_tickets.remove(potential_ticket)
         action = "unmerged"
+        messages.success(request, 'Tickets unmerged successfully.')
     else:
         merged_ticket.approved_merged_tickets.add(potential_ticket)
+        numtickets = merged_ticket.approved_merged_tickets.count()
         action = "merged"
+        messages.success(request, f'Success! There are currently {numtickets} tickets merged with the current ticket, by submitting a response to the current ticket your answer will be sent to all the merged tickets you selected. If you want to check or edit which tickets are merged, click the "Merge”button again.')
 
     merged_ticket.save()
     potential_tickets = find_potential_tickets_to_merge(ticket)

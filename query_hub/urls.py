@@ -15,37 +15,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from django.conf.urls.static import static
-from django.conf import settings
 from tickets.views import *
-from tickets.views.user_management import get_user_role
-from tickets.views import (
-    authentication,
-    user_management,
-    ticket_operations,
-    dashboard,
-    base_views,
-)
-from tickets.views.dashboard import (
-    dashboard_redirect,
-    program_officer_dashboard,
-    student_dashboard,
-    specialist_dashboard,
-    visualize_ticket_data,
-)
-from tickets.views.ticket_operations import (
-    close_ticket,
-    return_ticket,
-    merge_ticket,
-    respond_ticket,
-    update_ticket,
-    manage_ticket_page,
-    redirect_ticket,
-)
+from tickets.views import (authentication, base_views, dashboard,
+                           ticket_operations, user_management)
 from tickets.views.base_views import CreateTicketView
-
+from tickets.views.dashboard import (dashboard_redirect,
+                                     program_officer_dashboard,
+                                     specialist_dashboard, student_dashboard,
+                                     visualize_ticket_data)
+from tickets.views.ticket_operations import (close_ticket, manage_ticket_page,
+                                             merge_ticket, redirect_ticket,
+                                             respond_ticket, return_ticket,
+                                             update_ticket)
+from tickets.views.user_management import get_user_role
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -111,6 +97,9 @@ urlpatterns = [
         ticket_operations.update_ticket,
         name="update_ticket",
     ),
+    path('tickets/<uuid:ticket_id>/merge/<uuid:potential_ticket_id>/', 
+         ticket_operations.merge_ticket, 
+         name='merge_ticket'),
 ]
 urlpatterns += static(
     settings.STATIC_URL, document_root=settings.STATIC_ROOT
