@@ -1,11 +1,12 @@
+from email.mime.base import MIMEBase
 import os
 import io
 import django
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import ANY, patch, MagicMock
 from tickets.management.commands.fetch_emails import Command
 from tickets.models import Ticket, User, Department, Response
-from email import message_from_bytes
+from email import encoders, message_from_bytes
 from django.utils.timezone import now, timedelta
 from django.core import mail
 from django.contrib.auth import get_user_model
@@ -20,6 +21,8 @@ import requests
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
+from django.core.files.base import ContentFile
+from email.message import EmailMessage
 
 # Setup Django environment
 
@@ -529,9 +532,10 @@ class FetchEmailsTest(TransactionTestCase):
         part_valid.add_header("Content-Disposition", "inline")
         msg.attach(part_valid)
 
-        parsed_subject, parsed_sender, parsed_body = self.command.parse_email_message(
-            msg
+        parsed_subject, parsed_sender, parsed_body, _ = (
+            self.command.parse_email_message(msg)
         )
+
         self.assertEqual(parsed_body, valid_text)
         self.assertEqual(parsed_sender, "test@wukong.ac.uk")
 
@@ -553,55 +557,465 @@ class FetchEmailsTest(TransactionTestCase):
         part_attachment.add_header("Content-Disposition", "attachment")
         msg.attach(part_attachment)
 
-        parsed_subject, parsed_sender, parsed_body = self.command.parse_email_message(
-            msg
+        parsed_subject, parsed_sender, parsed_body, _ = (
+            self.command.parse_email_message(msg)
         )
+
         self.assertEqual(parsed_body, "")
         self.assertEqual(parsed_sender, "test@wukong.ac.uk")
 
-    def test_multipart_part_payload_none(self):
+    @patch("imaplib.IMAP4_SSL")
+    @patch("tickets.management.commands.fetch_emails.Command.parse_email_message")
+    def test_response_part_not_tuple(self, mock_parse, mock_imap):
+        instance = Command()
+
+        mock_mail = MagicMock()
+        mock_imap.return_value = mock_mail
+        mock_mail.search.return_value = ("OK", [b"1"])
+        mock_mail.fetch.return_value = ("OK", [b"Some non-tuple response"])
+
+        instance.handle()
+
+        # parse_email_message should not be called because response_part is not a tuple
+        mock_parse.assert_not_called()
+
+    @patch("imaplib.IMAP4_SSL")
+    @patch("tickets.management.commands.fetch_emails.ai_process_ticket")
+    @patch("tickets.management.commands.fetch_emails.Command.send_confirmation_email")
+    @patch("tickets.management.commands.fetch_emails.handle_uploaded_file_in_chunks")
+    def test_attachment_error_logging(
+        self,
+        mock_handle_upload,
+        mock_send_confirmation_email,
+        mock_ai_process_ticket,
+        mock_imap,
+    ):
         """
-        Build a multipart email with a text/plain part where the payload is None,
-        which should result in an empty
+        Test that if handle_uploaded_file_in_chunks throws an exception,
+        the error is logged via stderr.
         """
-        subject = "Test subject"
-        from_addr = "Test <test@wukong.ac.uk>"
+        attachment_content = ContentFile(b"Test file content")
+        mock_handle_upload.side_effect = Exception("Mocked attachment error")
 
-        msg = MIMEMultipart("mixed")
-        msg["Subject"] = subject
-        msg["From"] = from_addr
+        msg = MIMEText("This is the email body.")
+        msg["Subject"] = "Test with attachment"
+        msg["From"] = "student@wukong.ac.uk"
 
-        part_none = MIMEText("dummy", "plain", "utf-8")
-        part_none.add_header("Content-Disposition", "inline")
-        part_none.get_payload = lambda decode=True: None
+        command = Command()
 
-        msg.attach(part_none)
+        with patch.object(command, "stderr") as mock_stderr:
+            mock_stderr.write = MagicMock()
 
-        parsed_subject, parsed_sender, parsed_body = self.command.parse_email_message(
-            msg
-        )
+            with patch.object(command, "parse_email_message") as mock_parser:
+                mock_parser.return_value = (
+                    "Test with attachment",
+                    "student@wukong.ac.uk",
+                    "This is the email body.",
+                    [
+                        {
+                            "filename": "test.txt",
+                            "content_type": "text/plain",
+                            "data": attachment_content,
+                        }
+                    ],
+                )
+
+                fake_mail = MagicMock()
+                fake_mail.search.return_value = ("OK", [b"1"])
+                fake_mail.fetch.return_value = ("OK", [(None, msg.as_bytes())])
+                fake_mail.store.return_value = ("OK", [])
+                fake_mail.logout.return_value = ("OK",)
+                mock_imap.return_value = fake_mail
+
+                command.handle()
+
+                mock_stderr.write.assert_called_once()
+                logged_message = mock_stderr.write.call_args[0][0]
+                assert (
+                    "❌ Error saving attachment: Mocked attachment error"
+                    in logged_message
+                )
+
+    @patch("imaplib.IMAP4_SSL")
+    def test_error_processing_individual_email(self, mock_imap):
+        """
+        Test that if an exception occurs while processing an email,
+        the error is logged and the email is marked as read.
+        """
+        msg = MIMEText("This will cause an error.")
+        msg["Subject"] = "Error Email"
+        msg["From"] = "student@wukong.ac.uk"
+        email_bytes = msg.as_bytes()
+
+        fake_mail = MagicMock()
+        fake_mail.search.return_value = ("OK", [b"1"])
+        fake_mail.fetch.side_effect = Exception("Simulated fetch error")
+        fake_mail.store.return_value = ("OK", [])
+        mock_imap.return_value = fake_mail
+
+        command = Command()
+
+        with patch.object(command, "stderr") as mock_stderr:
+            mock_stderr.write = MagicMock()
+
+            command.handle()
+
+            mock_stderr.write.assert_called_once()
+            error_msg = mock_stderr.write.call_args[0][0]
+            self.assertIn("❌ Error processing email: Simulated fetch error", error_msg)
+
+            fake_mail.store.assert_called_with(b"1", "+FLAGS", "\\Seen")
+
+    def test_subject_decode_fallback_to_str(self):
+        """Test parse_email_message handles non-str, non-bytes subject parts."""
+
+        class DummyPart:
+            def __str__(self):
+                return "DummySubject"
+
+        dummy_header = [(DummyPart(), None)]
+
+        msg = EmailMessage()
+        msg["Subject"] = "ignored"
+
+        command = Command()
+
+        with patch(
+            "tickets.management.commands.fetch_emails.decode_header",
+            return_value=dummy_header,
+        ):
+            subject, sender, body, attachments = command.parse_email_message(msg)
+
+            self.assertEqual(
+                subject, "DummySubject", "❌ subject did not fallback to str(part)"
+            )
+
+    def test_subject_decode_exception_printed(self):
+        """Test that an exception during subject decoding prints an error."""
+
+        class BadPart:
+            def __str__(self):
+                raise ValueError("bad part")
+
+        msg = EmailMessage()
+        msg["Subject"] = "ignored"
+
+        fake_header = [(BadPart(), None)]
+
+        command = Command()
+
+        with patch(
+            "tickets.management.commands.fetch_emails.decode_header",
+            return_value=fake_header,
+        ), patch("builtins.print") as mock_print:
+            subject, sender, body, attachments = command.parse_email_message(msg)
+            mock_print.assert_called_once()
+            printed_args = mock_print.call_args[0]
+            self.assertIn("❌ Error decoding subject part:", printed_args[0])
+            self.assertIsInstance(printed_args[1], ValueError)
+            self.assertEqual(str(printed_args[1]), "bad part")
+
+    def test_multipart_body_is_str(self):
+        """Test multipart email where part_payload is a string (not bytes)."""
+        msg = MIMEMultipart()
+        msg["Subject"] = "Test"
+        msg["From"] = "Test <test@wukong.ac.uk>"
+
+        part = MIMEText("This is a plain text part.", "plain", "utf-8")
+        part.add_header("Content-Disposition", "inline")
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(body, "This is a plain text part.")
+
+    def test_multipart_body_fallback_to_str(self):
+        """Test when part_payload is not str or bytes, fallback to str()."""
+
+        class CustomObject:
+            def __str__(self):
+                return "CustomStrObject"
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "Test"
+        msg["From"] = "Test <test@wukong.ac.uk>"
+
+        part = MIMEText("dummy", "plain", "utf-8")
+        part.add_header("Content-Disposition", "inline")
+        part.get_payload = lambda decode=True: CustomObject()
+
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+        self.assertEqual(body, "CustomStrObject")
+
+    def test_attachment_filename_decoding(self):
+        """Test email with an attachment having a valid filename."""
+        msg = MIMEMultipart()
+        msg["Subject"] = "With Attachment"
+        msg["From"] = "Test <test@wukong.ac.uk>"
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(b"Fake file content")
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", 'attachment; filename="test_file.txt"')
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(len(attachments), 1)
+        self.assertEqual(attachments[0]["filename"], "test_file.txt")
+
+    def test_non_multipart_payload_str(self):
+        """Test a non-multipart email with string payload."""
+
+        msg = EmailMessage()
+        msg["Subject"] = "Simple"
+        msg["From"] = "sender@wukong.ac.uk"
+        msg.set_payload("This is a plain text body.")
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+        self.assertEqual(body, "This is a plain text body.")
+
+    @patch("builtins.print")
+    def test_payload_decode_exception(self, mock_print):
+        """Simulate decode exception during payload decoding in multipart part."""
+
+        class FakeBadBytes(bytes):
+            def decode(self, encoding="utf-8", errors="ignore"):
+                raise UnicodeDecodeError("utf-8", b"", 0, 1, "simulated decode error")
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "Test Subject"
+        msg["From"] = "Test <test@wukong.ac.uk>"
+
+        part = MIMEText("dummy", "plain", "utf-8")
+        part.add_header("Content-Disposition", "inline")
+        part.get_payload = lambda decode=True: FakeBadBytes(b"broken")
+
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
         self.assertEqual(
-            parsed_body, "", "When payload is None, body should be an empty string"
+            body, "[Decode Error]", "❌ Expected '[Decode Error]' on decode failure"
         )
+        mock_print.assert_not_called()
 
-    def test_non_multipart_payload_none(self):
-        """
-        Test that when a non-multipart email has a payload of None,
-        the body is an empty string.
-        """
-        subject = "Test subject"
-        from_addr = "Test <test@wukong.ac.uk>"
+    @patch("builtins.print")
+    def test_parse_email_message_top_level_exception(self, mock_print):
+        """Test that a top-level exception in parse_email_message is caught and logged."""
 
-        msg = MIMEText("dummy text", "plain", "utf-8")
-        msg["Subject"] = subject
-        msg["From"] = from_addr
+        msg = EmailMessage()
+        msg["Subject"] = "Trigger top level error"
+        msg["From"] = "sender@wukong.ac.uk"
 
-        # Mock the get_payload method to return None
-        msg.get_payload = lambda decode=True: None
+        command = Command()
 
-        parsed_subject, parsed_sender, parsed_body = self.command.parse_email_message(
-            msg
+        with patch(
+            "tickets.management.commands.fetch_emails.decode_header",
+            side_effect=Exception("Boom"),
+        ):
+            subject, sender, body, attachments = command.parse_email_message(msg)
+
+            self.assertEqual(subject, "")
+            self.assertEqual(sender, "")
+            self.assertEqual(body, "")
+            self.assertEqual(attachments, [])
+
+            mock_print.assert_called_once()
+            printed = mock_print.call_args[0][0]
+            self.assertIn("❌ Error parsing email message:", printed)
+
+    def test_part_payload_is_str(self):
+        """Test that when part_payload is a string, it is used directly as the body."""
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "Test subject"
+        msg["From"] = "Test <test@wukong.ac.uk>"
+
+        class FakeTextPart(MIMEText):
+            def get_payload(self, decode=True):
+                return "This is plain string body"
+
+        part = FakeTextPart("dummy", "plain", "utf-8")
+        part.add_header("Content-Disposition", "inline")
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(body, "This is plain string body")
+
+    def test_attachment_filename_bytes_decode(self):
+        """Test attachment filename decoding when p is bytes."""
+        msg = MIMEMultipart()
+        msg["Subject"] = "Test"
+        msg["From"] = "user@wukong.ac.uk"
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(b"data")
+        encoders.encode_base64(part)
+
+        part.add_header(
+            "Content-Disposition", "attachment; filename*=utf-8''test%20file.txt"
         )
+        part.get_filename = (
+            lambda: "=?utf-8?b?dGVzdF9maWxlLnR4dA==?="
+        )  # "test_file.txt" encoded in base64
+
+        msg.attach(part)
+
+        with patch(
+            "email.header.decode_header", return_value=[(b"test_file.txt", "utf-8")]
+        ):
+            subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(len(attachments), 1)
+        self.assertEqual(attachments[0]["filename"], "test_file.txt")
+
+    def test_attachment_file_data_invalid_type_skipped(self):
+        """Test attachment skipped if file_data is not bytes or str."""
+
+        class WeirdData:
+            pass
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "InvalidData"
+        msg["From"] = "user@wukong.ac.uk"
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(b"real content")
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment; filename=valid.txt")
+        part.get_filename = lambda: "valid.txt"
+        part.get_payload = lambda decode=True: WeirdData()
+
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(len(attachments), 0, "❌ Should skip invalid attachment data")
+
+    def test_valid_attachment_saved(self):
+        """Test that a valid attachment is added to the attachments list."""
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "Attach"
+        msg["From"] = "user@wukong.ac.uk"
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(b"hello world")
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment; filename=myfile.txt")
+        part.get_filename = lambda: "myfile.txt"
+
+        msg.attach(part)
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(len(attachments), 1)
+        self.assertEqual(attachments[0]["filename"], "myfile.txt")
+        self.assertEqual(attachments[0]["data"], b"hello world")
+
+    @patch("tickets.management.commands.fetch_emails.decode_header")
+    def test_attachment_filename_else_str_conversion(self, mock_decode_header):
+        """Test decode_header fallback to str(p) when p is neither str nor bytes."""
+
+        class CustomPart:
+            def __str__(self):
+                return "converted_from_custom_object"
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "Test Attachment Fallback"
+        msg["From"] = "user@wukong.ac.uk"
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(b"file content")
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment; filename=custom.txt")
+        part.get_filename = lambda: "=?utf-8?q?custom?="
+
+        msg.attach(part)
+
+        mock_decode_header.return_value = [(CustomPart(), None)]
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(attachments[0]["filename"], "converted_from_custom_object")
+
+    @patch("builtins.print")
+    @patch("tickets.management.commands.fetch_emails.decode_header")
+    def test_attachment_filename_decode_fallback_exception(
+        self, mock_decode_header, mock_print
+    ):
+        """Test that exception during str(p) is caught and logged with print()."""
+
+        class BadObject:
+            def __str__(self):
+                raise ValueError("cannot convert to string")
+
+        msg = MIMEMultipart()
+        msg["Subject"] = "=?utf-8?q?bad_subject?="
+        msg["From"] = "user@wukong.ac.uk"
+
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(b"filedata")
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", "attachment; filename=bad.txt")
+        part.get_filename = lambda: "=?utf-8?q?bad?="
+
+        msg.attach(part)
+
+        mock_decode_header.return_value = [(BadObject(), None)]
+
+        self.command.parse_email_message(msg)
+
+        mock_print.assert_any_call("❌ Error decoding attachment filename:", ANY)
+
+    def test_non_multipart_payload_is_str(self):
+        """Test that non-multipart email with string payload sets body directly."""
+
+        msg = EmailMessage()
+        msg["Subject"] = "Simple text"
+        msg["From"] = "sender@wukong.ac.uk"
+
+        msg.set_payload("This is a plain text email.")
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(body, "This is a plain text email.")
+
+    def test_non_multipart_decode_exception_sets_body(self):
+        """Test that decode exception in non-multipart sets body to '[Decode Error]'."""
+
+        class BadBytes(bytes):
+            def decode(self, encoding="utf-8", errors="ignore"):
+                raise UnicodeDecodeError("utf-8", b"", 0, 1, "bad decode")
+
+        msg = EmailMessage()
+        msg["Subject"] = "Trigger Decode Error"
+        msg["From"] = "sender@wukong.ac.uk"
+
+        msg.get_payload = lambda decode=True: BadBytes(b"broken")
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
         self.assertEqual(
-            parsed_body, "", "When payload is None, body should be an empty string"
+            body,
+            "[Decode Error]",
+            "❌ decode error should fallback to '[Decode Error]'",
         )
+
+    def test_non_multipart_payload_is_str_line_409_true_mocked(self):
+        """Test that line 409 -> 410 is covered when payload is str (mocked)."""
+
+        msg = EmailMessage()
+        msg["Subject"] = "Test Subject"
+        msg["From"] = "test@wukong.ac.uk"
+
+        msg.get_payload = lambda decode=True: "This is a string payload"
+
+        subject, sender, body, attachments = self.command.parse_email_message(msg)
+
+        self.assertEqual(body, "This is a string payload")
+        self.assertEqual(sender, "test@wukong.ac.uk")
