@@ -6,6 +6,7 @@ from tickets.helpers import get_filtered_tickets
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from tickets.models import Ticket, DailyTicketClosureReport
+from django.db.models import Case, When, Value, IntegerField
 
 
 @login_required
@@ -20,20 +21,28 @@ def dashboard_redirect(request):
     elif user.is_specialist():
         return redirect("dashboard_specialist")
 
-    return redirect("home")  
+    return redirect("home")
 
 
 @login_required
 def student_dashboard(request):
 
-    search_query = request.GET.get("search", "")  
-    status_filter = request.GET.get("status", "") 
+    search_query = request.GET.get("search", "")
+    status_filter = request.GET.get("status", "")
     sort_option = request.GET.get("sort", "")
 
+    base_queryset = Ticket.objects.filter(creator=request.user).annotate(
+        status_order=Case(
+            When(status="in_progress", then=Value(0)),
+            When(status="closed", then=Value(1)),
+            default=Value(99),
+            output_field=IntegerField(),
+        )
+    )
 
     tickets = get_filtered_tickets(
         request.user,
-        Ticket.objects.filter(creator=request.user),
+        base_queryset.order_by("status_order", "-created_at"),
         search_query,
         status_filter,
         sort_option,

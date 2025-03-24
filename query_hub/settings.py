@@ -17,15 +17,6 @@ from dotenv import load_dotenv
 import sys
 
 
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
-
-STORAGES = {
-    "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
-    "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
-}
-
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -190,6 +181,14 @@ MESSAGE_TAGS = {
     messages.ERROR: "danger",
 }
 
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
+STORAGES = {
+    "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
+    "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
+}
 
 AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "eu-west-2")
 
@@ -202,3 +201,8 @@ AWS_S3_OBJECT_PARAMETERS = {"ACL": "public-read"}
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
 
 Media_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+
+
+# DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# MEDIA_URL = "/media/"

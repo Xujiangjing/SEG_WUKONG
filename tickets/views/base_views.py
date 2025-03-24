@@ -58,6 +58,20 @@ class TicketListView(ListView):
     template_name = "tickets/ticket_list.html"
     context_object_name = "tickets"
 
+    def get_queryset(self):
+        user = self.request.user
+
+        # Program officers can see all
+        if user.is_program_officer():
+            return Ticket.objects.all()
+
+        # Specialists can only see tickets they edited
+        if user.is_specialist():
+            return Ticket.objects.filter(latest_editor=user)
+
+        # Students and others should not access this view
+        return Ticket.objects.none()
+
     def dispatch(self, request, *args, **kwargs):
         # Prevent students from accessing the general ticket list view
         if request.user.is_student():
@@ -66,7 +80,6 @@ class TicketListView(ListView):
             )
             return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
-
 
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
@@ -99,7 +112,6 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ticket = form.save(commit=False)
         ticket.creator = self.request.user
         ticket.status = "in_progress"
-
 
         ticket.priority = "low"
 
@@ -176,7 +188,7 @@ def ticket_detail(request, ticket_id):
     # Block access if user is unrelated to this ticket
     if (
         request.user != ticket.creator
-        and request.user != ticket.assigned_user
+        and request.user != ticket.latest_editor
         and not request.user.is_program_officer()
     ):
         return redirect("dashboard")

@@ -79,6 +79,10 @@
                     View
                   </a>
                 {% endif %}
+              {% else %}
+                <a href="{% url 'ticket_detail' ticket.id %}" class="view-btn">
+                  View
+                </a>
               {% endif %}
             </div>
           </div>
