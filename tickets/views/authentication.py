@@ -22,6 +22,7 @@ class LoginProhibitedMixin:
     such as the login page. Redirects them to a specified URL.
     """
 
+
     redirect_when_logged_in_url = None
 
     def dispatch(self, *args, **kwargs):
