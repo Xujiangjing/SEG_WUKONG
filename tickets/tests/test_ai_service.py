@@ -1,5 +1,5 @@
 from django.test import TestCase
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from botocore.exceptions import ClientError
 from tickets.models import Ticket, AITicketProcessing, MergedTicket
 from tickets.ai_service import (
@@ -10,6 +10,7 @@ from tickets.ai_service import (
     find_potential_tickets_to_merge,
     query_bedrock,
 )
+import json
 
 class AITicketProcessingTests(TestCase):
 
@@ -251,3 +252,44 @@ class TicketMergingTests(TestCase):
         # No MergedTicket should be created when no tickets are similar
         merged_ticket = MergedTicket.objects.filter(primary_ticket=self.ticket)
         self.assertFalse(merged_ticket.exists())
+
+
+class QueryBedrockTests(TestCase):
+
+    @patch("tickets.ai_service.client.invoke_model")
+    def test_query_bedrock_success(self, mock_invoke_model):
+        # Mock a successful response from AWS Bedrock
+        mock_response = MagicMock()
+        mock_response["body"].read.return_value = json.dumps({"generation": "This is a test response."})
+        mock_invoke_model.return_value = mock_response
+
+        prompt = "Test prompt"
+        response = query_bedrock(prompt)
+
+        self.assertEqual(response, "This is a test response.")
+        mock_invoke_model.assert_called_once()
+
+    @patch("tickets.ai_service.client.invoke_model")
+    def test_query_bedrock_client_error(self, mock_invoke_model):
+        # Mock a ClientError from AWS Bedrock
+        mock_invoke_model.side_effect = ClientError(
+            error_response={"Error": {"Code": "500", "Message": "Internal Server Error"}},
+            operation_name="InvokeModel"
+        )
+
+        prompt = "Test prompt"
+        response = query_bedrock(prompt)
+
+        self.assertEqual(response, "")
+        mock_invoke_model.assert_called_once()
+
+    @patch("tickets.ai_service.client.invoke_model")
+    def test_query_bedrock_unexpected_error(self, mock_invoke_model):
+        # Mock an unexpected error from AWS Bedrock
+        mock_invoke_model.side_effect = Exception("Unexpected error")
+
+        prompt = "Test prompt"
+        response = query_bedrock(prompt)
+
+        self.assertEqual(response, "")
+        mock_invoke_model.assert_called_once()
