@@ -67,19 +67,6 @@ class TicketListView(ListView):
             return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
 
-    def get_queryset(self):
-        """
-        Return ticket list filtered by user role:
-        - Program officer sees all
-        - Specialist sees only assigned
-        - Student sees only their own tickets
-        """
-        if self.request.user.is_program_officer():
-            return Ticket.objects.all()
-        elif self.request.user.is_specialist():
-            return Ticket.objects.filter(assigned_user=self.request.user)
-        # elif self.request.user.is_student():
-        #     return Ticket.objects.filter(creator=self.request.user)
 
 
 class CreateTicketView(LoginRequiredMixin, CreateView):
@@ -113,9 +100,8 @@ class CreateTicketView(LoginRequiredMixin, CreateView):
         ticket.creator = self.request.user
         ticket.status = "in_progress"
 
-        # Set default priority for student-created tickets
-        if self.request.user.is_student():
-            ticket.priority = "low"
+
+        ticket.priority = "low"
 
         ticket.save()
 
