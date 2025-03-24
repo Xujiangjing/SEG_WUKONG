@@ -5,7 +5,10 @@ import sys
 import requests
 from email.header import decode_header
 from django.core.management.base import BaseCommand
-from tickets.helpers import handle_uploaded_file_in_chunks
+from tickets.helpers import (
+    handle_uploaded_file_in_chunks,
+    send_ticket_confirmation_email,
+)
 from tickets.models import (
     Ticket,
     Department,
@@ -104,7 +107,7 @@ class Command(BaseCommand):
 
                         ai_process_ticket(ticket)
 
-                        self.send_confirmation_email(sender_email, subject)
+                        send_ticket_confirmation_email(ticket)
 
                         mail.store(email_id, "+FLAGS", "\\Seen")
 
@@ -153,66 +156,6 @@ class Command(BaseCommand):
                 return Department.objects.filter(name=category_name).first()
 
         return Department.objects.filter(name="general_enquiry").first()
-
-    def send_confirmation_email(self, student_email, ticket_title):
-        """Sends a confirmation email to the student with a signature, school logo, and styled font."""
-
-        subject = f"Your Ticket '{ticket_title}' Has Been Received"
-
-        html_message = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; color: #333; text-align: center;">
-                <div style="border: 1px solid #ddd; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto;">
-        
-                    <!-- WUKONG Logo with Gradient Background -->
-                    <h1 style="font-size: 32px; font-weight: bold; display: inline-block;
-                            background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
-                            color: white; padding: 10px 20px; border-radius: 5px;">
-                        WUKONG
-                    </h1>
-
-                    <h2 style="text-align: center; color: #0056b3;">Your Ticket Has Been Received</h2>
-
-                    <p style="text-align: left;">Hello,</p>
-                    <p style="text-align: left;">Thank you for reaching out. Your ticket titled <b>'{ticket_title}'</b> has been received and assigned to the relevant department.</p>
-                    <p style="text-align: left;">We will get back to you as soon as possible.</p>
-                    <br>
-
-                    <!-- Signature Part -->
-                    <p style="border-top: 2px solid #0056b3; padding-top: 10px; font-size: 14px; text-align: left; line-height: 1.6;">
-                        <strong>Best regards,</strong><br>
-
-                        <!-- WuKong Help Desk Gradient -->
-                        <span style="font-size: 16px; font-weight: bold; display: inline-block; margin-top: 5px;
-                                    background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
-                                    color: white; padding: 3px 8px; border-radius: 5px;">
-                            WuKong Help Desk
-                        </span>
-                        <br><br>
-
-                        <span style="color: #007BFF;"><strong>Email:</strong></span> 
-                        <a href="mailto:wukonghelpdesk@gmail.com" style="color: #007BFF; text-decoration: none;">wukonghelpdesk@gmail.com</a><br>
-
-                        <span style="color: #28A745;"><strong>Phone:</strong></span> 
-                        <span style="color: #28A745;">+1 (234) 567-890</span><br>
-
-                        <span style="color: #DC3545;"><strong>Website:</strong></span> 
-                        <a href="https://github.com/Haichong0-0/WUKONG" style="color: #DC3545; text-decoration: none;">https://github.com/Haichong0-0/WUKONG</a>
-                    </p>
-                </div>
-            </body>
-        </html>
-        """
-
-        # Sending email with HTML content
-        send_mail(
-            subject,
-            message="",  # Leave plain text empty
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[student_email],
-            fail_silently=False,
-            html_message=html_message,  # Use the HTML content
-        )
 
     def is_duplicate_ticket(self, sender_email, subject, body):
         """
