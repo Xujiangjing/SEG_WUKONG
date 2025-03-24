@@ -20,6 +20,7 @@ from tickets.forms import ReturnTicketForm, SupplementTicketForm, TicketForm
 from tickets.helpers import (
     send_ticket_confirmation_email,
     send_updated_notification_email,
+    send_response_notification_email,
 )
 from tickets.models import (
     DailyTicketClosureReport,
@@ -298,6 +299,12 @@ def respond_ticket(request, ticket_id):
                 ) + f"\nResponse by {request.user.full_name()}: {response_message}"
             approved_ticket.status = "in_progress"
             approved_ticket.save()
+            send_response_notification_email(
+                student_email=approved_ticket.creator.email,
+                ticket_title=approved_ticket.title,
+                response_message=approved_ticket.answers,
+                ticket_id=approved_ticket.id,
+            )
             TicketActivity.objects.create(
                 ticket=approved_ticket,
                 action="responded",
@@ -321,7 +328,12 @@ def respond_ticket(request, ticket_id):
     ticket.program_officer_resolved = request.user.is_program_officer()
     ticket.specialist_resolved = request.user.is_specialist()
     ticket.save()
-    send_ticket_confirmation_email(ticket)
+    send_response_notification_email(
+        student_email=ticket.creator.email,
+        ticket_title=ticket.title,
+        response_message=response_message,
+        ticket_id=ticket.id,
+    )
 
     return render(
         request,
@@ -507,7 +519,7 @@ def get_specialists(ticket):
         dummy_spec = SimpleNamespace(
             id="ai",
             username=f"---------- {ai_assigned_department} (recommend) ----------",
-            department__name=SimpleNamespace(name=ai_assigned_department),
+            department=SimpleNamespace(name=ai_assigned_department),
         )
         recommended_list = [dummy_spec]
 
