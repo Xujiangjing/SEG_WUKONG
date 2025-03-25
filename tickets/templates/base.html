@@ -6,12 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-uWxY/CJNBR+1zjPWmfnSnVxwRheevXITnMqoEIeG1LJrdI0GlVs/9cVSyPYXdcSF" crossorigin="anonymous">
-    <!-- <link href="{% static 'custom.css' %}" rel="stylesheet"> -->
-     <!-- <link rel="stylesheet" href="{% static 'custom.css' %}"> -->
       <link rel="stylesheet" href="/static/custom.css">
     {% comment %} <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css"> {% endcomment %}
     <title>{% block title %}WUKONG{% endblock %}</title>
-    <!-- <link rel="icon" type="image/png" sizes="64x64" href="{% static 'images/logo-bigger.png' %}"> -->
      <link rel="icon" type="image/png" sizes="64x64" href="/static/images/logo-bigger.png">
   </head>
   <body>
@@ -55,7 +52,7 @@
     $('.section-2, .bg-cover-2').on('click', () => {
       $('.section-2 .header').animate({
         left: '50%',
-      }, 1000); // The animation duration is 1000 milliseconds.
+      }, 1000); 
       $('.section-2 .center-text').animate({
         top: "20%",
       }, 1000); 
