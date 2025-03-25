@@ -259,10 +259,10 @@ class Command(BaseCommand):
             )
             return spam_score > 0.8
         except requests.RequestException as e:
-            print("❌ Error connecting to Perspective API:", e)
+            print("Error connecting to Perspective API:", e)
             return False
         except ValueError:
-            print("❌ Invalid JSON response from Perspective API")
+            print("Invalid JSON response from Perspective API")
             return False
 
     def parse_email_message(self, msg):
@@ -330,7 +330,7 @@ class Command(BaseCommand):
                                     else:
                                         decoded_filename += str(p)
                                 except Exception as e:
-                                    print("❌ Error decoding attachment filename:", e)
+                                    print("Error decoding attachment filename:", e)
                             file_data = part.get_payload(decode=True)
 
                             if not isinstance(file_data, (bytes, str)):
