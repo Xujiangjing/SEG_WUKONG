@@ -106,7 +106,6 @@
           <label for="return_reason">Return Reason:</label>
           <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
         </div>
-
         <button type="submit" id="submit_btn" class="btn btn-success mt-3" style="display: none;">Submit</button>
       </form>
     </div>
@@ -164,7 +163,7 @@
 
 
     const responseBox = document.getElementById("response_message");
-    const aiResponse = "AI Response: {{ ticket.ai_processing.ai_generated_response }}";
+    const aiResponse = "{{ ticket.ai_processing.ai_generated_response }}";
     let aiPlaceholderActive = false;
 
     responseBox.addEventListener("focus", function () {
