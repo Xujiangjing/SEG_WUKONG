@@ -308,6 +308,7 @@ def respond_ticket(request, ticket_id):
         response_message = request.POST.get("response_message")
         merged_ticket = MergedTicket.objects.filter(primary_ticket=ticket).first()
         if merged_ticket and len(merged_ticket.approved_merged_tickets.all()) > 0:
+            #reply to all merged tickets
             for approved_ticket in merged_ticket.approved_merged_tickets.all():
                 approved_ticket.answers = (
                     approved_ticket.answers or ""
@@ -361,6 +362,7 @@ def respond_ticket(request, ticket_id):
 def update_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     if request.user != ticket.creator:
+        #only student can and program officer can eidt ticket
         messages.error(request, "You do not have permission to modify this ticket.")
         return redirect("dashboard")
 
@@ -503,7 +505,7 @@ def manage_ticket_page(request, ticket_id):
             },
         )
 
-
+#do not modify this function
 def get_specialists(ticket):
     try:
         ai_assigned_department = classify_department(ticket.description)
