@@ -38,5 +38,6 @@ class Command(BaseCommand):
         )
         ucount = urgent_tickets.update(priority="urgent")
         self.stdout.write(
-            self.style.SUCCESS(f"Successfully closed {ucount} stale tickets")
+            self.style.SUCCESS(f"Successfully updated {ucount} tickets to urgent")
         )
+        
