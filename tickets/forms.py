@@ -98,8 +98,6 @@ class PasswordForm(NewPasswordMixin):
 
 
 
-# tickets/forms.py
-
 
 class TicketForm(forms.ModelForm):
     class Meta:
