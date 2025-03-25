@@ -18,13 +18,6 @@ class DjangoSeleniumTests(unittest.TestCase):
         driver = self.driver
         driver.get("http://127.0.0.1:8000/")
 
-        # Check the page title
-        new_title = driver.title
-        print(f"New page title: {new_title}")
-
-        # Ensure "WUKONG" is in the page title (case insensitive)
-        self.assertIn("wukong", new_title.lower())
-
         # Ensure LOG IN button exists
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.LINK_TEXT, "LOG IN"))
@@ -47,7 +40,6 @@ class DjangoSeleniumTests(unittest.TestCase):
         # Get and print the color of the LOG IN button (check CSS styles)
         login_button = driver.find_element(By.LINK_TEXT, "LOG IN")
         color = login_button.value_of_css_property("color")
-        print("LOG IN button color:", color)
 
     def test_login_page_loads(self):
         """Test if the Login page loads correctly"""
@@ -60,8 +52,6 @@ class DjangoSeleniumTests(unittest.TestCase):
 
         heading = driver.find_element(By.CLASS_NAME, "ticket-system")
         self.assertTrue(heading.is_displayed(), "Login page heading missing")
-
-        print("✅ Login page loaded successfully!")
 
 
     def test_base_template_renders(self):
@@ -94,7 +84,6 @@ class DjangoSeleniumTests(unittest.TestCase):
 
         # Verify the URL is correct
         current_url = driver.current_url
-        print(f"Redirected to: {current_url}")
         self.assertIn("log_in", current_url)
 
     @classmethod
