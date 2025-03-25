@@ -374,7 +374,7 @@ def update_ticket(request, ticket_id):
             ticket.specialist_resolved = True
         ticket.need_student_update = False
         ticket.save()
-        if assigned_user != request.user:
+        if assigned_user and assigned_user != request.user:
             send_updated_notification_email_to_specialist_or_program_officer(
                 assigned_user.email,
                 ticket.title,

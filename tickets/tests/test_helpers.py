@@ -9,6 +9,7 @@ from tickets.helpers import (
     send_response_notification_email,
     send_updated_notification_email,
     handle_uploaded_file_in_chunks,
+    send_updated_notification_email_to_specialist_or_program_officer,
 )
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -61,6 +62,41 @@ class EmailNotificationTests(TestCase):
         )
 
         mock_send_mail.assert_called_once()
+
+    @patch("tickets.helpers.send_mail")
+    @patch("tickets.helpers.render_to_string")
+    def test_send_updated_notification_email_to_specialist_or_program_officer(
+        self, mock_render, mock_send_mail
+    ):
+        mock_render.return_value = "<p>Update Notice</p>"
+
+        send_updated_notification_email_to_specialist_or_program_officer(
+            "john.doe@university.edu",
+            "Assignment Help Needed",
+            "abc-123-ticket-id",
+            "student@uni.edu",
+            "Here is the updated info",
+        )
+
+        mock_render.assert_called_once_with(
+            "emails/update_notice.html",
+            {
+                "name": "john.doe",
+                "ticket_title": "Assignment Help Needed",
+                "response_message": "Here is the updated info",
+                "ticket_id": "abc-123-ticket-id",
+            },
+        )
+
+        mock_send_mail.assert_called_once()
+        args, kwargs = mock_send_mail.call_args
+
+        self.assertEqual(
+            args[0],
+            "Your assigned ticket is updated by student: 'Assignment Help Needed'",
+        )
+        self.assertIn("john.doe@university.edu", args[3])
+        self.assertEqual(kwargs["html_message"], "<p>Update Notice</p>")
 
 
 class FilterTicketsTests(TestCase):

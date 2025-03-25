@@ -1,6 +1,6 @@
 from unittest.mock import patch, ANY, MagicMock
-
-from django.test import TestCase
+from django.core import mail
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.http import HttpResponse
@@ -710,6 +710,33 @@ class TicketManageViewTestCase(TestCase):
             response = self.client.post(url, {"action_type": "redirect_ticket"})
             self.assertEqual(response.content, b"redirect ticket")
             mock_redirect.assert_called_once_with(ANY, ticket_id=self.ticket.id)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_update_ticket_triggers_notification(self):
+        self.client.login(username="@student", password="Password123")
+
+        self.ticket.creator = self.student
+        self.ticket.assigned_user = self.officer
+        self.ticket.latest_editor = self.officer
+        self.ticket.save()
+
+        response = self.client.post(
+            reverse("manage_ticket_page", kwargs={"ticket_id": self.ticket.id}),
+            {
+                "action_type": "update_ticket",
+                "update_message": "Student updated the ticket",
+            },
+        )
+
+        self.ticket.refresh_from_db()
+        self.assertIn("Student updated the ticket", self.ticket.description)
+        self.assertEqual(response.status_code, 302)
+
+        from django.core import mail
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.officer.email, mail.outbox[0].to)
+        self.assertIn("updated by student", mail.outbox[0].subject.lower())
 
 
 class MergeTicketViewTestCase(TestCase):
