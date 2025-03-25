@@ -8,13 +8,13 @@ from .models import Ticket, TicketAttachment, User
 
 
 class LogInForm(forms.Form):
-    """Form enabling registered users to log in."""
+
 
     username = forms.CharField(label="Username")
     password = forms.CharField(label="Password", widget=forms.PasswordInput())
 
     def get_user(self):
-        """Returns authenticated user if possible."""
+
 
         user = None
         if self.is_valid():
@@ -25,17 +25,17 @@ class LogInForm(forms.Form):
 
 
 class UserForm(forms.ModelForm):
-    """Form to update user profiles."""
+
 
     class Meta:
-        """Form options."""
+
 
         model = User
         fields = ["first_name", "last_name", "username", "email"]
 
 
 class NewPasswordMixin(forms.Form):
-    """Form mixing for new_password and password_confirmation fields."""
+
 
     new_password = forms.CharField(
         label="New Password",
@@ -53,7 +53,7 @@ class NewPasswordMixin(forms.Form):
     )
 
     def clean(self):
-        """Form mixing for new_password and password_confirmation fields."""
+
 
         super().clean()
         new_password = self.cleaned_data.get("new_password")
@@ -65,18 +65,18 @@ class NewPasswordMixin(forms.Form):
 
 
 class PasswordForm(NewPasswordMixin):
-    """Form enabling users to change their password."""
+
 
     password = forms.CharField(label="Previous password", widget=forms.PasswordInput())
 
     def __init__(self, user=None, **kwargs):
-        """Construct new form instance with a user instance."""
+
 
         super().__init__(**kwargs)
         self.user = user
 
     def clean(self):
-        """Clean the data and generate messages for any errors."""
+
 
         super().clean()
         password = self.cleaned_data.get("password")
@@ -88,7 +88,7 @@ class PasswordForm(NewPasswordMixin):
             self.add_error("password", "Password is invalid")
 
     def save(self):
-        """Save the user's new password."""
+
 
         new_password = self.cleaned_data["new_password"]
         if self.user is not None:
