@@ -182,8 +182,7 @@ def ticket_detail(request, ticket_id):
         )
     ):
         messages.warning(request, "This ticket is waiting for the staff to process.")
-        print("This ticket is waiting for the staff to process.")
-
+    
     # Block access if user is unrelated to this ticket
     if (
         request.user != ticket.creator
