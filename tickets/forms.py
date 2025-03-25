@@ -14,7 +14,7 @@ class LogInForm(forms.Form):
     password = forms.CharField(label="Password", widget=forms.PasswordInput())
 
     def get_user(self):
-
+        ## The get_user method is used to authenticate the user based on the username and password provided.
 
         user = None
         if self.is_valid():
@@ -35,8 +35,7 @@ class UserForm(forms.ModelForm):
 
 
 class NewPasswordMixin(forms.Form):
-
-
+    ## The NewPasswordMixin class is a mixin that contains the new_password and password_confirmation fields.
     new_password = forms.CharField(
         label="New Password",
         widget=forms.PasswordInput(),
@@ -65,8 +64,7 @@ class NewPasswordMixin(forms.Form):
 
 
 class PasswordForm(NewPasswordMixin):
-
-
+    ## The PasswordForm form is used to create a form for changing a user's password.
     password = forms.CharField(label="Previous password", widget=forms.PasswordInput())
 
     def __init__(self, user=None, **kwargs):
