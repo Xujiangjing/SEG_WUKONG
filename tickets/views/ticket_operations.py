@@ -123,7 +123,7 @@ def return_ticket(request, ticket_id):
             )
 
             return redirect("ticket_detail", ticket_id=ticket_id)
-        
+
     else:
         form = ReturnTicketForm()
 
@@ -151,7 +151,7 @@ def redirect_ticket(request, ticket_id):
         ticket.assigned_department = ai_assigned_department
         ticket.save()
     except Exception as e:
-        ai_assigned_department = ticket.assigned_department or "IT"
+        ai_assigned_department = ticket.assigned_department or "it_support"
         ticket.assigned_department = ai_assigned_department
         ticket.save()
 
