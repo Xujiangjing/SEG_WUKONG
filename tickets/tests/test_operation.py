@@ -294,20 +294,35 @@ class RedirectTicketViewTestCase(TestCase):
             specialists = get_specialists(self.ticket)
             self.assertEqual(specialists[0]["department"], "general_enquiry")
 
+    @patch("tickets.views.ticket_operations.classify_department", return_value="it_support")
+    def test_get_specialists_recommend_username_modified(self, mock_classify):
+        self.ticket.assigned_department = "it_support"
+        self.ticket.save()
+
+        specialists = get_specialists(self.ticket)
+
+        self.assertTrue(any(
+            "(recommend)" in spec["username"] for spec in specialists
+        ))
+        self.assertTrue(any(
+            spec["department"] == "it_support" for spec in specialists
+        ))
 
 
     @patch("tickets.models.Ticket.save", autospec=True)
     @patch("tickets.ai_service.classify_department", side_effect=Exception("Simulated AI failure"))
     def test_redirect_ticket_classify_department_exception_fallback(self, mock_classify, mock_save):
         self.client.login(username="@officer", password="Password123")
+        self.ticket.assigned_department = ""
+        self.ticket.save()  
+
         url = reverse("redirect_ticket", kwargs={"ticket_id": self.ticket.id})
 
         response = self.client.post(url, {"new_assignee_id": "ai"})
 
-        self.assertEqual(response.status_code, 200)
-
         self.ticket.refresh_from_db()
-        self.assertIn(self.ticket.assigned_department, ["it_support", "general_enquiry"])
+        self.assertEqual(self.ticket.assigned_department, "IT")  
+        self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(mock_save.call_count, 2)
 
     
@@ -723,3 +738,24 @@ class MergeTicketViewTestCase(TestCase):
         response = self.client.post(url)
         self.assertEqual(response.status_code, 302)
         self.assertIn("/log_in/", response.url)
+
+
+    def test_merge_ticket_real_logic(self):
+        self.client.login(username="@officer", password="Password123")
+
+        url = reverse("merge_ticket", kwargs={
+            "ticket_id": self.ticket.id,
+            "potential_ticket_id": self.potential_ticket.id,
+        })
+
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "tickets/manage_tickets_page_for_program_officer.html")
+
+        merged_ticket = MergedTicket.objects.get(primary_ticket=self.ticket)
+        self.assertIn(self.potential_ticket, merged_ticket.approved_merged_tickets.all())
+
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 200)
+        merged_ticket.refresh_from_db()
+        self.assertNotIn(self.potential_ticket, merged_ticket.approved_merged_tickets.all())
