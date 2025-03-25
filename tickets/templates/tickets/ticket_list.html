@@ -7,7 +7,7 @@
         All Tickets
     </h1>
     {% if tickets %}
-    <!-- 排序部分 -->
+    <!-- sort -->
     <div class="mb-3">
       <label for="sort" class="form-label">Sort by:</label>
       <select id="sort" class="form-select" onchange="sortTickets()">
@@ -20,7 +20,7 @@
     </div>
 
     <div class="tickets-container">
-      <!-- 列标题 -->
+      <!-- subtitles -->
       <div class="tickets-header">
         <div data-sort="title">Title</div>
         <div data-sort="priority">Priority</div>
