@@ -144,6 +144,7 @@
                     </select>
                     <button type="submit" id="redirect_submit_btn" class="btn btn-success mt-3">Submit</button>
                 </div>
+
                 <!-- Merge Section -->
                 <div id="merge-section" style="display: none;">
                     {% if potential_tickets %}
@@ -179,14 +180,18 @@
                         <p>No potential tickets to merge found.</p>
                     {% endif %}
                 </div>
-                </div>
 
                 <!--Return to student-->
-                <div id="return-section" style="display: none; width: 97%; margin: 0 auto;">
-                    <textarea id="return_reason" name="return_reason" class="form-control" style="width: 100%;"></textarea>
+                <div id="return-section" style="display: none;">
+                    <label for="return_reason">Return Reason:</label>
+                    <textarea id="return_reason" name="return_reason" class="form-control"></textarea>
+                
                     <button type="submit" id="return_submit_btn" class="btn btn-success mt-3">Submit</button>
                 </div>
             </form>
+            </div>
+
+                
         </div>
 
         <div class="profile-actions d-flex justify-content-end align-items-center">
@@ -234,6 +239,23 @@
                 
             });
         });
+
+        document.getElementById("action_form").addEventListener("submit", function (event) {
+            if (actionTypeInput.value === "respond_ticket") {
+              let responseText = document.getElementById("response_message").value.trim();
+              if (!responseText) {
+                event.preventDefault();
+                alert("Response message cannot be empty.");
+              }
+            }
+            if (actionTypeInput.value === "return_to_student") {
+              let returnReason = document.getElementById("return_reason").value.trim();
+              if (!returnReason) {
+                event.preventDefault();
+                alert("Please provide a return reason.");
+              }
+            }
+          });
 
         document.getElementById("respond_submit_btn").addEventListener("click", function (event) {
         let responseText = document.getElementById("response_message").value.trim();
