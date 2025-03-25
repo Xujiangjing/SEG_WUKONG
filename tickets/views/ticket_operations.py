@@ -231,7 +231,6 @@ def redirect_ticket(request, ticket_id):
     return JsonResponse({"error": "No specialist selected"}, status=400)
 
 
-#### 需修改: ????测试服务覆盖，没有相应的url
 @login_required
 @require_POST
 def merge_ticket(request, ticket_id, potential_ticket_id):
@@ -516,7 +515,7 @@ def get_specialists(ticket):
 
     for spec in specialists_list:
         dept_name = spec.department.name if spec.department else ""
-        if dept_name == ai_assigned_department:
+        if dept_name.lower().replace(" ", "_") == ai_assigned_department.lower():
             spec.username = f"{spec.username} (recommend)"
             recommended_list.append(spec)
         else:
@@ -527,6 +526,8 @@ def get_specialists(ticket):
             id="ai",
             username=f"---------- {ai_assigned_department} (recommend) ----------",
             department=SimpleNamespace(name=ai_assigned_department),
+            open_tickets=0,
+            is_ai=True,
         )
         recommended_list = [dummy_spec]
 
@@ -534,9 +535,11 @@ def get_specialists(ticket):
         {
             "id": spec.id,
             "username": spec.username,
-            "department": spec.department.name if spec.department else "",
+            "department_name": (
+                getattr(spec.department, "name", "") if spec.department else ""
+            ),
             "open_tickets": getattr(spec, "open_tickets", 0),
-            "is_ai": False,
+            "is_ai": getattr(spec, "is_ai", False),
         }
         for spec in recommended_list + non_recommended_list
     ]
