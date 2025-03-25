@@ -1,13 +1,13 @@
 {% load static %}
 <nav class="sidebar d-flex flex-column" style="height: 100vh;">
-  <!-- 头部 Logo/标题 -->
+  <!-- Logo -->
   <div class="sidebar-header">
     <a class="navbar-brand" href="{% url 'home' %}">
       <img src="{% static 'images/logo.png' %}" alt="Logo" class="sidebar-logo">
     </a>
   </div>
 
-  <!-- 导航菜单 -->
+  <!-- navbar menu -->
   <ul class="navbar-nav flex-column flex-grow-1" id="sidebarMenu">
     <!-- Dashboard -->
     <li class="nav-item mb-3">
@@ -19,7 +19,7 @@
       </a>
     </li>
 
-    <!-- 仅 Program Officers 可见的 Statistics 链接 -->
+    <!-- only Program Officers have Statistics link -->
     {% if user.is_program_officer %}
     <li class="nav-item mb-3">
         <a id="statistics-link" class="nav-link text-black" href="{% url 'visualize_ticket_data' %}" onclick="setActive('statistics')">
@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", function() {
     let dashboardIcon = document.getElementById("dashboard-icon");
     let profileIcon = document.getElementById("profile-icon");
     let statisticsIcon = document.getElementById("statistics-icon");
-    // 预定义静态图片路径
     let dashboardDefault = "{% static 'images/dashboard_icon.png' %}";
     let dashboardDark = "{% static 'images/dashboard_icon_dark.png' %}";
     let profileDefault = "{% static 'images/profile_icon.png' %}";
@@ -84,8 +83,8 @@ document.addEventListener("DOMContentLoaded", function() {
             statistics.classList.remove("active");
             statisticsIcon.src = statisticsDark;
             }
-            dashboardIcon.src = dashboardDefault; // Dashboard 默认图标
-            profileIcon.src = profileDefault; // Profile 默认图标
+            dashboardIcon.src = dashboardDefault; 
+            profileIcon.src = profileDefault; 
         } else if (page === "profile") {
             profile.classList.add("active");
             dashboard.classList.remove("active");
@@ -93,15 +92,15 @@ document.addEventListener("DOMContentLoaded", function() {
             statistics.classList.remove("active");
             statisticsIcon.src = statisticsDark;
             }
-            dashboardIcon.src = dashboardDark; // Dashboard 变暗
-            profileIcon.src = profileWhite; // Profile 变白
+            dashboardIcon.src = dashboardDark;
+            profileIcon.src = profileWhite; 
         } else if (page === "statistics" && statistics) {
             statistics.classList.add("active");
             dashboard.classList.remove("active");
             profile.classList.remove("active");
-            dashboardIcon.src = dashboardDark; // Dashboard 变暗
-            profileIcon.src = profileDefault; // Profile 默认图标
-            statisticsIcon.src = statisticsDefault; // Statistics 变白
+            dashboardIcon.src = dashboardDark; 
+            profileIcon.src = profileDefault; 
+            statisticsIcon.src = statisticsDefault;
         }
     }
 });

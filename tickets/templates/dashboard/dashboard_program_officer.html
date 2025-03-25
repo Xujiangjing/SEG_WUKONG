@@ -18,7 +18,7 @@
                     Welcome to your dashboard
                 </h1>
 
-                <!-- Tickets 区域 -->
+                <!-- Tickets -->
                 <div id="tickets">
                     <form method="GET" action="{% url 'dashboard_program_officer' %}">
                         <div class="row mb-4">
@@ -53,7 +53,7 @@
                         </div>
                     </form>
 
-                    <!-- Tickets 和 View All 同行 -->
+                    <!-- Tickets and View All -->
                     <div class="tickets-header-container">
                         <h2 class="tickets-title">Tickets</h2>
                         <a href="{% url 'ticket_list' %}" class="create-btn">
@@ -70,6 +70,7 @@
                                 <div>Category</div>
                                 <div>Status</div>
                                 <div>Priority</div>
+                                <div>Date</div>
                                 <div>Assigned To</div>
                                 <div>Answers</div>
                                 <div>Actions</div>
@@ -82,6 +83,9 @@
                                         <div>{{ ticket.get_department_name }}</div>
                                         <div>{{ ticket.get_status_name }}</div>
                                         <div>{{ ticket.get_priority_name }}</div>
+                                        <div data-date-value="{{ ticket.created_at|date:'Y-m-d H:i:s' }}">
+                                            {{ ticket.created_at|date:'Y-m-d H:i:s' }}
+                                        </div>
                                         {% if ticket.assigned_user %}
                                             <div>{{ ticket.assigned_user.full_name }}</div>
                                         {% else %}

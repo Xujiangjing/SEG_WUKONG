@@ -243,7 +243,6 @@
         }
     });
 
-        // ✅ Redirect Ticket AJAX
         document.getElementById("redirect_submit_btn").addEventListener("click", function (event) {
             event.preventDefault();
 
@@ -272,7 +271,7 @@
                     alert("⚠️ " + data.error);
                 }
             })
-            .catch(error => console.error("❌ AJAX Error:", error));
+            .catch(error => console.error(" AJAX Error:", error));
         });
 
 
@@ -280,7 +279,7 @@
             let returnReason = document.getElementById("return_reason").value.trim();
             if (!returnReason) {
                 event.preventDefault();
-                alert("⚠️ Return reason cannot be empty.");
+                alert(" Return reason cannot be empty.");
             }else{
                 actionForm.submit();
             }
