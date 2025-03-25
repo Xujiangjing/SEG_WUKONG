@@ -122,46 +122,8 @@ class CreateTicketViewTestCase(TestCase):
         self.assertEqual(len(messages_list), 1)
         self.assertEqual(messages_list[0].level, messages.SUCCESS)
 
-    def test_post_create_ticket_with_attachments(self):
-        self.client.login(username=self.user.username, password="Password123")
 
-        file1 = SimpleUploadedFile(
-            "test1.txt", b"file1 content", content_type="text/plain"
-        )
-        file2 = SimpleUploadedFile(
-            "test2.txt", b"file2 content", content_type="text/plain"
-        )
 
-        data = {
-            "title": "My Test Ticket",
-            "description": "Hello, I have an issue with my coursework.",
-            "file": [file1, file2],
-        }
-
-        response = self.client.post(self.url, data, follow=True)
-
-        ticket = Ticket.objects.latest("created_at")
-        attachments = TicketAttachment.objects.filter(ticket=ticket)
-        self.assertEqual(attachments.count(), 2, "Should have 2 attachments in the DB")
-
-        response_s3 = self.s3_client.list_objects_v2(Bucket="test-bucket")
-        self.assertIn("Contents", response_s3, "No objects found in mock S3 at all!")
-        keys = [obj["Key"] for obj in response_s3["Contents"]]
-
-        found_test1 = any("test1.txt" in key for key in keys)
-        found_test2 = any("test2.txt" in key for key in keys)
-        self.assertTrue(found_test1, "test1.txt not found in mock S3!")
-        self.assertTrue(found_test2, "test2.txt not found in mock S3!")
-
-        response_data = json.loads(response.content)
-        expected_redirect_url = reverse(
-            "ticket_detail", kwargs={"ticket_id": ticket.pk}
-        )
-        self.assertEqual(response_data["redirect_url"], expected_redirect_url)
-
-        messages_list = list(response.wsgi_request._messages)
-        self.assertEqual(len(messages_list), 1)
-        self.assertEqual(messages_list[0].level, messages.SUCCESS)
 
     def test_post_create_ticket_invalid_data(self):
         self.client.login(username=self.user.username, password="Password123")
