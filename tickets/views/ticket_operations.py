@@ -231,7 +231,6 @@ def redirect_ticket(request, ticket_id):
     return JsonResponse({"error": "No specialist selected"}, status=400)
 
 
-#### 需修改: ????测试服务覆盖，没有相应的url
 @login_required
 @require_POST
 def merge_ticket(request, ticket_id, potential_ticket_id):
@@ -489,4 +488,58 @@ def manage_ticket_page(request, ticket_id):
 
 
 def get_specialists(ticket):
-    return User.objects.filter(role="specialists").select_related("department")
+    try:
+        ai_assigned_department = classify_department(ticket.description)
+    except Exception as e:
+        ai_assigned_department = ticket.assigned_department or "IT"
+
+    specialists_qs = (
+        User.objects.filter(role="specialists")
+        .annotate(
+            open_tickets=Coalesce(
+                Count(
+                    "assigned_tickets",
+                    filter=Q(assigned_tickets__status="in_progress"),
+                    distinct=True,
+                ),
+                Value(0),
+            )
+        )
+        .select_related("department")
+        .order_by("open_tickets")
+    )
+    specialists_list = list(specialists_qs)
+
+    recommended_list = []
+    non_recommended_list = []
+
+    for spec in specialists_list:
+        dept_name = spec.department.name if spec.department else ""
+        if dept_name.lower().replace(" ", "_") == ai_assigned_department.lower():
+            spec.username = f"{spec.username} (recommend)"
+            recommended_list.append(spec)
+        else:
+            non_recommended_list.append(spec)
+
+    if not recommended_list:
+        dummy_spec = SimpleNamespace(
+            id="ai",
+            username=f"---------- {ai_assigned_department} (recommend) ----------",
+            department=SimpleNamespace(name=ai_assigned_department),
+            open_tickets=0,
+            is_ai=True,
+        )
+        recommended_list = [dummy_spec]
+
+    return [
+        {
+            "id": spec.id,
+            "username": spec.username,
+            "department_name": (
+                getattr(spec.department, "name", "") if spec.department else ""
+            ),
+            "open_tickets": getattr(spec, "open_tickets", 0),
+            "is_ai": getattr(spec, "is_ai", False),
+        }
+        for spec in recommended_list + non_recommended_list
+    ]
