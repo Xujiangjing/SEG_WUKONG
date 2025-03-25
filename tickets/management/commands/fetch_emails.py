@@ -102,7 +102,7 @@ class Command(BaseCommand):
                                 )
                             except Exception as e:
                                 self.stderr.write(
-                                    self.style.ERROR(f"❌ Error saving attachment: {e}")
+                                    self.style.ERROR(f"Error saving attachment: {e}")
                                 )
 
                         ai_process_ticket(ticket)
@@ -113,7 +113,7 @@ class Command(BaseCommand):
 
                 except Exception as e:
                     self.stderr.write(
-                        self.style.ERROR(f"❌ Error processing email: {e}")
+                        self.style.ERROR(f"Error processing email: {e}")
                     )
 
                     mail.store(email_id, "+FLAGS", "\\Seen")
@@ -122,7 +122,7 @@ class Command(BaseCommand):
             mail.logout()
 
         except Exception as e:
-            self.stderr.write(self.style.ERROR(f"❌ Error fetching emails: {e}"))
+            self.stderr.write(self.style.ERROR(f"Error fetching emails: {e}"))
 
     def categorize_ticket(self, subject, body):
         """Assigns a category based on keywords in the subject or body."""
@@ -259,10 +259,10 @@ class Command(BaseCommand):
             )
             return spam_score > 0.8
         except requests.RequestException as e:
-            print("❌ Error connecting to Perspective API:", e)
+            print("Error connecting to Perspective API:", e)
             return False
         except ValueError:
-            print("❌ Invalid JSON response from Perspective API")
+            print("Invalid JSON response from Perspective API")
             return False
 
     def parse_email_message(self, msg):
@@ -280,7 +280,7 @@ class Command(BaseCommand):
                     else:
                         subject += str(part)
                 except Exception as e:
-                    print("❌ Error decoding subject part:", e)
+                    print("Error decoding subject part:", e)
 
             # Extract sender
             sender = msg.get("From", "")
@@ -330,7 +330,7 @@ class Command(BaseCommand):
                                     else:
                                         decoded_filename += str(p)
                                 except Exception as e:
-                                    print("❌ Error decoding attachment filename:", e)
+                                    print("Error decoding attachment filename:", e)
                             file_data = part.get_payload(decode=True)
 
                             if not isinstance(file_data, (bytes, str)):
@@ -360,5 +360,5 @@ class Command(BaseCommand):
             return subject, sender_email, body, attachments
 
         except Exception as e:
-            print("❌ Error parsing email message:", e)
+            print("Error parsing email message:", e)
             return "", "", "", []
