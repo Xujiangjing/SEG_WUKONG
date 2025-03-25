@@ -135,7 +135,7 @@ DEPARTMENTS = [
 class Command(BaseCommand):
     """Build automation command to seed the database."""
 
-    TICKET_COUNT = 5
+    TICKET_COUNT = 20
     USER_COUNT = 30
     DEFAULT_PASSWORD = "pbkdf2_sha256$260000$4BNvFuAWoTT1XVU8D6hCay$KqDCG+bHl8TwYcvA60SGhOMluAheVOnF1PMz0wClilc="
     help = "Seeds the database with sample data"
@@ -317,7 +317,7 @@ class Command(BaseCommand):
         for ticket in created_tickets:
             ai_process_ticket(ticket)
             new_ai_tickets_count += 1
-            print_ticket(ticket)
+            #print_ticket(ticket)
         self.stdout.write(
             self.style.SUCCESS(f"Successfully answered {new_ai_tickets_count} tickets.")
         )
