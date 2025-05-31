@@ -1,3 +1,6 @@
+修改建议：  
+1. 结构调整，很多class太长 --> django结构下把功能分成更多的app
+   
 # WUKONG
 - Our Project Title: Ticketing system for student queries
 - Our Software Name: WUKONG University Ticket System
